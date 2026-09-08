@@ -9,6 +9,6 @@ class EnvironmentConfig {
     flavor: AppFlavor.user,
     environment: AppEnvironment.development,
     appName: 'Avantika Lok Dev',
-    baseUrl: 'http://api-dev.tirthsangam.com',
+    baseUrl: 'https://api-dev.tirthsangam.com',
   );
 }
