@@ -18,7 +18,7 @@ class ServiceTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-        border: Border.all(color: const Color(0xFFFFD5DB)),
+        border: Border.all(color: AppColors.brandBorder),
       ),
       child: Material(
         color: Colors.transparent,

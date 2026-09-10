@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../../app/config/app_config.dart';
+import '../../../../app/config/app_flavor.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
@@ -58,6 +60,9 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    final config = getIt<AppConfig>();
+    final isAdmin = config.flavor == AppFlavor.admin;
+
     return Scaffold(
       backgroundColor: AppColors.splashBackground,
       body: SafeArea(
@@ -66,30 +71,36 @@ class _SplashPageState extends State<SplashPage>
             opacity: _fadeAnimation,
             child: ScaleTransition(
               scale: _scaleAnimation,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    AssetConstants.logoMark,
-                    width: 205,
-                    height: 194,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Avantika Lok',
-                    style: AppTypography.brandTitle.copyWith(
-                      fontSize: 30,
-                      color: const Color(0xFFFF7424),
+              child: isAdmin
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          AssetConstants.logoMark,
+                          width: 205,
+                          height: 194,
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'Avantika Lok',
+                          style: AppTypography.brandTitle.copyWith(fontSize: 30),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'A Holy March',
+                          style: AppTypography.brandSubtitle.copyWith(fontSize: 11),
+                        ),
+                      ],
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Image.asset(
+                        config.logoAsset,
+                        width: 330,
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'A Holy March',
-                    style: AppTypography.brandSubtitle.copyWith(fontSize: 11),
-                  ),
-                ],
-              ),
             ),
           ),
         ),

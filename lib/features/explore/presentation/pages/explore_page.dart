@@ -47,7 +47,7 @@ class _ExplorePageState extends State<ExplorePage> {
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: AppColors.primaryDark));
+              return Center(child: CircularProgressIndicator(color: AppColors.primaryDark));
             }
             if (snapshot.hasError) {
               return _ExploreError(onRetry: _reload);
@@ -204,7 +204,7 @@ class _Header extends StatelessWidget {
                     decoration: InputDecoration(
                       hintText: 'Search places or locations',
                       hintStyle: AppTypography.caption.copyWith(fontSize: 11),
-                      prefixIcon: const Icon(Icons.search, color: AppColors.iconPink, size: 20),
+                      prefixIcon: Icon(Icons.search, color: AppColors.iconPink, size: 20),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -215,7 +215,7 @@ class _Header extends StatelessWidget {
               Container(
                 width: 42,
                 height: 42,
-                decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
                 child: const Icon(Icons.tune, color: Colors.white, size: 20),
               ),
             ],
@@ -238,7 +238,7 @@ class _ExploreError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_outlined, size: 48, color: AppColors.primaryDark),
+            Icon(Icons.cloud_off_outlined, size: 48, color: AppColors.primaryDark),
             const SizedBox(height: 12),
             const Text('Unable to load tourism places from the live API.'),
             const SizedBox(height: 14),

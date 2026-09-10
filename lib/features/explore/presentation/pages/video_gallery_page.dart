@@ -56,7 +56,7 @@ class _VideoGalleryPageState extends State<VideoGalleryPage> {
                             width: 58,
                             height: 58,
                             decoration: const BoxDecoration(color: Colors.white70, shape: BoxShape.circle),
-                            child: const Icon(Icons.play_arrow, color: AppColors.primaryDark, size: 36),
+                            child: Icon(Icons.play_arrow, color: AppColors.primaryDark, size: 36),
                           ),
                         ),
                       ),
@@ -150,7 +150,7 @@ class _Header extends StatelessWidget {
               child: Container(
                 width: 36,
                 height: 36,
-                decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
                 child: const Icon(Icons.arrow_back, color: Colors.white, size: 19),
               ),
             ),

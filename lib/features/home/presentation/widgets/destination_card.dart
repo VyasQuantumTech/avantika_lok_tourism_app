@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../domain/entities/home_dashboard.dart';
@@ -17,14 +18,14 @@ class DestinationCard extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Image.asset(item.image, fit: BoxFit.cover),
-          const Align(
+          Align(
             alignment: Alignment.bottomCenter,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0xBBF34266)],
+                  colors: [Colors.transparent, AppColors.destinationOverlay],
                 ),
               ),
               child: SizedBox(height: 34, width: double.infinity),

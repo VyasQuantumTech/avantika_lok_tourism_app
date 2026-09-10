@@ -74,7 +74,7 @@ class _ExploreDetailPageState extends State<ExploreDetailPage> {
                       _GalleryCard(place: place),
                       if (snapshot.connectionState == ConnectionState.waiting) ...[
                         const SizedBox(height: 12),
-                        const LinearProgressIndicator(minHeight: 2, color: AppColors.primaryDark),
+                        LinearProgressIndicator(minHeight: 2, color: AppColors.primaryDark),
                       ],
                     ]),
                   ),
@@ -109,7 +109,7 @@ class _TopBar extends StatelessWidget {
                 child: Container(
                   width: 38,
                   height: 38,
-                  decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
                   child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
                 ),
               ),
@@ -212,7 +212,7 @@ class _AboutCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on_outlined, color: AppColors.accent, size: 18),
+                Icon(Icons.location_on_outlined, color: AppColors.accent, size: 18),
                 const SizedBox(width: 6),
                 Expanded(child: Text(place.address, style: AppTypography.caption.copyWith(fontSize: 11))),
               ],
@@ -271,7 +271,7 @@ class _VisitorRow extends StatelessWidget {
           Container(
             width: 22,
             height: 22,
-            decoration: const BoxDecoration(color: Color(0xFFFFE4C7), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: AppColors.brandSoft, shape: BoxShape.circle),
             child: Icon(_iconFor(label), color: AppColors.accent, size: 14),
           ),
           const SizedBox(width: 8),
@@ -395,7 +395,7 @@ class _GalleryButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           gradient: active
-              ? const LinearGradient(colors: [AppColors.accent, AppColors.primaryDark])
+              ? LinearGradient(colors: [AppColors.accent, AppColors.primaryDark])
               : null,
           color: active ? null : AppColors.softSurface,
           borderRadius: BorderRadius.circular(5),
