@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
+import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
@@ -91,7 +92,10 @@ class _HomePageState extends State<HomePage> {
                   ),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      _ServicesSection(items: dashboard.services),
+                      _ServicesSection(
+                        items: dashboard.services,
+                        onExploreTap: () => Navigator.of(context).pushNamed(RouteNames.explore),
+                      ),
                       const SizedBox(height: AppDimensions.sectionGap),
                       _DestinationsSection(items: dashboard.destinations),
                       const SizedBox(height: AppDimensions.sectionGap),
@@ -237,9 +241,10 @@ class _TopHeader extends StatelessWidget {
 }
 
 class _ServicesSection extends StatelessWidget {
-  const _ServicesSection({required this.items});
+  const _ServicesSection({required this.items, required this.onExploreTap});
 
   final List<ServiceItem> items;
+  final VoidCallback onExploreTap;
 
   @override
   Widget build(BuildContext context) {
@@ -257,7 +262,13 @@ class _ServicesSection extends StatelessWidget {
             crossAxisSpacing: 10,
             childAspectRatio: 0.9,
           ),
-          itemBuilder: (context, index) => ServiceTile(item: items[index]),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return ServiceTile(
+              item: item,
+              onTap: item.title.trim().toLowerCase() == 'explore' ? onExploreTap : null,
+            );
+          },
         ),
       ],
     );

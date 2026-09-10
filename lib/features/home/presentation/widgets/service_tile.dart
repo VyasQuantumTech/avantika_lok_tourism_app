@@ -7,9 +7,10 @@ import '../../domain/entities/home_dashboard.dart';
 import 'home_icon_mapper.dart';
 
 class ServiceTile extends StatelessWidget {
-  const ServiceTile({required this.item, super.key});
+  const ServiceTile({required this.item, this.onTap, super.key});
 
   final ServiceItem item;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +24,7 @@ class ServiceTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-          onTap: () {},
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
             child: Column(

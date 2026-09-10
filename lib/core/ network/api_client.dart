@@ -12,6 +12,8 @@ class ApiClient {
         _client = client;
 
   final String _baseUrl;
+
+  String get baseUrl => _baseUrl;
   final http.Client _client;
 
   Future<Map<String, dynamic>> get(String path) async {
