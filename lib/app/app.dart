@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../features/system/presentation/pages/health_page.dart';
 import 'config/app_config.dart';
+import 'router/app_router.dart';
+import 'router/route_names.dart';
+import 'theme/app_theme.dart';
 
 class AvantikaLokApp extends StatelessWidget {
   const AvantikaLokApp({
@@ -16,11 +18,9 @@ class AvantikaLokApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: config.appName,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF57C00)),
-        useMaterial3: true,
-      ),
-      home: const HealthPage(),
+      theme: AppTheme.light,
+      initialRoute: RouteNames.splash,
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }

@@ -1,0 +1,53 @@
+{
+  "profile": {
+    "name": "James Anderson",
+    "email": "kames.anderson@gmail.com",
+    "avatar": "assets/images/common/avatar.png"
+  },
+  "services": [
+    {"title": "Hotel", "icon": "hotel"},
+    {"title": "Puja", "icon": "puja"},
+    {"title": "Explore", "icon": "explore"},
+    {"title": "Panditji", "icon": "panditji"}
+  ],
+  "destinations": [
+    {"title": "Badrinath", "image": "assets/images/destinations/badrinath.jpg"},
+    {"title": "Somnath", "image": "assets/images/destinations/somnath.jpg"},
+    {"title": "Golden Temple", "image": "assets/images/destinations/golden_temple.jpg"},
+    {"title": "Kedarnath", "image": "assets/images/destinations/kedarnath.jpg"},
+    {"title": "Ujjain", "image": "assets/images/destinations/ujjain.jpg"},
+    {"title": "Meenakshi Temple", "image": "assets/images/destinations/meenakshi_temple.jpg"}
+  ],
+  "accommodations": [
+    {
+      "name": "Shirdi Sai Suresh Dham (Near Temple)",
+      "address": "C.S. No. 904, Plot No. 04, near Sai Moreshwar Hotel, Shirdi, Maharashtra",
+      "price": 800,
+      "image": "assets/images/accommodations/hotel_1.jpg",
+      "isFavorite": true
+    },
+    {
+      "name": "Lords Inn Somnath",
+      "address": "Veraval Somnath Bypass, Somnath, Gujarat",
+      "price": 1100,
+      "image": "assets/images/accommodations/hotel_2.jpg",
+      "isFavorite": false
+    }
+  ],
+  "menu": [
+    {"title": "Home", "icon": "home"},
+    {"title": "Your Destinations", "icon": "destinations"},
+    {"title": "Hotel", "icon": "hotel"},
+    {"title": "Puja", "icon": "puja"},
+    {"title": "Explore", "icon": "explore"},
+    {"title": "Panditji", "icon": "panditji"},
+    {"title": "Vehicle", "icon": "vehicle"},
+    {"title": "Settings", "icon": "settings"},
+    {"title": "Sign out", "icon": "signout"}
+  ],
+  "secondaryMenu": [
+    {"title": "About", "icon": "about"},
+    {"title": "Help & Feedback", "icon": "help"},
+    {"title": "Term & Conditions", "icon": "terms"}
+  ]
+}
