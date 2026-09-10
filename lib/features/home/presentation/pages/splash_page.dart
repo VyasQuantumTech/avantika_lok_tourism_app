@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/constants/asset_constants.dart';
+import '../../../auth/domain/usecases/restore_session.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -19,7 +21,6 @@ class _SplashPageState extends State<SplashPage>
   late final AnimationController _controller;
   late final Animation<double> _fadeAnimation;
   late final Animation<double> _scaleAnimation;
-  Timer? _navigationTimer;
 
   @override
   void initState() {
@@ -28,26 +29,29 @@ class _SplashPageState extends State<SplashPage>
       vsync: this,
       duration: const Duration(milliseconds: 650),
     );
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    );
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _scaleAnimation = Tween<double>(begin: 0.94, end: 1).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
-
     _controller.forward();
-    _navigationTimer = Timer(const Duration(milliseconds: 1200), _openHome);
+    unawaited(_resolveInitialRoute());
   }
 
-  void _openHome() {
+  Future<void> _resolveInitialRoute() async {
+    final minimumSplash = Future<void>.delayed(const Duration(milliseconds: 1200));
+    final sessionFuture = getIt<RestoreSession>()();
+    final results = await Future.wait<dynamic>([minimumSplash, sessionFuture]);
+    final signedIn = results[1] == true;
+
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(RouteNames.home);
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      signedIn ? RouteNames.home : RouteNames.login,
+      (_) => false,
+    );
   }
 
   @override
   void dispose() {
-    _navigationTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

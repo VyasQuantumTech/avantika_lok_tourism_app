@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/di/injection.dart';
+import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../auth/domain/usecases/logout_user.dart';
 import '../../domain/entities/home_dashboard.dart';
 import 'home_icon_mapper.dart';
 
@@ -10,6 +13,54 @@ class HomeDrawer extends StatelessWidget {
   const HomeDrawer({required this.dashboard, super.key});
 
   final HomeDashboard dashboard;
+
+  Future<void> _signOut(BuildContext context) async {
+    // Capture the app navigator before closing the drawer. The previous
+    // implementation closed the drawer first and then tried to open the
+    // confirmation dialog with the drawer's now-deactivated BuildContext,
+    // so the logout flow never actually started.
+    final appNavigator = Navigator.of(context, rootNavigator: true);
+
+    final shouldSignOut = await showDialog<bool>(
+      context: context,
+      useRootNavigator: true,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sign out?'),
+        content: const Text('You will need to sign in again to access your account.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSignOut != true) return;
+
+    // The confirmation dialog has finished, so it is now safe to close the
+    // drawer. Do not use the drawer BuildContext for navigation after this.
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
+
+    try {
+      await getIt<LogoutUser>()();
+    } catch (_) {
+      // Logout remains local-first. Even if the backend cannot be reached,
+      // the repository invalidates and clears the persisted local session.
+    }
+
+    if (!appNavigator.mounted) return;
+    appNavigator.pushNamedAndRemoveUntil(
+      RouteNames.login,
+      (_) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +82,10 @@ class HomeDrawer extends StatelessWidget {
                     (item) => _DrawerItem(
                       item: item,
                       onTap: () {
+                        if (item.title == 'Sign out') {
+                          _signOut(context);
+                          return;
+                        }
                         if (item.title != 'Home') {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

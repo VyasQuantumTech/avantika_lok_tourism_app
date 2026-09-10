@@ -1,0 +1,183 @@
+import 'package:flutter/material.dart';
+
+import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_typography.dart';
+
+class AuthScaffold extends StatelessWidget {
+  const AuthScaffold({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+    super.key,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        constraints: const BoxConstraints(minHeight: 205),
+                        padding: const EdgeInsets.fromLTRB(24, 54, 24, 34),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [Color(0xFFFFAF58), Color(0xFFE92F61)],
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              title,
+                              style: AppTypography.body.copyWith(
+                                color: Colors.white,
+                                fontSize: 24,
+                                height: 1.08,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              subtitle,
+                              style: AppTypography.caption.copyWith(
+                                color: Colors.white.withOpacity(0.95),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Transform.translate(
+                        offset: const Offset(0, -18),
+                        child: Container(
+                          width: double.infinity,
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight - 187,
+                          ),
+                          padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+                          ),
+                          child: child,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AuthPrimaryButton extends StatelessWidget {
+  const AuthPrimaryButton({
+    required this.label,
+    required this.onPressed,
+    this.loading = false,
+    super.key,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 46,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFAA56), Color(0xFFE82F61)],
+          ),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: ElevatedButton(
+          onPressed: loading ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          ),
+          child: loading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  label,
+                  style: AppTypography.body.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class AuthSwitchLink extends StatelessWidget {
+  const AuthSwitchLink({
+    required this.prefix,
+    required this.action,
+    required this.onTap,
+    super.key,
+  });
+
+  final String prefix;
+  final String action;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(prefix, style: AppTypography.body.copyWith(fontSize: 12)),
+        TextButton(
+          onPressed: onTap,
+          child: Text(
+            action,
+            style: AppTypography.body.copyWith(
+              color: AppColors.headingPink,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
