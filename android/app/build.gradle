@@ -20,20 +20,67 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.avantika_lok_tourism_app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Keeps the main manifest valid even if Android tooling evaluates the
+        // default configuration outside a concrete flavor.
+        manifestPlaceholders["appName"] = "Avantika Lok"
+    }
+
+    // One dimension with explicit role/environment combinations keeps Flutter's
+    // --flavor command simple and predictable.
+    flavorDimensions "app"
+
+    productFlavors {
+        userDev {
+            dimension "app"
+            // Keep the current package id for the existing user-development app
+            // so local installs/session storage are not unnecessarily reset.
+            versionNameSuffix "-user-dev"
+            manifestPlaceholders["appName"] = "Avantika Lok"
+        }
+
+        userProd {
+            dimension "app"
+            applicationIdSuffix ".user"
+            manifestPlaceholders["appName"] = "Avantika Lok"
+        }
+
+        providerDev {
+            dimension "app"
+            applicationIdSuffix ".provider.dev"
+            versionNameSuffix "-provider-dev"
+            manifestPlaceholders["appName"] = "Avantika Lok Seva provider"
+        }
+
+        providerProd {
+            dimension "app"
+            applicationIdSuffix ".provider"
+            manifestPlaceholders["appName"] = "Avantika Lok Seva provider"
+        }
+
+        adminDev {
+            dimension "app"
+            applicationIdSuffix ".admin.dev"
+            versionNameSuffix "-admin-dev"
+            manifestPlaceholders["appName"] = "Avantika Lok Admin Dev"
+        }
+
+        adminProd {
+            dimension "app"
+            applicationIdSuffix ".admin"
+            manifestPlaceholders["appName"] = "Avantika Lok Admin"
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Keep the project's existing behavior so current release runs are
+            // not blocked while production signing is configured separately.
             signingConfig = signingConfigs.debug
         }
     }

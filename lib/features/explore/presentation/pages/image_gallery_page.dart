@@ -115,7 +115,7 @@ class _GalleryHeader extends StatelessWidget {
               child: Container(
                 width: 36,
                 height: 36,
-                decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
                 child: const Icon(Icons.arrow_back, color: Colors.white, size: 19),
               ),
             ),

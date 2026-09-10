@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> {
       future: _dashboardFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
+          return Scaffold(
             body: Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             ),
@@ -58,7 +58,7 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
                         size: 48,
                         color: AppColors.primary,
@@ -198,7 +198,7 @@ class _TopHeader extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 13),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.search,
                         color: AppColors.iconPink,
                         size: 20,
@@ -221,7 +221,7 @@ class _TopHeader extends StatelessWidget {
                 child: Container(
                   width: 42,
                   height: 42,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.accent,
                     shape: BoxShape.circle,
                   ),

@@ -18,7 +18,7 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
       fontFamily: AppTypography.fontFamily,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -26,7 +26,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
       ),
       dividerColor: AppColors.border,
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.primaryDark,
         unselectedItemColor: AppColors.navInactive,

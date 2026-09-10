@@ -134,11 +134,11 @@ class _ProfileHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 50, 16, 22),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFFF56564), Color(0xFFFF925A)],
+          colors: [AppColors.brandGradientEnd, AppColors.brandGradientStart],
         ),
       ),
       child: Stack(
@@ -186,7 +186,7 @@ class _ProfileHeader extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: Colors.white.withOpacity(0.96),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.notifications_none,
                 color: AppColors.primary,
                 size: 16,

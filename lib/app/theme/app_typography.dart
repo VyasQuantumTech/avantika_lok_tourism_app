@@ -7,13 +7,13 @@ class AppTypography {
 
   static const String fontFamily = 'Roboto';
 
-  static const TextStyle brandTitle = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 21,
-    fontWeight: FontWeight.w700,
-    height: 1.1,
-    color: AppColors.primary,
-  );
+  static TextStyle get brandTitle => TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 21,
+        fontWeight: FontWeight.w700,
+        height: 1.1,
+        color: AppColors.primary,
+      );
 
   static const TextStyle brandSubtitle = TextStyle(
     fontFamily: fontFamily,
@@ -22,12 +22,12 @@ class AppTypography {
     color: AppColors.textSecondary,
   );
 
-  static const TextStyle sectionTitle = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 16,
-    fontWeight: FontWeight.w700,
-    color: AppColors.headingPink,
-  );
+  static TextStyle get sectionTitle => TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        color: AppColors.headingPink,
+      );
 
   static const TextStyle body = TextStyle(
     fontFamily: fontFamily,

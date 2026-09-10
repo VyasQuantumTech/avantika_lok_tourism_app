@@ -34,11 +34,11 @@ class AuthScaffold extends StatelessWidget {
                         width: double.infinity,
                         constraints: const BoxConstraints(minHeight: 205),
                         padding: const EdgeInsets.fromLTRB(24, 54, 24, 34),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
-                            colors: [Color(0xFFFFAF58), Color(0xFFE92F61)],
+                            colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd],
                           ),
                         ),
                         child: Column(
@@ -111,8 +111,8 @@ class AuthPrimaryButton extends StatelessWidget {
       height: 46,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFAA56), Color(0xFFE82F61)],
+          gradient: LinearGradient(
+            colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd],
           ),
           borderRadius: BorderRadius.circular(6),
         ),
