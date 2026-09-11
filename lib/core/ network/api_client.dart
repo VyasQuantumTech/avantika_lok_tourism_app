@@ -47,6 +47,19 @@ class ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> put(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authenticated = false,
+  }) {
+    return _request(
+      method: 'PUT',
+      path: path,
+      body: body,
+      authenticated: authenticated,
+    );
+  }
+
   Future<Map<String, dynamic>> _request({
     required String method,
     required String path,
@@ -70,20 +83,32 @@ class ApiClient {
       }
 
       final http.Response response;
-      if (method == 'POST') {
-        response = await _client
-            .post(
-              uri,
-              headers: headers,
-              body: body == null ? null : jsonEncode(body),
-            )
-            .timeout(const Duration(seconds: 20));
-      } else if (method == 'GET') {
-        response = await _client
-            .get(uri, headers: headers)
-            .timeout(const Duration(seconds: 20));
-      } else {
-        throw UnsupportedError('Unsupported HTTP method: $method');
+      switch (method) {
+        case 'POST':
+          response = await _client
+              .post(
+                uri,
+                headers: headers,
+                body: body == null ? null : jsonEncode(body),
+              )
+              .timeout(const Duration(seconds: 20));
+          break;
+        case 'PUT':
+          response = await _client
+              .put(
+                uri,
+                headers: headers,
+                body: body == null ? null : jsonEncode(body),
+              )
+              .timeout(const Duration(seconds: 20));
+          break;
+        case 'GET':
+          response = await _client
+              .get(uri, headers: headers)
+              .timeout(const Duration(seconds: 20));
+          break;
+        default:
+          throw UnsupportedError('Unsupported HTTP method: $method');
       }
 
       if (response.statusCode == 401 &&

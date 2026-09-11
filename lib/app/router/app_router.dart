@@ -9,6 +9,11 @@ import '../../features/explore/presentation/pages/image_gallery_page.dart';
 import '../../features/explore/presentation/pages/video_gallery_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/splash_page.dart';
+import '../../features/provider/presentation/pages/provider_gate_page.dart';
+import '../../features/provider/presentation/pages/provider_registration_page.dart';
+import '../../features/provider/presentation/pages/dashboards/accommodation_dashboard_page.dart';
+import '../../features/provider/presentation/pages/dashboards/pandit_dashboard_page.dart';
+import '../../features/provider/presentation/pages/dashboards/transport_dashboard_page.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -16,18 +21,18 @@ class AppRouter {
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
-    // -----------------------------------------------------------------------
-    // Splash
-    // -----------------------------------------------------------------------
+      // ---------------------------------------------------------------------
+      // Splash
+      // ---------------------------------------------------------------------
       case RouteNames.splash:
         return MaterialPageRoute<void>(
           builder: (_) => const SplashPage(),
           settings: settings,
         );
 
-    // -----------------------------------------------------------------------
-    // Authentication
-    // -----------------------------------------------------------------------
+      // ---------------------------------------------------------------------
+      // Authentication
+      // ---------------------------------------------------------------------
       case RouteNames.login:
         return MaterialPageRoute<void>(
           builder: (_) => const LoginPage(),
@@ -40,9 +45,46 @@ class AppRouter {
           settings: settings,
         );
 
-    // -----------------------------------------------------------------------
-    // Home
-    // -----------------------------------------------------------------------
+      // ---------------------------------------------------------------------
+      // Provider onboarding gate
+      // ---------------------------------------------------------------------
+      case RouteNames.providerGate:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderGatePage(),
+          settings: settings,
+        );
+
+      case RouteNames.providerRegistration:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderRegistrationPage(),
+          settings: settings,
+        );
+
+
+      // ---------------------------------------------------------------------
+      // Provider dashboards
+      // ---------------------------------------------------------------------
+      case RouteNames.panditDashboard:
+        return MaterialPageRoute<void>(
+          builder: (_) => const PanditDashboardPage(),
+          settings: settings,
+        );
+
+      case RouteNames.accommodationDashboard:
+        return MaterialPageRoute<void>(
+          builder: (_) => const AccommodationDashboardPage(),
+          settings: settings,
+        );
+
+      case RouteNames.transportDashboard:
+        return MaterialPageRoute<void>(
+          builder: (_) => const TransportDashboardPage(),
+          settings: settings,
+        );
+
+      // ---------------------------------------------------------------------
+      // Home
+      // ---------------------------------------------------------------------
       case RouteNames.home:
         return PageRouteBuilder<void>(
           settings: settings,
@@ -56,9 +98,9 @@ class AppRouter {
           },
         );
 
-    // -----------------------------------------------------------------------
-    // Explore
-    // -----------------------------------------------------------------------
+      // ---------------------------------------------------------------------
+      // Explore
+      // ---------------------------------------------------------------------
       case RouteNames.explore:
         return MaterialPageRoute<void>(
           builder: (_) => const ExplorePage(),
@@ -116,9 +158,9 @@ class AppRouter {
           settings: settings,
         );
 
-    // -----------------------------------------------------------------------
-    // Unknown route
-    // -----------------------------------------------------------------------
+      // ---------------------------------------------------------------------
+      // Unknown route
+      // ---------------------------------------------------------------------
       default:
         return _errorRoute(
           settings,
@@ -128,9 +170,9 @@ class AppRouter {
   }
 
   static Route<dynamic> _errorRoute(
-      RouteSettings settings,
-      String message,
-      ) {
+    RouteSettings settings,
+    String message,
+  ) {
     return MaterialPageRoute<void>(
       settings: settings,
       builder: (_) => Scaffold(

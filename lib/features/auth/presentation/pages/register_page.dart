@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/config/app_config.dart';
+import '../../../../app/config/app_flavor.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_typography.dart';
@@ -59,13 +61,25 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(RouteNames.home, (_) => false);
+
+      final config = getIt<AppConfig>();
+      final nextRoute = config.flavor == AppFlavor.provider
+          ? RouteNames.providerGate
+          : RouteNames.home;
+
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        nextRoute,
+        (_) => false,
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _serverError = _friendlyMessage(error));
     } catch (_) {
       if (!mounted) return;
-      setState(() => _serverError = 'Unable to create the account right now. Please try again.');
+      setState(
+        () => _serverError =
+            'Unable to create the account right now. Please try again.',
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -128,7 +142,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 icon: Icons.mail_outline,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.newUsername, AutofillHints.email],
+                autofillHints: const [
+                  AutofillHints.newUsername,
+                  AutofillHints.email,
+                ],
                 validator: AppValidators.email,
               ),
               const SizedBox(height: 13),
@@ -165,7 +182,8 @@ class _RegisterPageState extends State<RegisterPage> {
               if (_serverError != null) ...[
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF1F2),
                     borderRadius: BorderRadius.circular(7),

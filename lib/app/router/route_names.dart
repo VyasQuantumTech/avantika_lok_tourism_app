@@ -5,6 +5,16 @@ class RouteNames {
   static const String login = '/login';
   static const String register = '/register';
 
+  // Provider onboarding
+  static const String providerGate = '/provider/gate';
+  static const String providerRegistration = '/provider/register';
+
+  // Provider dashboards
+  static const String panditDashboard = '/provider/dashboard/pandit';
+  static const String accommodationDashboard =
+      '/provider/dashboard/accommodation';
+  static const String transportDashboard = '/provider/dashboard/transport';
+
   // App
   static const String splash = '/';
   static const String home = '/home';

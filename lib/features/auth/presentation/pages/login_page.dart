@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/config/app_config.dart';
+import '../../../../app/config/app_flavor.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
@@ -43,13 +45,25 @@ class _LoginPageState extends State<LoginPage> {
         password: _passwordController.text,
       );
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(RouteNames.home, (_) => false);
+
+      final config = getIt<AppConfig>();
+      final nextRoute = config.flavor == AppFlavor.provider
+          ? RouteNames.providerGate
+          : RouteNames.home;
+
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        nextRoute,
+        (_) => false,
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _serverError = _friendlyMessage(error));
     } catch (_) {
       if (!mounted) return;
-      setState(() => _serverError = 'Unable to sign in right now. Please try again.');
+      setState(
+        () => _serverError =
+            'Unable to sign in right now. Please try again.',
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -92,7 +106,11 @@ class _LoginPageState extends State<LoginPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: const [
-                      BoxShadow(color: AppColors.shadow, blurRadius: 4, offset: Offset(0, 1)),
+                      BoxShadow(
+                        color: AppColors.shadow,
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
                     ],
                   ),
                   child: Text(
@@ -108,7 +126,10 @@ class _LoginPageState extends State<LoginPage> {
                 icon: Icons.mail_outline,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.username, AutofillHints.email],
+                autofillHints: const [
+                  AutofillHints.username,
+                  AutofillHints.email,
+                ],
                 validator: AppValidators.email,
               ),
               const SizedBox(height: 13),
@@ -138,7 +159,8 @@ class _LoginPageState extends State<LoginPage> {
               AuthSwitchLink(
                 prefix: 'New to Avantika Lok?',
                 action: 'Create account',
-                onTap: () => Navigator.of(context).pushNamed(RouteNames.register),
+                onTap: () =>
+                    Navigator.of(context).pushNamed(RouteNames.register),
               ),
             ],
           ),
