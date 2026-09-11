@@ -31,23 +31,46 @@ class _SplashPageState extends State<SplashPage>
       vsync: this,
       duration: const Duration(milliseconds: 650),
     );
-    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
     _scaleAnimation = Tween<double>(begin: 0.94, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutBack,
+      ),
     );
     _controller.forward();
     unawaited(_resolveInitialRoute());
   }
 
   Future<void> _resolveInitialRoute() async {
-    final minimumSplash = Future<void>.delayed(const Duration(milliseconds: 1200));
+    final minimumSplash =
+        Future<void>.delayed(const Duration(milliseconds: 1200));
     final sessionFuture = getIt<RestoreSession>()();
-    final results = await Future.wait<dynamic>([minimumSplash, sessionFuture]);
+    final results = await Future.wait<dynamic>([
+      minimumSplash,
+      sessionFuture,
+    ]);
     final signedIn = results[1] == true;
 
     if (!mounted) return;
+
+    final config = getIt<AppConfig>();
+    final String route;
+
+    if (!signedIn) {
+      route = RouteNames.login;
+    } else if (config.flavor == AppFlavor.provider) {
+      // Provider flavor must always verify the provider profile on app restore.
+      route = RouteNames.providerGate;
+    } else {
+      route = RouteNames.home;
+    }
+
     Navigator.of(context).pushNamedAndRemoveUntil(
-      signedIn ? RouteNames.home : RouteNames.login,
+      route,
       (_) => false,
     );
   }
@@ -89,7 +112,9 @@ class _SplashPageState extends State<SplashPage>
                         const SizedBox(height: 3),
                         Text(
                           'A Holy March',
-                          style: AppTypography.brandSubtitle.copyWith(fontSize: 11),
+                          style: AppTypography.brandSubtitle.copyWith(
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     )

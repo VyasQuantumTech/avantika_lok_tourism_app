@@ -20,6 +20,11 @@ import '../../features/home/data/datasources/home_local_data_source.dart';
 import '../../features/home/data/repositories/home_repository_impl.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_home_dashboard.dart';
+import '../../features/provider/data/datasources/provider_remote_data_source.dart';
+import '../../features/provider/data/repositories/provider_repository_impl.dart';
+import '../../features/provider/domain/repositories/provider_repository.dart';
+import '../../features/provider/domain/usecases/check_provider_status.dart';
+import '../../features/provider/domain/usecases/register_provider.dart';
 import '../../features/system/data/datasources/system_remote_data_source.dart';
 import '../../features/system/data/repositories/system_repository_impl.dart';
 import '../../features/system/domain/repositories/system_repository.dart';
@@ -56,10 +61,31 @@ Future<void> configureDependencies(AppConfig config) async {
       getIt<SecureStorageService>(),
     ),
   );
-  getIt.registerLazySingleton<LoginUser>(() => LoginUser(getIt<AuthRepository>()));
-  getIt.registerLazySingleton<RegisterUser>(() => RegisterUser(getIt<AuthRepository>()));
-  getIt.registerLazySingleton<RestoreSession>(() => RestoreSession(getIt<AuthRepository>()));
-  getIt.registerLazySingleton<LogoutUser>(() => LogoutUser(getIt<AuthRepository>()));
+  getIt.registerLazySingleton<LoginUser>(
+    () => LoginUser(getIt<AuthRepository>()),
+  );
+  getIt.registerLazySingleton<RegisterUser>(
+    () => RegisterUser(getIt<AuthRepository>()),
+  );
+  getIt.registerLazySingleton<RestoreSession>(
+    () => RestoreSession(getIt<AuthRepository>()),
+  );
+  getIt.registerLazySingleton<LogoutUser>(
+    () => LogoutUser(getIt<AuthRepository>()),
+  );
+
+  getIt.registerLazySingleton<ProviderRemoteDataSource>(
+    () => ProviderRemoteDataSourceImpl(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<ProviderRepository>(
+    () => ProviderRepositoryImpl(getIt<ProviderRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<CheckProviderStatus>(
+    () => CheckProviderStatus(getIt<ProviderRepository>()),
+  );
+  getIt.registerLazySingleton<RegisterProvider>(
+    () => RegisterProvider(getIt<ProviderRepository>()),
+  );
 
   getIt.registerLazySingleton<SystemRemoteDataSource>(
     () => SystemRemoteDataSourceImpl(getIt<ApiClient>()),
@@ -71,7 +97,9 @@ Future<void> configureDependencies(AppConfig config) async {
     () => GetServiceHealth(getIt<SystemRepository>()),
   );
 
-  getIt.registerLazySingleton<HomeLocalDataSource>(HomeLocalDataSourceImpl.new);
+  getIt.registerLazySingleton<HomeLocalDataSource>(
+    HomeLocalDataSourceImpl.new,
+  );
   getIt.registerLazySingleton<HomeRepository>(
     () => HomeRepositoryImpl(getIt<HomeLocalDataSource>()),
   );

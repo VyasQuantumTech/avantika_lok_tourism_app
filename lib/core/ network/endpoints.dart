@@ -9,4 +9,7 @@ class Endpoints {
   static const String refresh = '/api/v1/auth/refresh';
   static const String logout = '/api/v1/auth/logout';
   static const String me = '/api/v1/auth/me';
+
+  static const String providerStatus = '/api/v1/provider/me/status';
+  static const String providerMe = '/api/v1/provider/me';
 }
