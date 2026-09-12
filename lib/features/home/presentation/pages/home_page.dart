@@ -108,7 +108,16 @@ class _HomePageState extends State<HomePage> {
           ),
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _selectedBottomIndex,
-            onTap: (index) => setState(() => _selectedBottomIndex = index),
+            onTap: (index) {
+              if (index == 4) {
+                Navigator.of(context).pushNamed(RouteNames.customerProfile);
+                return;
+              }
+              setState(() => _selectedBottomIndex = index);
+              if (index == 2) {
+                Navigator.of(context).pushNamed(RouteNames.explore);
+              }
+            },
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home_outlined),

@@ -20,6 +20,13 @@ import '../../features/home/data/datasources/home_local_data_source.dart';
 import '../../features/home/data/repositories/home_repository_impl.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_home_dashboard.dart';
+import '../../features/profile/data/datasources/profile_remote_data_source.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/domain/usecases/get_my_profile.dart';
+import '../../features/profile/domain/usecases/get_my_profile_dashboard.dart';
+import '../../features/profile/domain/usecases/update_my_profile.dart';
+import '../../features/profile/domain/usecases/update_my_provider_profile.dart';
 import '../../features/provider/data/datasources/provider_remote_data_source.dart';
 import '../../features/provider/data/repositories/provider_repository_impl.dart';
 import '../../features/provider/domain/repositories/provider_repository.dart';
@@ -72,6 +79,26 @@ Future<void> configureDependencies(AppConfig config) async {
   );
   getIt.registerLazySingleton<LogoutUser>(
     () => LogoutUser(getIt<AuthRepository>()),
+  );
+
+
+  getIt.registerLazySingleton<ProfileRemoteDataSource>(
+    () => ProfileRemoteDataSourceImpl(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(getIt<ProfileRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<GetMyProfile>(
+    () => GetMyProfile(getIt<ProfileRepository>()),
+  );
+  getIt.registerLazySingleton<GetMyProfileDashboard>(
+    () => GetMyProfileDashboard(getIt<ProfileRepository>()),
+  );
+  getIt.registerLazySingleton<UpdateMyProfile>(
+    () => UpdateMyProfile(getIt<ProfileRepository>()),
+  );
+  getIt.registerLazySingleton<UpdateMyProviderProfile>(
+    () => UpdateMyProviderProfile(getIt<ProfileRepository>()),
   );
 
   getIt.registerLazySingleton<ProviderRemoteDataSource>(

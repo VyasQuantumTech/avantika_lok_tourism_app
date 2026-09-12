@@ -12,4 +12,7 @@ class Endpoints {
 
   static const String providerStatus = '/api/v1/provider/me/status';
   static const String providerMe = '/api/v1/provider/me';
+
+  static const String profileMe = '/api/v1/profile/me';
+  static const String profileDashboard = '/api/v1/profile/me/dashboard';
 }
