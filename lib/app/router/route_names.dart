@@ -14,10 +14,15 @@ class RouteNames {
   static const String accommodationDashboard =
       '/provider/dashboard/accommodation';
   static const String transportDashboard = '/provider/dashboard/transport';
+  static const String providerProfile = '/provider/profile';
+  static const String providerProfileEdit = '/provider/profile/edit';
+  static const String providerEarnings = '/provider/earnings';
 
   // App
   static const String splash = '/';
   static const String home = '/home';
+  static const String customerProfile = '/profile';
+  static const String customerProfileEdit = '/profile/edit';
 
   // Explore
   static const String explore = '/explore';

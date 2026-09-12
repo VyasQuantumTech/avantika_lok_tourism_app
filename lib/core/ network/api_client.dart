@@ -47,6 +47,19 @@ class ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authenticated = false,
+  }) {
+    return _request(
+      method: 'PATCH',
+      path: path,
+      body: body,
+      authenticated: authenticated,
+    );
+  }
+
   Future<Map<String, dynamic>> put(
     String path, {
     Map<String, dynamic>? body,
@@ -87,6 +100,15 @@ class ApiClient {
         case 'POST':
           response = await _client
               .post(
+                uri,
+                headers: headers,
+                body: body == null ? null : jsonEncode(body),
+              )
+              .timeout(const Duration(seconds: 20));
+          break;
+        case 'PATCH':
+          response = await _client
+              .patch(
                 uri,
                 headers: headers,
                 body: body == null ? null : jsonEncode(body),

@@ -9,6 +9,10 @@ import '../../features/explore/presentation/pages/image_gallery_page.dart';
 import '../../features/explore/presentation/pages/video_gallery_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/splash_page.dart';
+import '../../features/profile/presentation/pages/customer_profile_page.dart';
+import '../../features/profile/presentation/pages/profile_edit_page.dart';
+import '../../features/profile/presentation/pages/provider_earnings_page.dart';
+import '../../features/profile/presentation/pages/provider_profile_page.dart';
 import '../../features/provider/presentation/pages/provider_gate_page.dart';
 import '../../features/provider/presentation/pages/provider_registration_page.dart';
 import '../../features/provider/presentation/pages/dashboards/accommodation_dashboard_page.dart';
@@ -82,6 +86,25 @@ class AppRouter {
           settings: settings,
         );
 
+
+      case RouteNames.providerProfile:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderProfilePage(),
+          settings: settings,
+        );
+
+      case RouteNames.providerProfileEdit:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderProfileEditPage(),
+          settings: settings,
+        );
+
+      case RouteNames.providerEarnings:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderEarningsPage(),
+          settings: settings,
+        );
+
       // ---------------------------------------------------------------------
       // Home
       // ---------------------------------------------------------------------
@@ -96,6 +119,19 @@ class AppRouter {
               child: child,
             );
           },
+        );
+
+
+      case RouteNames.customerProfile:
+        return MaterialPageRoute<void>(
+          builder: (_) => const CustomerProfilePage(),
+          settings: settings,
+        );
+
+      case RouteNames.customerProfileEdit:
+        return MaterialPageRoute<void>(
+          builder: (_) => const CustomerProfileEditPage(),
+          settings: settings,
         );
 
       // ---------------------------------------------------------------------
