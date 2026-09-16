@@ -112,7 +112,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                           await Navigator.of(context).pushNamed(RouteNames.providerProfileEdit);
                           if (mounted) _reload();
                         }),
-                        ProfileMenuRow(icon: Icons.verified_user_outlined, label: 'KYC Status', value: _pretty(provider.kycStatus), onTap: () => _soon('KYC management')),
+                        ProfileMenuRow(icon: Icons.verified_user_outlined, label: 'KYC Status', value: _pretty(provider.kycStatus), onTap: () => Navigator.of(context).pushNamed(RouteNames.providerKyc)),
                         ProfileMenuRow(icon: Icons.account_balance_wallet_outlined, label: 'My Earnings', value: '₹${provider.financial.netCollected.toStringAsFixed(0)}', onTap: () => Navigator.of(context).pushNamed(RouteNames.providerEarnings)),
                         ProfileMenuRow(icon: variant.domainIcon, label: variant.managementLabel, value: variant.secondaryDomainValue(provider), onTap: () => _soon(variant.managementLabel)),
                         ProfileMenuRow(icon: Icons.calendar_month_outlined, label: variant.availabilityLabel, value: variant.availabilityValue(provider), onTap: () => _soon(variant.availabilityLabel)),

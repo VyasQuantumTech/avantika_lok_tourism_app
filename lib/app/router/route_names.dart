@@ -8,6 +8,7 @@ class RouteNames {
   // Provider onboarding
   static const String providerGate = '/provider/gate';
   static const String providerRegistration = '/provider/register';
+  static const String providerKyc = '/provider/kyc';
 
   // Provider dashboards
   static const String panditDashboard = '/provider/dashboard/pandit';
@@ -23,6 +24,20 @@ class RouteNames {
   static const String home = '/home';
   static const String customerProfile = '/profile';
   static const String customerProfileEdit = '/profile/edit';
+
+
+  // Pooja - customer
+  static const String poojas = '/poojas';
+  static const String poojaDetail = '/poojas/detail';
+  static const String poojaBooking = '/poojas/book';
+  static const String poojaPayment = '/poojas/payment';
+  static const String customerPoojaBookings = '/poojas/bookings';
+
+  // Pooja - pandit provider
+  static const String panditPoojaServices = '/provider/pandit/poojas';
+  static const String panditPoojaForm = '/provider/pandit/poojas/form';
+  static const String panditAvailability = '/provider/pandit/availability';
+  static const String panditPoojaBookings = '/provider/pandit/bookings';
 
   // Explore
   static const String explore = '/explore';

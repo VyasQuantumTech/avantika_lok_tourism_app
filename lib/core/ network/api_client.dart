@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -73,6 +74,98 @@ class ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authenticated = false,
+  }) {
+    return _request(
+      method: 'DELETE',
+      path: path,
+      body: body,
+      authenticated: authenticated,
+    );
+  }
+
+
+  Future<Map<String, dynamic>> postBytes(
+    String path, {
+    required Uint8List bytes,
+    required String contentType,
+    required Map<String, String> headers,
+    bool authenticated = false,
+  }) {
+    return _postBytes(
+      path: path,
+      bytes: bytes,
+      contentType: contentType,
+      headers: headers,
+      authenticated: authenticated,
+    );
+  }
+
+  Future<Map<String, dynamic>> _postBytes({
+    required String path,
+    required Uint8List bytes,
+    required String contentType,
+    required Map<String, String> headers,
+    required bool authenticated,
+    bool allowRefresh = true,
+  }) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final requestHeaders = <String, String>{
+      'Accept': 'application/json',
+      'Content-Type': contentType,
+      ...headers,
+    };
+
+    if (authenticated) {
+      final accessToken = await _secureStorage.readAccessToken();
+      if (accessToken != null && accessToken.isNotEmpty) {
+        requestHeaders['Authorization'] = 'Bearer $accessToken';
+      }
+    }
+
+    try {
+      final response = await _client
+          .post(uri, headers: requestHeaders, body: bytes)
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 401 &&
+          authenticated &&
+          allowRefresh &&
+          path != Endpoints.refresh) {
+        final refreshed = await _refreshAccessToken();
+        if (refreshed) {
+          return _postBytes(
+            path: path,
+            bytes: bytes,
+            contentType: contentType,
+            headers: headers,
+            authenticated: authenticated,
+            allowRefresh: false,
+          );
+        }
+      }
+
+      final decoded = _decodeResponse(response);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw _toApiException(response, decoded);
+      }
+      return decoded;
+    } on ApiException {
+      rethrow;
+    } on TimeoutException {
+      throw const ApiException(
+        'The upload timed out. Please check your connection and try again.',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        'Unable to reach the server. Please check your internet connection.',
+      );
+    }
+  }
+
   Future<Map<String, dynamic>> _request({
     required String method,
     required String path,
@@ -127,6 +220,15 @@ class ApiClient {
         case 'GET':
           response = await _client
               .get(uri, headers: headers)
+              .timeout(const Duration(seconds: 20));
+          break;
+        case 'DELETE':
+          response = await _client
+              .delete(
+                uri,
+                headers: headers,
+                body: body == null ? null : jsonEncode(body),
+              )
               .timeout(const Duration(seconds: 20));
           break;
         default:

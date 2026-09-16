@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../app/router/route_names.dart';
 import '../../widgets/provider_dashboard_shell.dart';
 
 class PanditDashboardPage extends StatelessWidget {
@@ -10,8 +11,8 @@ class PanditDashboardPage extends StatelessWidget {
       partnerTitle: 'Avantika Lok\nPandit Partner',
       domainTitle: 'Pooja Service Summary',
       quickActions: [
-        ProviderQuickAction(icon: Icons.add_circle_outline, label: 'Add New Pooja'),
-        ProviderQuickAction(icon: Icons.calendar_month_outlined, label: 'Update Slots'),
+        ProviderQuickAction(icon: Icons.add_circle_outline, label: 'Add New Pooja', routeName: RouteNames.panditPoojaForm),
+        ProviderQuickAction(icon: Icons.calendar_month_outlined, label: 'Update Slots', routeName: RouteNames.panditAvailability),
         ProviderQuickAction(icon: Icons.account_balance_wallet_outlined, label: 'View Earnings'),
       ],
       bottomItems: [

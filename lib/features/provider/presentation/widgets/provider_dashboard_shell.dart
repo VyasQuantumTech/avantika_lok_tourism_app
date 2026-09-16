@@ -10,9 +10,14 @@ import '../../../profile/domain/entities/profile_dashboard.dart';
 import '../../../profile/domain/usecases/get_my_profile_dashboard.dart';
 
 class ProviderQuickAction {
-  const ProviderQuickAction({required this.icon, required this.label});
+  const ProviderQuickAction({
+    required this.icon,
+    required this.label,
+    this.routeName,
+  });
   final IconData icon;
   final String label;
+  final String? routeName;
 }
 
 class ProviderListing {
@@ -164,10 +169,13 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
                             child: _QuickActionCard(
                               action: config.quickActions[index],
                               onTap: () {
-                                if (config.quickActions[index].label == 'View Earnings') {
+                                final action = config.quickActions[index];
+                                if (action.routeName != null) {
+                                  Navigator.of(context).pushNamed(action.routeName!);
+                                } else if (action.label == 'View Earnings') {
                                   Navigator.of(context).pushNamed(RouteNames.providerEarnings);
                                 } else {
-                                  _showComingSoon(config.quickActions[index].label);
+                                  _showComingSoon(action.label);
                                 }
                               },
                             ),
@@ -233,6 +241,16 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
           if (index == 3) {
             Navigator.of(context).pushNamed(RouteNames.providerEarnings);
             return;
+          }
+          if (config.expectedProviderType == 'pandit') {
+            if (index == 1) {
+              Navigator.of(context).pushNamed(RouteNames.panditPoojaBookings);
+              return;
+            }
+            if (index == 2) {
+              Navigator.of(context).pushNamed(RouteNames.panditPoojaServices);
+              return;
+            }
           }
           setState(() => _selectedIndex = index);
           if (index != 0) _showComingSoon(config.bottomItems[index].label);

@@ -63,6 +63,10 @@ class _ProviderGatePageState extends State<ProviderGatePage> {
       return RouteNames.providerRegistration;
     }
 
+    if ((status.kycStatus ?? 'not_submitted') != 'approved') {
+      return RouteNames.providerKyc;
+    }
+
     switch (status.providerType) {
       case 'pandit':
         return RouteNames.panditDashboard;

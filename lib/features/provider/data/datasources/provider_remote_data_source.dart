@@ -1,10 +1,31 @@
+import 'dart:typed_data';
+
 import '../../../../core/ network/api_client.dart';
 import '../../../../core/ network/endpoints.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../domain/entities/provider_account_status.dart';
+import '../../domain/entities/provider_kyc.dart';
 
 abstract class ProviderRemoteDataSource {
   Future<ProviderAccountStatus> getCurrentUserProviderStatus();
+
+  Future<ProviderKycSnapshot> getMyKyc();
+
+  Future<void> addMyKycDocument({
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+    required String category,
+    required String documentType,
+    String? documentNumber,
+    String? documentSide,
+    String? issuedAt,
+    String? expiresAt,
+  });
+
+  Future<void> deleteMyKycDocument(String documentId);
+
+  Future<void> submitMyKyc();
 
   Future<void> registerCurrentUserAsProvider({
     required String providerType,
@@ -89,6 +110,18 @@ class ProviderRemoteDataSourceImpl implements ProviderRemoteDataSource {
           ),
     );
 
+    // KYC may be nested under provider/profile in /provider/me/status.
+    // Resolve it from the provider object first, then fall back to the outer
+    // response. Previously we only inspected `data`, which caused an approved
+    // provider to be reconstructed as `not_submitted` and routed straight back
+    // to the KYC page when pressing "Continue to provider dashboard".
+    final kycStatus =
+        _kycStatus(nestedProvider) ?? _kycStatus(data) ?? _kycStatus(response);
+    final kycApplicationId =
+        _kycApplicationId(nestedProvider) ??
+        _kycApplicationId(data) ??
+        _kycApplicationId(response);
+
     final explicit = _firstBoolean(
       data,
       const <String>[
@@ -158,6 +191,8 @@ class ProviderRemoteDataSourceImpl implements ProviderRemoteDataSource {
       return ProviderAccountStatus(
         isProvider: explicitDecision,
         providerType: explicitDecision ? providerType : null,
+        kycApplicationId: explicitDecision ? kycApplicationId : null,
+        kycStatus: explicitDecision ? kycStatus : null,
       );
     }
 
@@ -167,6 +202,8 @@ class ProviderRemoteDataSourceImpl implements ProviderRemoteDataSource {
       return ProviderAccountStatus(
         isProvider: statusDecision,
         providerType: statusDecision ? providerType : null,
+        kycApplicationId: statusDecision ? kycApplicationId : null,
+        kycStatus: statusDecision ? kycStatus : null,
       );
     }
 
@@ -200,6 +237,88 @@ class ProviderRemoteDataSourceImpl implements ProviderRemoteDataSource {
     return ProviderAccountStatus(
       isProvider: hasIdentity,
       providerType: hasIdentity ? providerType : null,
+      kycApplicationId: hasIdentity ? kycApplicationId : null,
+      kycStatus: hasIdentity ? kycStatus : null,
+    );
+  }
+
+  @override
+  Future<ProviderKycSnapshot> getMyKyc() async {
+    final response = await _apiClient.get(
+      Endpoints.providerKyc,
+      authenticated: true,
+    );
+    return _parseKycSnapshot(_asMap(response['data']));
+  }
+
+  @override
+  Future<void> addMyKycDocument({
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+    required String category,
+    required String documentType,
+    String? documentNumber,
+    String? documentSide,
+    String? issuedAt,
+    String? expiresAt,
+  }) async {
+    final mediaResponse = await _apiClient.postBytes(
+      Endpoints.media,
+      bytes: bytes,
+      contentType: mimeType,
+      authenticated: true,
+      headers: <String, String>{
+        'x-file-name': fileName,
+        'x-media-visibility': 'private',
+      },
+    );
+
+    final mediaData = _asMap(mediaResponse['data']);
+    final mediaAssetId = mediaData['id']?.toString();
+    if (mediaAssetId == null || mediaAssetId.isEmpty) {
+      throw const ApiException('KYC file upload completed without a media id.');
+    }
+
+    try {
+      await _apiClient.post(
+        Endpoints.providerKycDocuments,
+        authenticated: true,
+        body: <String, dynamic>{
+          'mediaAssetId': mediaAssetId,
+          'category': category,
+          'documentType': documentType,
+          if (documentNumber != null && documentNumber.trim().isNotEmpty)
+            'documentNumber': documentNumber.trim(),
+          if (documentSide != null) 'documentSide': documentSide,
+          if (issuedAt != null) 'issuedAt': issuedAt,
+          if (expiresAt != null) 'expiresAt': expiresAt,
+        },
+      );
+    } catch (_) {
+      try {
+        await _apiClient.delete(
+          '${Endpoints.media}/$mediaAssetId',
+          authenticated: true,
+        );
+      } catch (_) {}
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteMyKycDocument(String documentId) async {
+    await _apiClient.delete(
+      '${Endpoints.providerKycDocuments}/$documentId',
+      authenticated: true,
+    );
+  }
+
+  @override
+  Future<void> submitMyKyc() async {
+    await _apiClient.post(
+      Endpoints.providerKycSubmit,
+      authenticated: true,
     );
   }
 
@@ -226,6 +345,145 @@ class ProviderRemoteDataSourceImpl implements ProviderRemoteDataSource {
         'countryCode': countryCode.trim().toUpperCase(),
       },
     );
+  }
+
+  ProviderKycSnapshot _parseKycSnapshot(Map<String, dynamic> data) {
+    final application = _asMap(data['application']);
+    final requirementRoot = _asMap(data['requirements']);
+    final rawRequirements = requirementRoot['requirements'];
+    final rawDocuments = application['documents'];
+
+    final requirements = <ProviderKycRequirement>[];
+    if (rawRequirements is List) {
+      for (final item in rawRequirements) {
+        final map = _asMap(item);
+        final accepted = map['acceptedTypes'];
+        requirements.add(ProviderKycRequirement(
+          key: map['key']?.toString() ?? '',
+          category: map['category']?.toString() ?? '',
+          required: map['required'] == true,
+          minimumDocuments: (map['minimumDocuments'] as num?)?.toInt() ?? 1,
+          acceptedTypes: accepted is List
+              ? accepted.map((e) => e.toString()).toList(growable: false)
+              : const <String>[],
+          matchingDocumentCount: (map['matchingDocumentCount'] as num?)?.toInt() ?? 0,
+          satisfied: map['satisfied'] == true,
+        ));
+      }
+    }
+
+    final documents = <ProviderKycDocument>[];
+    if (rawDocuments is List) {
+      for (final item in rawDocuments) {
+        final map = _asMap(item);
+        documents.add(ProviderKycDocument(
+          id: map['id']?.toString() ?? '',
+          category: map['category']?.toString() ?? '',
+          documentType: map['documentType']?.toString() ?? '',
+          fileRegistered: map['fileRegistered'] == true,
+          documentNumberLast4: map['documentNumberLast4']?.toString(),
+          originalFileName: map['originalFileName']?.toString(),
+          mimeType: map['mimeType']?.toString(),
+          documentSide: map['documentSide']?.toString(),
+          issuedAt: map['issuedAt']?.toString(),
+          expiresAt: map['expiresAt']?.toString(),
+        ));
+      }
+    }
+
+    return ProviderKycSnapshot(
+      providerType: data['providerType']?.toString() ?? 'other',
+      status: application['status']?.toString() ?? 'not_submitted',
+      applicationId: application['id']?.toString(),
+      reviewReason: application['reviewReason']?.toString(),
+      complete: requirementRoot['complete'] == true,
+      requirements: requirements,
+      documents: documents,
+    );
+  }
+
+  String? _kycApplicationId(Map<String, dynamic> data) {
+    final kyc = _asMap(data['kyc']);
+    final application = _asMap(
+      kyc['application'] ??
+          data['kycApplication'] ??
+          data['kyc_application'],
+    );
+
+    final value =
+        _firstString(
+          kyc,
+          const <String>[
+            'applicationId',
+            'application_id',
+            'kycApplicationId',
+            'kyc_application_id',
+          ],
+        ) ??
+        _firstString(
+          application,
+          const <String>[
+            'id',
+            'applicationId',
+            'application_id',
+          ],
+        ) ??
+        _firstString(
+          data,
+          const <String>[
+            'kycApplicationId',
+            'kyc_application_id',
+          ],
+        );
+
+    final normalized = value?.trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
+  }
+
+  String? _kycStatus(Map<String, dynamic> data) {
+    final kyc = _asMap(data['kyc']);
+    final application = _asMap(
+      kyc['application'] ??
+          data['kycApplication'] ??
+          data['kyc_application'],
+    );
+
+    // /provider/me/status and /provider/me/kyc do not necessarily expose the
+    // KYC status at the same nesting level. Accept all backend shapes used by
+    // the project so an already-approved provider is not sent back to KYC.
+    final value =
+        _firstString(
+          kyc,
+          const <String>[
+            'status',
+            'kycStatus',
+            'kyc_status',
+            'applicationStatus',
+            'application_status',
+          ],
+        ) ??
+        _firstString(
+          application,
+          const <String>[
+            'status',
+            'kycStatus',
+            'kyc_status',
+            'applicationStatus',
+            'application_status',
+          ],
+        ) ??
+        _firstString(
+          data,
+          const <String>[
+            'kycStatus',
+            'kyc_status',
+            'kycApplicationStatus',
+            'kyc_application_status',
+          ],
+        );
+
+    final normalized = value?.trim().toLowerCase();
+    return normalized == null || normalized.isEmpty ? null : normalized;
   }
 
   bool _meansProviderProfileMissing(ApiException error) {
