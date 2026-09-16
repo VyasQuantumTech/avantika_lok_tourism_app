@@ -21,6 +21,10 @@ import '../../features/home/data/repositories/home_repository_impl.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_home_dashboard.dart';
 import '../../features/profile/data/datasources/profile_remote_data_source.dart';
+import '../../features/pooja/data/datasources/pooja_remote_data_source.dart';
+import '../../features/pooja/data/repositories/pooja_repository_impl.dart';
+import '../../features/pooja/domain/repositories/pooja_repository.dart';
+import '../../features/pooja/domain/usecases/pooja_actions.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/domain/usecases/get_my_profile.dart';
@@ -32,6 +36,7 @@ import '../../features/provider/data/repositories/provider_repository_impl.dart'
 import '../../features/provider/domain/repositories/provider_repository.dart';
 import '../../features/provider/domain/usecases/check_provider_status.dart';
 import '../../features/provider/domain/usecases/register_provider.dart';
+import '../../features/provider/domain/usecases/manage_provider_kyc.dart';
 import '../../features/system/data/datasources/system_remote_data_source.dart';
 import '../../features/system/data/repositories/system_repository_impl.dart';
 import '../../features/system/domain/repositories/system_repository.dart';
@@ -112,6 +117,23 @@ Future<void> configureDependencies(AppConfig config) async {
   );
   getIt.registerLazySingleton<RegisterProvider>(
     () => RegisterProvider(getIt<ProviderRepository>()),
+  );
+  getIt.registerLazySingleton<ManageProviderKyc>(
+    () => ManageProviderKyc(getIt<ProviderRepository>()),
+  );
+
+
+  getIt.registerLazySingleton<PoojaRemoteDataSource>(
+    () => PoojaRemoteDataSourceImpl(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<PoojaRepository>(
+    () => PoojaRepositoryImpl(getIt<PoojaRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<CustomerPoojaActions>(
+    () => CustomerPoojaActions(getIt<PoojaRepository>()),
+  );
+  getIt.registerLazySingleton<PanditPoojaActions>(
+    () => PanditPoojaActions(getIt<PoojaRepository>()),
   );
 
   getIt.registerLazySingleton<SystemRemoteDataSource>(

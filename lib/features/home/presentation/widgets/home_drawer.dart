@@ -82,11 +82,26 @@ class HomeDrawer extends StatelessWidget {
                     (item) => _DrawerItem(
                       item: item,
                       onTap: () {
-                        if (item.title == 'Sign out') {
+                        final title = item.title.trim().toLowerCase();
+                        if (title == 'sign out') {
                           _signOut(context);
                           return;
                         }
-                        if (item.title != 'Home') {
+                        if (title == 'puja' ||
+                            title == 'pooja' ||
+                            title == 'panditji') {
+                          Navigator.of(context).pop();
+                          Navigator.of(context, rootNavigator: true)
+                              .pushNamed(RouteNames.poojas);
+                          return;
+                        }
+                        if (title == 'explore' || title == 'your destinations') {
+                          Navigator.of(context).pop();
+                          Navigator.of(context, rootNavigator: true)
+                              .pushNamed(RouteNames.explore);
+                          return;
+                        }
+                        if (title != 'home') {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('${item.title} screen will be connected next.'),

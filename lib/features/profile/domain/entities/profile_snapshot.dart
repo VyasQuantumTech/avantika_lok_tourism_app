@@ -27,6 +27,7 @@ class PersonalProfile {
     this.gender,
     this.dateOfBirth,
     this.birthTime,
+    this.placeOfBirth,
     this.addressLine1,
     this.addressLine2,
     this.city,
@@ -41,6 +42,7 @@ class PersonalProfile {
   final String? gender;
   final String? dateOfBirth;
   final String? birthTime;
+  final String? placeOfBirth;
   final String? addressLine1;
   final String? addressLine2;
   final String? city;
@@ -58,7 +60,13 @@ class PersonalProfile {
   }
 
   String get addressText {
-    return [addressLine1, addressLine2, city, state, postalCode]
+    return [
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      postalCode,
+    ]
         .where((value) => value != null && value!.trim().isNotEmpty)
         .map((value) => value!.trim())
         .join(', ');
@@ -122,5 +130,6 @@ class ProfileSnapshot {
   final String accountType;
   final ProviderProfileInfo? providerProfile;
 
-  bool get isProvider => accountType == 'provider' && providerProfile != null;
+  bool get isProvider =>
+      accountType == 'provider' && providerProfile != null;
 }
