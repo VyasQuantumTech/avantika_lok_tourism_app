@@ -18,7 +18,7 @@ class AuthScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(
@@ -48,7 +48,7 @@ class AuthScaffold extends StatelessWidget {
                             Text(
                               title,
                               style: AppTypography.body.copyWith(
-                                color: Colors.white,
+                                color: AppColors.onPrimary,
                                 fontSize: 24,
                                 height: 1.08,
                                 fontWeight: FontWeight.w700,
@@ -58,7 +58,7 @@ class AuthScaffold extends StatelessWidget {
                             Text(
                               subtitle,
                               style: AppTypography.caption.copyWith(
-                                color: Colors.white.withOpacity(0.95),
+                                color: AppColors.onPrimary.withValues(alpha: .95),
                                 fontSize: 11,
                               ),
                             ),
@@ -73,8 +73,8 @@ class AuthScaffold extends StatelessWidget {
                             minHeight: constraints.maxHeight - 187,
                           ),
                           padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
                           ),
                           child: child,
@@ -120,25 +120,25 @@ class AuthPrimaryButton extends StatelessWidget {
           onPressed: loading ? null : onPressed,
           style: ElevatedButton.styleFrom(
             elevation: 0,
-            backgroundColor: Colors.transparent,
-            disabledBackgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.transparent,
+            disabledBackgroundColor: AppColors.transparent,
+            shadowColor: AppColors.transparent,
+            foregroundColor: AppColors.onPrimary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           ),
           child: loading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.onPrimary),
                   ),
                 )
               : Text(
                   label,
                   style: AppTypography.body.copyWith(
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

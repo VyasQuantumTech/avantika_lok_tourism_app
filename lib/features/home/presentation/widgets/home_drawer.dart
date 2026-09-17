@@ -163,14 +163,14 @@ class _ProfileHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.onPrimary,
                 backgroundImage: AssetImage(profile.avatar),
               ),
               const SizedBox(height: 14),
               Text(
                 profile.name,
                 style: AppTypography.body.copyWith(
-                  color: Colors.white,
+                  color: AppColors.onPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
@@ -183,10 +183,10 @@ class _ProfileHeader extends StatelessWidget {
                       profile.email,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption.copyWith(color: Colors.white),
+                      style: AppTypography.caption.copyWith(color: AppColors.onPrimary),
                     ),
                   ),
-                  const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 18),
+                  Icon(Icons.keyboard_arrow_down, color: AppColors.onPrimary, size: 18),
                 ],
               ),
             ],
@@ -199,7 +199,7 @@ class _ProfileHeader extends StatelessWidget {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.96),
+                color: AppColors.onPrimary.withOpacity(0.96),
               ),
               child: Icon(
                 Icons.notifications_none,
@@ -236,7 +236,7 @@ class _DrawerItem extends StatelessWidget {
         item.title,
         style: AppTypography.body.copyWith(
           fontSize: 13,
-          color: const Color(0xFF767676),
+          color: AppColors.textSecondary,
         ),
       ),
       onTap: onTap,

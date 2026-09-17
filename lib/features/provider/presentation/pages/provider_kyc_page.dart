@@ -247,11 +247,11 @@ class _ProviderKycPageState extends State<ProviderKycPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Provider KYC'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF17202A),
+        backgroundColor: AppColors.onPrimary,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
       ),
       body: FutureBuilder<ProviderKycSnapshot>(
@@ -299,7 +299,7 @@ class _ProviderKycPageState extends State<ProviderKycPage> {
                       child: ListTile(
                         leading: Icon(
                           requirement.satisfied ? Icons.check_circle : Icons.pending_outlined,
-                          color: requirement.satisfied ? Colors.green : AppColors.primary,
+                          color: requirement.satisfied ? AppColors.success : AppColors.primary,
                         ),
                         title: Text(_pretty(requirement.key), style: const TextStyle(fontWeight: FontWeight.w700)),
                         subtitle: Text(
@@ -369,14 +369,14 @@ class _StatusCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.onPrimary,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5EAF0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(children: [
         CircleAvatar(
-          backgroundColor: (approved ? Colors.green : AppColors.primary).withOpacity(0.1),
-          child: Icon(approved ? Icons.verified : Icons.verified_user_outlined, color: approved ? Colors.green : AppColors.primary),
+          backgroundColor: (approved ? AppColors.success : AppColors.primary).withOpacity(0.1),
+          child: Icon(approved ? Icons.verified : Icons.verified_user_outlined, color: approved ? AppColors.success : AppColors.primary),
         ),
         const SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

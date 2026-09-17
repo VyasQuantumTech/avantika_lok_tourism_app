@@ -4,6 +4,7 @@ import '../../../../app/config/app_config.dart';
 import '../../../../app/config/app_flavor.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/utils/validators.dart';
@@ -185,14 +186,14 @@ class _RegisterPageState extends State<RegisterPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF1F2),
+                    color: AppColors.errorSoft,
                     borderRadius: BorderRadius.circular(7),
-                    border: Border.all(color: const Color(0xFFFFD6DB)),
+                    border: Border.all(color: AppColors.error.withValues(alpha: .22)),
                   ),
                   child: Text(
                     _serverError!,
                     style: AppTypography.caption.copyWith(
-                      color: const Color(0xFFB42335),
+                      color: AppColors.error,
                       fontSize: 11,
                     ),
                   ),

@@ -14,6 +14,7 @@ class Endpoints {
   static const String providerPanditAvailability =
       '/api/v1/provider/pandit/availability';
   static const String providerBookings = '/api/v1/provider/bookings';
+  static const String providerReviews = '/api/v1/provider/reviews';
 
   static const String register = '/api/v1/auth/register';
   static const String login = '/api/v1/auth/login';

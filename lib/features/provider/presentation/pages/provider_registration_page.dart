@@ -222,14 +222,14 @@ class _ProviderRegistrationPageState extends State<ProviderRegistrationPage> {
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(7),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFB42335),
+                  borderSide: BorderSide(
+                    color: AppColors.error,
                   ),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(7),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFB42335),
+                  borderSide: BorderSide(
+                    color: AppColors.error,
                     width: 1.3,
                   ),
                 ),
@@ -340,16 +340,16 @@ class _ProviderRegistrationPageState extends State<ProviderRegistrationPage> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F2),
+                  color: AppColors.errorSoft,
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
-                    color: const Color(0xFFFFD6DB),
+                    color: AppColors.error.withValues(alpha: .18),
                   ),
                 ),
                 child: Text(
                   _serverError!,
                   style: AppTypography.caption.copyWith(
-                    color: const Color(0xFFB42335),
+                    color: AppColors.error,
                     fontSize: 11,
                     height: 1.3,
                   ),

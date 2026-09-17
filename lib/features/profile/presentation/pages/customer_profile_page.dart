@@ -48,7 +48,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: FutureBuilder<ProfileDashboard>(
           future: _future,

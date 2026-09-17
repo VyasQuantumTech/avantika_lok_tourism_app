@@ -433,9 +433,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     return Scaffold(
       backgroundColor:
-      const Color(0xFFFAFAFA),
+      AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.onPrimary,
         elevation: 0,
         leading: IconButton(
           onPressed: () {
@@ -504,12 +504,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                   child: CircleAvatar(
                     radius: 43,
                     backgroundColor:
-                    const Color(
-                      0xFFE1E1E1,
-                    ),
-                    child: const Icon(
+                    AppColors.border,
+                    child: Icon(
                       Icons.person,
-                      color: Colors.white,
+                      color: AppColors.onPrimary,
                       size: 54,
                     ),
                   ),
@@ -818,9 +816,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     decoration:
                     BoxDecoration(
                       color:
-                      const Color(
-                        0xFFFFF1F2,
-                      ),
+                      AppColors.errorSoft,
                       borderRadius:
                       BorderRadius
                           .circular(
@@ -830,10 +826,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     child: Text(
                       _serverError!,
                       style:
-                      const TextStyle(
-                        color: Color(
-                          0xFFB42335,
-                        ),
+                      TextStyle(
+                        color: AppColors.error,
                         fontSize: 12,
                       ),
                     ),
@@ -954,16 +948,13 @@ class _Field extends StatelessWidget {
               8,
             ),
             borderSide:
-            const BorderSide(
-              color:
-              Color(
-                0xFFE3E3E3,
-              ),
+            BorderSide(
+              color: AppColors.border,
             ),
           ),
           filled: true,
           fillColor:
-          Colors.white,
+          AppColors.onPrimary,
         ),
       ),
     );
@@ -995,9 +986,7 @@ class _ReadOnlyField
           labelText: label,
           filled: true,
           fillColor:
-          const Color(
-            0xFFF5F5F5,
-          ),
+          AppColors.softSurface,
           border:
           OutlineInputBorder(
             borderRadius:
@@ -1054,7 +1043,7 @@ class _TapField
           ),
           filled: true,
           fillColor:
-          Colors.white,
+          AppColors.onPrimary,
           border:
           OutlineInputBorder(
             borderRadius:

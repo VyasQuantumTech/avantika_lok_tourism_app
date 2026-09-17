@@ -103,7 +103,7 @@ class _ProviderGatePageState extends State<ProviderGatePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.onPrimary,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -151,7 +151,7 @@ class _ProviderGatePageState extends State<ProviderGatePage> {
                           onPressed: _checkProviderStatus,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           child: const Text('Retry'),

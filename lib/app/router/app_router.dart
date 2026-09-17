@@ -25,6 +25,7 @@ import '../../features/profile/presentation/pages/provider_earnings_page.dart';
 import '../../features/profile/presentation/pages/provider_profile_page.dart';
 import '../../features/provider/presentation/pages/provider_gate_page.dart';
 import '../../features/provider/presentation/pages/provider_registration_page.dart';
+import '../../features/reviews/presentation/pages/provider_reviews_page.dart';
 import '../../features/provider/presentation/pages/provider_kyc_page.dart';
 import '../../features/provider/presentation/pages/dashboards/accommodation_dashboard_page.dart';
 import '../../features/provider/presentation/pages/dashboards/pandit_dashboard_page.dart';
@@ -119,6 +120,13 @@ class AppRouter {
       case RouteNames.providerEarnings:
         return MaterialPageRoute<void>(
           builder: (_) => const ProviderEarningsPage(),
+          settings: settings,
+        );
+
+
+      case RouteNames.providerReviews:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderReviewsPage(),
           settings: settings,
         );
 

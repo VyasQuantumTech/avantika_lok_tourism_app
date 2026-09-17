@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/app_ui.dart';
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({
@@ -30,9 +32,9 @@ class ProfileHeader extends StatelessWidget {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(34),
-          bottomRight: Radius.circular(34),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(AppDimensions.cardRadius + 14),
+          bottomRight: Radius.circular(AppDimensions.cardRadius + 14),
         ),
       ),
       child: Column(
@@ -41,28 +43,31 @@ class ProfileHeader extends StatelessWidget {
             children: [
               InkWell(
                 onTap: () => Navigator.of(context).maybePop(),
+                borderRadius: BorderRadius.circular(99),
                 child: Container(
-                  width: 34,
-                  height: 34,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: .24),
+                    color: AppColors.onPrimary.withValues(alpha: .18),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: AppColors.onPrimary,
+                    size: 20,
+                  ),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'My Profile',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                  style: AppTypography.sectionTitle.copyWith(
+                    color: AppColors.onPrimary,
                   ),
                 ),
               ),
-              const SizedBox(width: 34),
+              const SizedBox(width: 36),
             ],
           ),
           const SizedBox(height: 18),
@@ -70,11 +75,16 @@ class ProfileHeader extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               CircleAvatar(
-                radius: 40,
-                backgroundColor: Colors.white,
-                foregroundImage: avatarUrl == null ? null : NetworkImage(avatarUrl!),
+                radius: 42,
+                backgroundColor: AppColors.surface,
+                foregroundImage:
+                    avatarUrl == null ? null : NetworkImage(avatarUrl!),
                 child: avatarUrl == null
-                    ? Icon(Icons.person, size: 48, color: AppColors.textSecondary)
+                    ? Icon(
+                        Icons.person_rounded,
+                        size: 46,
+                        color: AppColors.textSecondary,
+                      )
                     : null,
               ),
               Positioned(
@@ -82,50 +92,60 @@ class ProfileHeader extends StatelessWidget {
                 bottom: 0,
                 child: InkWell(
                   onTap: onEdit,
+                  borderRadius: BorderRadius.circular(99),
                   child: Container(
-                    width: 25,
-                    height: 25,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
                       shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.border),
                     ),
-                    child: Icon(Icons.edit, size: 14, color: AppColors.headingPink),
+                    child: Icon(
+                      Icons.edit_rounded,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             name,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTypography.title.copyWith(color: AppColors.onPrimary),
           ),
           if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text(
               subtitle!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70, fontSize: 11),
+              style: AppTypography.caption.copyWith(
+                color: AppColors.onPrimary.withValues(alpha: .78),
+              ),
             ),
           ],
           if (location.trim().isNotEmpty) ...[
-            const SizedBox(height: 5),
+            const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.location_on_outlined, color: Colors.white, size: 14),
+                Icon(
+                  Icons.location_on_outlined,
+                  color: AppColors.onPrimary,
+                  size: 14,
+                ),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
                     location,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontSize: 11),
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.onPrimary,
+                    ),
                   ),
                 ),
               ],
@@ -154,38 +174,39 @@ class ProfileStatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: InkWell(
+      child: AppPanel(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.brandSoft.withValues(alpha: .48),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: AppColors.headingPink, size: 22),
-              const SizedBox(height: 5),
-              Text(
-                value,
-                maxLines: 1,
-                style: TextStyle(
-                  color: AppColors.headingPink,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+        child: Column(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(11),
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.caption.copyWith(fontSize: 9),
+              child: Icon(icon, color: AppColors.primary, size: 20),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              value,
+              maxLines: 1,
+              style: AppTypography.label.copyWith(
+                color: AppColors.primaryDark,
+                fontWeight: FontWeight.w800,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.tiny,
+            ),
+          ],
         ),
       ),
     );
@@ -210,30 +231,48 @@ class ProfileMenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? const Color(0xFFB42335) : AppColors.textPrimary;
+    final color = destructive ? AppColors.error : AppColors.textPrimary;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
-            child: Row(
-              children: [
-                Icon(icon, color: destructive ? color : AppColors.accent, size: 19),
-                const SizedBox(width: 12),
-                Expanded(child: Text(label, style: AppTypography.body.copyWith(color: color))),
-                if (value != null) ...[
-                  Text(value!, style: AppTypography.caption),
-                  const SizedBox(width: 6),
-                ],
-                Icon(Icons.chevron_right, color: destructive ? color : AppColors.accent, size: 18),
-              ],
+      child: AppPanel(
+        onTap: onTap,
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: destructive ? AppColors.errorSoft : AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(
+                icon,
+                color: destructive ? AppColors.error : AppColors.primary,
+                size: 19,
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTypography.body.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (value != null) ...[
+              Text(value!, style: AppTypography.caption),
+              const SizedBox(width: 6),
+            ],
+            Icon(
+              Icons.chevron_right_rounded,
+              color: destructive ? AppColors.error : AppColors.textMuted,
+              size: 20,
+            ),
+          ],
         ),
       ),
     );
@@ -241,26 +280,17 @@ class ProfileMenuRow extends StatelessWidget {
 }
 
 class ProfileErrorView extends StatelessWidget {
-  const ProfileErrorView({required this.message, required this.onRetry, super.key});
+  const ProfileErrorView({
+    required this.message,
+    required this.onRetry,
+    super.key,
+  });
+
   final String message;
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.cloud_off_outlined, color: AppColors.primary, size: 44),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center, style: AppTypography.body),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
-      ),
-    );
+    return AppErrorState(message: message, onRetry: onRetry);
   }
 }

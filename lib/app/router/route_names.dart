@@ -18,6 +18,7 @@ class RouteNames {
   static const String providerProfile = '/provider/profile';
   static const String providerProfileEdit = '/provider/profile/edit';
   static const String providerEarnings = '/provider/earnings';
+  static const String providerReviews = '/provider/reviews';
 
   // App
   static const String splash = '/';

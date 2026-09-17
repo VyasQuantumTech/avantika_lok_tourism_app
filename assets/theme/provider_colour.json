@@ -1,0 +1,66 @@
+{
+  "colors": {
+    "primary": "#2767C8",
+    "primaryDark": "#1C4692",
+    "primarySoft": "#EDF4FF",
+    "secondary": "#258FC4",
+    "accent": "#24B9D6",
+    "gradientStart": "#28B8D6",
+    "gradientEnd": "#4A238D",
+    "background": "#F6F8FC",
+    "surface": "#FFFFFF",
+    "surfaceSoft": "#F0F4FA",
+    "surfaceElevated": "#FFFFFF",
+    "border": "#DCE4F0",
+    "divider": "#E8EDF4",
+    "textPrimary": "#182133",
+    "textSecondary": "#5F6B7E",
+    "textMuted": "#8B96A8",
+    "onPrimary": "#FFFFFF",
+    "navInactive": "#7D8797",
+    "success": "#178A5B",
+    "successSoft": "#E9F8F1",
+    "warning": "#B7791F",
+    "warningSoft": "#FFF7E3",
+    "error": "#C33C54",
+    "errorSoft": "#FFF0F3",
+    "info": "#2767C8",
+    "infoSoft": "#EDF4FF",
+    "star": "#F3A712",
+    "shadow": "#160B1736",
+    "scrim": "#66091428",
+    "splashBackground": "#E8F7FB",
+    "brandBorder": "#CCE8F3",
+    "brandSoft": "#DDF3F9",
+    "destinationOverlay": "#BB39237F",
+    "transparent": "#00000000",
+    "mediaBackground": "#000000",
+    "onMedia": "#FFFFFF"
+  },
+  "typography": {
+    "fontFamily": "Roboto",
+    "displaySize": 28,
+    "titleLargeSize": 22,
+    "titleSize": 18,
+    "sectionSize": 16,
+    "bodySize": 14,
+    "labelSize": 13,
+    "captionSize": 12,
+    "tinySize": 10
+  },
+  "shape": {
+    "cardRadius": 18,
+    "controlRadius": 14,
+    "pillRadius": 999,
+    "dialogRadius": 22
+  },
+  "spacing": {
+    "page": 16,
+    "section": 22,
+    "card": 16,
+    "compact": 10
+  },
+  "motion": {
+    "pageTransitionMs": 260
+  }
+}

@@ -25,7 +25,7 @@ class _VideoGalleryPageState extends State<VideoGalleryPage> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 16),
+          padding: EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -35,7 +35,7 @@ class _VideoGalleryPageState extends State<VideoGalleryPage> {
                 aspectRatio: 0.72,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: AppColors.mediaBackground,
                     borderRadius: BorderRadius.circular(7),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -48,14 +48,14 @@ class _VideoGalleryPageState extends State<VideoGalleryPage> {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                         ),
-                      Container(color: Colors.black26),
+                      Container(color: AppColors.mediaBackground.withValues(alpha: .26)),
                       Center(
                         child: InkWell(
                           onTap: () => _showVideoLink(context, current.url),
                           child: Container(
                             width: 58,
                             height: 58,
-                            decoration: const BoxDecoration(color: Colors.white70, shape: BoxShape.circle),
+                            decoration: BoxDecoration(color: AppColors.onPrimary.withValues(alpha: .70), shape: BoxShape.circle),
                             child: Icon(Icons.play_arrow, color: AppColors.primaryDark, size: 36),
                           ),
                         ),
@@ -85,7 +85,7 @@ class _VideoGalleryPageState extends State<VideoGalleryPage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: index == _index ? AppColors.primaryDark : Colors.transparent,
+                            color: index == _index ? AppColors.primaryDark : AppColors.transparent,
                             width: 2,
                           ),
                         ),
@@ -94,7 +94,7 @@ class _VideoGalleryPageState extends State<VideoGalleryPage> {
                           fit: StackFit.expand,
                           children: [
                             if (thumbnail.isNotEmpty) Image.network(thumbnail, fit: BoxFit.cover),
-                            const Center(child: Icon(Icons.play_circle_fill, color: Colors.white, size: 24)),
+                            Center(child: Icon(Icons.play_circle_fill, color: AppColors.onPrimary, size: 24)),
                           ],
                         ),
                       ),
@@ -151,12 +151,12 @@ class _Header extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 19),
+                child: Icon(Icons.arrow_back, color: AppColors.onPrimary, size: 19),
               ),
             ),
           ),
           Text('Video Gallery', style: AppTypography.sectionTitle.copyWith(fontSize: 15)),
-          const Align(
+          Align(
             alignment: Alignment.centerRight,
             child: Icon(Icons.share_outlined, color: AppColors.textPrimary, size: 23),
           ),

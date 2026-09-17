@@ -81,7 +81,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 SizedBox(
                   height: 44,
                   child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.pagePadding),
+                    padding: EdgeInsets.symmetric(horizontal: AppDimensions.pagePadding),
                     scrollDirection: Axis.horizontal,
                     itemCount: categories.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -95,7 +95,7 @@ class _ExplorePageState extends State<ExplorePage> {
                         showCheckmark: false,
                         labelStyle: AppTypography.caption.copyWith(
                           fontSize: 11,
-                          color: selected ? Colors.white : AppColors.textPrimary,
+                          color: selected ? AppColors.onPrimary : AppColors.textPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                         selectedColor: AppColors.accent,
@@ -120,7 +120,7 @@ class _ExplorePageState extends State<ExplorePage> {
                           },
                           child: ListView.separated(
                             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                            padding: const EdgeInsets.fromLTRB(
+                            padding: EdgeInsets.fromLTRB(
                               AppDimensions.pagePadding,
                               0,
                               AppDimensions.pagePadding,
@@ -160,7 +160,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppDimensions.pagePadding, 12, AppDimensions.pagePadding, 8),
+      padding: EdgeInsets.fromLTRB(AppDimensions.pagePadding, 12, AppDimensions.pagePadding, 8),
       child: Column(
         children: [
           SizedBox(
@@ -180,7 +180,7 @@ class _Header extends StatelessWidget {
                   'Explore Ujjain',
                   style: AppTypography.sectionTitle.copyWith(fontSize: 16),
                 ),
-                const Align(
+                Align(
                   alignment: Alignment.centerRight,
                   child: Icon(Icons.search, color: AppColors.textPrimary, size: 26),
                 ),
@@ -216,7 +216,7 @@ class _Header extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                child: const Icon(Icons.tune, color: Colors.white, size: 20),
+                child: Icon(Icons.tune, color: AppColors.onPrimary, size: 20),
               ),
             ],
           ),

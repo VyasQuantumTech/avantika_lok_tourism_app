@@ -25,7 +25,7 @@ class DestinationCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, AppColors.destinationOverlay],
+                  colors: [AppColors.transparent, AppColors.destinationOverlay],
                 ),
               ),
               child: SizedBox(height: 34, width: double.infinity),
@@ -41,7 +41,7 @@ class DestinationCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.caption.copyWith(
-                  color: Colors.white,
+                  color: AppColors.onPrimary,
                   fontSize: 8,
                   fontWeight: FontWeight.w500,
                 ),

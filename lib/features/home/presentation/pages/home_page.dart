@@ -84,7 +84,7 @@ class _HomePageState extends State<HomePage> {
               slivers: [
                 SliverToBoxAdapter(child: _TopHeader(onFilterTap: () {})),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: EdgeInsets.fromLTRB(
                     AppDimensions.pagePadding,
                     12,
                     AppDimensions.pagePadding,
@@ -96,9 +96,9 @@ class _HomePageState extends State<HomePage> {
                         items: dashboard.services,
                         onExploreTap: () => Navigator.of(context).pushNamed(RouteNames.explore),
                       ),
-                      const SizedBox(height: AppDimensions.sectionGap),
+                      SizedBox(height: AppDimensions.sectionGap),
                       _DestinationsSection(items: dashboard.destinations),
-                      const SizedBox(height: AppDimensions.sectionGap),
+                      SizedBox(height: AppDimensions.sectionGap),
                       _AccommodationSection(items: dashboard.accommodations),
                     ]),
                   ),
@@ -158,7 +158,7 @@ class _TopHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppDimensions.pagePadding,
         14,
         AppDimensions.pagePadding,
@@ -236,9 +236,9 @@ class _TopHeader extends StatelessWidget {
                     color: AppColors.accent,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.tune,
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                     size: 20,
                   ),
                 ),

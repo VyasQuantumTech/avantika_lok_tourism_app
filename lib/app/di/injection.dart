@@ -37,6 +37,7 @@ import '../../features/provider/domain/repositories/provider_repository.dart';
 import '../../features/provider/domain/usecases/check_provider_status.dart';
 import '../../features/provider/domain/usecases/register_provider.dart';
 import '../../features/provider/domain/usecases/manage_provider_kyc.dart';
+import '../../features/reviews/data/datasources/provider_review_remote_data_source.dart';
 import '../../features/system/data/datasources/system_remote_data_source.dart';
 import '../../features/system/data/repositories/system_repository_impl.dart';
 import '../../features/system/domain/repositories/system_repository.dart';
@@ -134,6 +135,10 @@ Future<void> configureDependencies(AppConfig config) async {
   );
   getIt.registerLazySingleton<PanditPoojaActions>(
     () => PanditPoojaActions(getIt<PoojaRepository>()),
+  );
+
+  getIt.registerLazySingleton<ProviderReviewRemoteDataSource>(
+    () => ProviderReviewRemoteDataSourceImpl(getIt<ApiClient>()),
   );
 
   getIt.registerLazySingleton<SystemRemoteDataSource>(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
@@ -18,7 +19,7 @@ class AccommodationCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         border: Border.all(color: AppColors.border),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.shadow,
             blurRadius: 8,
@@ -48,14 +49,14 @@ class AccommodationCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: item.isFavorite
                               ? AppColors.iconPink
-                              : Colors.white,
+                              : AppColors.onPrimary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
+                          border: Border.all(color: AppColors.onPrimary, width: 1.5),
                         ),
                         child: Icon(
                           item.isFavorite ? Icons.favorite : Icons.favorite_border,
                           color: item.isFavorite
-                              ? Colors.white
+                              ? AppColors.onPrimary
                               : AppColors.textSecondary,
                           size: 13,
                         ),
@@ -68,11 +69,11 @@ class AccommodationCard extends StatelessWidget {
                         width: 22,
                         height: 22,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.onPrimary,
                           shape: BoxShape.circle,
                           border: Border.all(color: AppColors.textSecondary),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.image_outlined,
                           size: 12,
                           color: AppColors.textPrimary,
@@ -103,8 +104,8 @@ class AccommodationCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 1),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
                         child: Icon(
                           Icons.location_on_outlined,
                           size: 13,
@@ -141,7 +142,7 @@ class AccommodationCard extends StatelessWidget {
                           onPressed: () {},
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.onPrimary,
                             padding: const EdgeInsets.symmetric(horizontal: 15),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5),

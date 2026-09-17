@@ -109,7 +109,7 @@ class _CustomerPoojaDetailPageState extends State<CustomerPoojaDetailPage> {
     }
     return Row(
       children: [
-        const Icon(Icons.star_rounded, color: Colors.amber, size: 22),
+        Icon(Icons.star_rounded, color: AppColors.star, size: 22),
         const SizedBox(width: 5),
         Text(
           summary.averageRating.toStringAsFixed(1),

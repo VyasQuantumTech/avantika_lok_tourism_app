@@ -169,10 +169,10 @@ class _CustomerPoojaBookingsPageState
   }
 
   Color _statusColor(PoojaBooking booking) {
-    if (booking.isCompleted) return Colors.green;
-    if (booking.isInProgress) return Colors.blue;
+    if (booking.isCompleted) return AppColors.success;
+    if (booking.isInProgress) return AppColors.info;
     if (booking.status == 'cancelled' || booking.providerDecision == 'rejected') {
-      return Colors.red;
+      return AppColors.error;
     }
     return AppColors.primary;
   }
@@ -430,7 +430,7 @@ class _InlineOtp extends StatelessWidget {
               fontSize: 22,
               fontWeight: FontWeight.w900,
               letterSpacing: 2.5,
-              color: available ? null : Colors.grey,
+              color: available ? null : AppColors.textMuted,
             ),
           ),
         ],
