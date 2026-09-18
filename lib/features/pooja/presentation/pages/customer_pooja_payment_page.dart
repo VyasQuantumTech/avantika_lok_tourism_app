@@ -3,13 +3,15 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
+import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/widgets/app_ui.dart';
 import '../../domain/entities/pooja_entities.dart';
 import '../../domain/usecases/pooja_actions.dart';
 
 class CustomerPoojaPaymentPage extends StatefulWidget {
   const CustomerPoojaPaymentPage({required this.booking, super.key});
-
   final PoojaBooking booking;
 
   @override
@@ -37,6 +39,9 @@ class _CustomerPoojaPaymentPageState extends State<CustomerPoojaPaymentPage> {
     super.dispose();
   }
 
+  String _hex(Color color) =>
+      '#${(color.value & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
   Future<void> _pay() async {
     if (_loading) return;
     setState(() {
@@ -47,11 +52,7 @@ class _CustomerPoojaPaymentPageState extends State<CustomerPoojaPaymentPage> {
       final session = await getIt<CustomerPoojaActions>().initiatePayment(widget.booking.id);
       if (!mounted) return;
       if (session.keyId.isEmpty || session.orderId.isEmpty || session.amountMinor <= 0) {
-        throw const ApiException(
-          'Payment checkout configuration is incomplete.',
-          statusCode: 500,
-          code: 'PAYMENT_CHECKOUT_INVALID',
-        );
+        throw const ApiException('Payment checkout configuration is incomplete.', statusCode: 500, code: 'PAYMENT_CHECKOUT_INVALID');
       }
       _session = session;
       setState(() => _loading = false);
@@ -63,20 +64,12 @@ class _CustomerPoojaPaymentPageState extends State<CustomerPoojaPaymentPage> {
         'name': 'Avantika Lok',
         'description': widget.booking.pricingSnapshot['poojaName']?.toString() ?? 'Pooja booking',
         'retry': <String, dynamic>{'enabled': true, 'max_count': 2},
-        'theme': <String, dynamic>{'color': '#8B1E2D'},
+        'theme': <String, dynamic>{'color': _hex(AppColors.primary)},
       });
     } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = e.message;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = 'Unable to start payment. Please try again.';
-      });
+      if (mounted) setState(() { _loading = false; _error = e.message; });
+    } catch (_) {
+      if (mounted) setState(() { _loading = false; _error = 'Unable to start payment. Please try again.'; });
     }
   }
 
@@ -100,76 +93,104 @@ class _CustomerPoojaPaymentPageState extends State<CustomerPoojaPaymentPage> {
         (route) => route.settings.name == RouteNames.home,
       );
     } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = e.message;
-      });
+      if (mounted) setState(() { _loading = false; _error = e.message; });
     }
   }
 
   void _onFailure(PaymentFailureResponse response) {
-    if (!mounted) return;
-    setState(() {
-      _loading = false;
-      _error = response.message ?? 'Payment was not completed.';
-    });
+    if (mounted) setState(() { _loading = false; _error = response.message ?? 'Payment was not completed.'; });
   }
 
   void _onExternalWallet(ExternalWalletResponse response) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Continue in ${response.walletName ?? 'the selected wallet'} to finish payment.')),
-    );
+    if (mounted) AppFeedback.info(context, 'Continue in ${response.walletName ?? 'the selected wallet'} to finish payment.');
   }
 
   @override
   Widget build(BuildContext context) {
-    final poojaName = widget.booking.pricingSnapshot['poojaName']?.toString() ?? 'Pooja';
-    return Scaffold(
-      appBar: AppBar(title: const Text('Payment')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+    final booking = widget.booking;
+    final poojaName = booking.pricingSnapshot['poojaName']?.toString() ?? 'Pooja';
+    final code = booking.currency.toUpperCase();
+    final amount = '${code == 'INR' ? '₹' : '$code '}${booking.totalAmount.toStringAsFixed(2)}';
+    final time = booking.startTime;
+    final shortTime = time == null || time.isEmpty ? '' : time.substring(0, time.length >= 5 ? 5 : time.length);
+
+    return AppPage(
+      title: 'Payment',
+      subtitle: 'Booking ${booking.bookingNumber}',
+      child: ListView(
         children: [
-          const Icon(Icons.verified_user_outlined, size: 54),
-          const SizedBox(height: 16),
-          Text(poojaName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          Text('Booking ${widget.booking.bookingNumber}'),
-          Text('${widget.booking.serviceDate} ${widget.booking.startTime?.substring(0, 5) ?? ''}'),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Expanded(child: Text('Amount payable', style: TextStyle(fontWeight: FontWeight.w700))),
-                  Text('₹${widget.booking.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                ],
-              ),
+          AppPanel(
+            child: Column(
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
+                  child: Icon(Icons.verified_user_outlined, color: AppColors.primary, size: 30),
+                ),
+                const SizedBox(height: 12),
+                Text(poojaName, style: AppTypography.titleLarge, textAlign: TextAlign.center),
+                const SizedBox(height: 5),
+                Text('${booking.serviceDate}${shortTime.isEmpty ? '' : ' • $shortTime'}', style: AppTypography.caption),
+                const SizedBox(height: 16),
+                Divider(color: AppColors.divider),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Text('Amount payable', style: AppTypography.label),
+                    const Spacer(),
+                    Text(amount, style: AppTypography.titleLarge.copyWith(color: AppColors.primary)),
+                  ],
+                ),
+              ],
             ),
           ),
           if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: AppColors.errorSoft, borderRadius: BorderRadius.circular(14)),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline_rounded, color: AppColors.error),
+                  const SizedBox(width: 9),
+                  Expanded(child: Text(_error!, style: AppTypography.caption.copyWith(color: AppColors.error))),
+                ],
+              ),
+            ),
           ],
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _loading ? null : _pay,
-            icon: _loading
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.lock_outline),
-            label: Text(_loading ? 'Preparing payment…' : 'Pay securely with Razorpay'),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _loading ? null : _pay,
+              icon: _loading
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.lock_outline_rounded),
+              label: Text(_loading ? 'Preparing payment…' : 'Pay securely with Razorpay'),
+            ),
           ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: _loading ? null : () => Navigator.of(context).pushReplacementNamed(RouteNames.customerPoojaBookings),
-            child: const Text('Pay later / View booking'),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _loading
+                  ? null
+                  : () => Navigator.of(context).pushReplacementNamed(RouteNames.customerPoojaBookings),
+              icon: const Icon(Icons.schedule_rounded),
+              label: const Text('Pay later / View booking'),
+            ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Your booking remains pending until payment is captured and the Pandit accepts it. Start OTP becomes available only after confirmation.',
-            textAlign: TextAlign.center,
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppColors.infoSoft, borderRadius: BorderRadius.circular(14)),
+            child: Text(
+              'Payment is currently optional for the service-start flow. Your booking and its Start/End OTPs remain available in My Pooja Bookings according to the backend booking state.',
+              textAlign: TextAlign.center,
+              style: AppTypography.caption,
+            ),
           ),
         ],
       ),

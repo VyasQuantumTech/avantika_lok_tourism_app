@@ -5,6 +5,7 @@ import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/app_ui.dart';
 import '../../domain/entities/tourism_place.dart';
 import '../../domain/usecases/get_tourism_places.dart';
 import '../widgets/explore_bottom_navigation.dart';
@@ -47,10 +48,10 @@ class _ExplorePageState extends State<ExplorePage> {
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator(color: AppColors.primaryDark));
+              return const AppLoadingView(message: 'Discovering places…');
             }
             if (snapshot.hasError) {
-              return _ExploreError(onRetry: _reload);
+              return AppErrorState(message: 'Unable to load tourism places from the live API.', onRetry: _reload);
             }
 
             final places = snapshot.data ?? const <TourismPlace>[];
@@ -110,7 +111,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 const SizedBox(height: 8),
                 Expanded(
                   child: filtered.isEmpty
-                      ? const Center(child: Text('No tourism places found.'))
+                      ? const AppEmptyState(title: 'No places found', message: 'Try another search or category.', icon: Icons.travel_explore_rounded)
                       : RefreshIndicator(
                           color: AppColors.primaryDark,
                           onRefresh: () async {
@@ -221,30 +222,6 @@ class _Header extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ExploreError extends StatelessWidget {
-  const _ExploreError({required this.onRetry});
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.cloud_off_outlined, size: 48, color: AppColors.primaryDark),
-            const SizedBox(height: 12),
-            const Text('Unable to load tourism places from the live API.'),
-            const SizedBox(height: 14),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
       ),
     );
   }
