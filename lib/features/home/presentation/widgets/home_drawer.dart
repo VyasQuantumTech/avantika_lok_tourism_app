@@ -5,6 +5,7 @@ import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/app_ui.dart';
 import '../../../auth/domain/usecases/logout_user.dart';
 import '../../domain/entities/home_dashboard.dart';
 import 'home_icon_mapper.dart';
@@ -21,26 +22,14 @@ class HomeDrawer extends StatelessWidget {
     // so the logout flow never actually started.
     final appNavigator = Navigator.of(context, rootNavigator: true);
 
-    final shouldSignOut = await showDialog<bool>(
-      context: context,
-      useRootNavigator: true,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text('You will need to sign in again to access your account.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Sign out'),
-          ),
-        ],
-      ),
+    final shouldSignOut = await AppDialogs.confirm(
+      context,
+      title: 'Sign out?',
+      message: 'You will need to sign in again to access your account.',
+      confirmLabel: 'Sign out',
     );
 
-    if (shouldSignOut != true) return;
+    if (!shouldSignOut) return;
 
     // The confirmation dialog has finished, so it is now safe to close the
     // drawer. Do not use the drawer BuildContext for navigation after this.
@@ -102,12 +91,7 @@ class HomeDrawer extends StatelessWidget {
                           return;
                         }
                         if (title != 'home') {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${item.title} screen will be connected next.'),
-                              duration: const Duration(milliseconds: 900),
-                            ),
-                          );
+                          AppFeedback.info(context, '${item.title} screen is not connected to a backend module yet.');
                         }
                         Navigator.of(context).maybePop();
                       },
@@ -118,12 +102,7 @@ class HomeDrawer extends StatelessWidget {
                     (item) => _DrawerItem(
                       item: item,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${item.title} screen will be connected next.'),
-                            duration: const Duration(milliseconds: 900),
-                          ),
-                        );
+                        AppFeedback.info(context, '${item.title} screen is not connected to a backend module yet.');
                         Navigator.of(context).maybePop();
                       },
                     ),
@@ -163,14 +142,14 @@ class _ProfileHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.onPrimary,
                 backgroundImage: AssetImage(profile.avatar),
               ),
               const SizedBox(height: 14),
               Text(
                 profile.name,
                 style: AppTypography.body.copyWith(
-                  color: Colors.white,
+                  color: AppColors.onPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
@@ -183,10 +162,10 @@ class _ProfileHeader extends StatelessWidget {
                       profile.email,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption.copyWith(color: Colors.white),
+                      style: AppTypography.caption.copyWith(color: AppColors.onPrimary),
                     ),
                   ),
-                  const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 18),
+                  Icon(Icons.keyboard_arrow_down, color: AppColors.onPrimary, size: 18),
                 ],
               ),
             ],
@@ -199,7 +178,7 @@ class _ProfileHeader extends StatelessWidget {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.96),
+                color: AppColors.onPrimary.withOpacity(0.96),
               ),
               child: Icon(
                 Icons.notifications_none,
@@ -236,7 +215,7 @@ class _DrawerItem extends StatelessWidget {
         item.title,
         style: AppTypography.body.copyWith(
           fontSize: 13,
-          color: const Color(0xFF767676),
+          color: AppColors.textSecondary,
         ),
       ),
       onTap: onTap,

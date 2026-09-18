@@ -1,52 +1,51 @@
 import 'package:flutter/material.dart';
 
-import '../config/app_flavor.dart';
+import 'app_theme_config.dart';
 
 class AppColors {
-  const AppColors._();
+  AppColors._();
 
-  static AppFlavor _flavor = AppFlavor.user;
+  static Color _c(String key, Color fallback) =>
+      AppThemeConfig.instance.color(key, fallback: fallback);
 
-  static void configure(AppFlavor flavor) {
-    _flavor = flavor;
-  }
+  static Color get primary => _c('primary', const Color(0xFFF45170));
+  static Color get primaryDark => _c('primaryDark', const Color(0xFFD93459));
+  static Color get primarySoft => _c('primarySoft', const Color(0xFFFFF0F3));
+  static Color get secondary => _c('secondary', const Color(0xFFFF755A));
+  static Color get accent => _c('accent', const Color(0xFFFFAA57));
+  static Color get brandGradientStart => _c('gradientStart', primary);
+  static Color get brandGradientEnd => _c('gradientEnd', primaryDark);
+  static Color get background => _c('background', const Color(0xFFF8F9FB));
+  static Color get surface => _c('surface', Colors.white);
+  static Color get softSurface => _c('surfaceSoft', const Color(0xFFF3F5F8));
+  static Color get surfaceElevated => _c('surfaceElevated', Colors.white);
+  static Color get border => _c('border', const Color(0xFFE7EAF0));
+  static Color get divider => _c('divider', const Color(0xFFEDF0F4));
+  static Color get textPrimary => _c('textPrimary', const Color(0xFF20242C));
+  static Color get textSecondary => _c('textSecondary', const Color(0xFF626A78));
+  static Color get textMuted => _c('textMuted', const Color(0xFF9299A6));
+  static Color get onPrimary => _c('onPrimary', Colors.white);
+  static Color get navInactive => _c('navInactive', const Color(0xFF7D8594));
+  static Color get success => _c('success', const Color(0xFF198754));
+  static Color get successSoft => _c('successSoft', const Color(0xFFEAF7F0));
+  static Color get warning => _c('warning', const Color(0xFFB7791F));
+  static Color get warningSoft => _c('warningSoft', const Color(0xFFFFF7E6));
+  static Color get error => _c('error', const Color(0xFFC83B50));
+  static Color get errorSoft => _c('errorSoft', const Color(0xFFFFF0F2));
+  static Color get info => _c('info', const Color(0xFF2F6FED));
+  static Color get infoSoft => _c('infoSoft', const Color(0xFFEDF3FF));
+  static Color get star => _c('star', const Color(0xFFF5A623));
+  static Color get shadow => _c('shadow', const Color(0x16000000));
+  static Color get scrim => _c('scrim', const Color(0x66000000));
+  static Color get splashBackground => _c('splashBackground', background);
+  static Color get brandBorder => _c('brandBorder', border);
+  static Color get brandSoft => _c('brandSoft', primarySoft);
+  static Color get destinationOverlay => _c('destinationOverlay', const Color(0x88000000));
+  static Color get transparent => _c('transparent', Colors.transparent);
+  static Color get mediaBackground => _c('mediaBackground', Colors.black);
+  static Color get onMedia => _c('onMedia', Colors.white);
 
-  static bool get _provider => _flavor == AppFlavor.provider;
-
-  // User flavor intentionally keeps the existing palette unchanged.
-  // Provider flavor uses the blue/cyan/violet family from the supplied logo.
-  static Color get primary =>
-      _provider ? const Color(0xFF258FC4) : const Color(0xFFFF755A);
-  static Color get primaryDark =>
-      _provider ? const Color(0xFF4A238D) : const Color(0xFFF45170);
-  static Color get accent =>
-      _provider ? const Color(0xFF24B9D6) : const Color(0xFFFFAA57);
-  static Color get splashBackground =>
-      _provider ? const Color(0xFFE8F7FB) : const Color(0xFFFFE5CF);
-  static Color get border =>
-      _provider ? const Color(0xFFDDECF4) : const Color(0xFFF0E4E5);
-  static Color get iconPink =>
-      _provider ? const Color(0xFF2A9CC9) : const Color(0xFFFF6D8E);
-  static Color get headingPink =>
-      _provider ? const Color(0xFF4A238D) : const Color(0xFFF63F6C);
-
-  static Color get brandGradientStart =>
-      _provider ? const Color(0xFF28B8D6) : const Color(0xFFFFAF58);
-  static Color get brandGradientEnd =>
-      _provider ? const Color(0xFF4A238D) : const Color(0xFFE92F61);
-  static Color get brandBorder =>
-      _provider ? const Color(0xFFCCE8F3) : const Color(0xFFFFD5DB);
-  static Color get brandSoft =>
-      _provider ? const Color(0xFFDDF3F9) : const Color(0xFFFFE4C7);
-  static Color get destinationOverlay =>
-      _provider ? const Color(0xBB39237F) : const Color(0xBBF34266);
-
-  static const Color background = Color(0xFFFDFDFD);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color softSurface = Color(0xFFF8F8F8);
-  static const Color textPrimary = Color(0xFF555555);
-  static const Color textSecondary = Color(0xFF8B8B8B);
-  static const Color textMuted = Color(0xFFB1B1B1);
-  static const Color navInactive = Color(0xFF7F7F7F);
-  static const Color shadow = Color(0x16000000);
+  // Backward-compatible aliases used by older screens.
+  static Color get iconPink => secondary;
+  static Color get headingPink => primaryDark;
 }

@@ -21,8 +21,8 @@ class TourismPlaceCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(9),
-            border: Border.all(color: const Color(0xFFE8E8E8)),
-            boxShadow: const [
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
               BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: Offset(0, 2)),
             ],
           ),
@@ -76,7 +76,7 @@ class _NetworkImage extends StatelessWidget {
     if (url.isEmpty) {
       return Container(
         color: AppColors.softSurface,
-        child: const Icon(Icons.temple_hindu_outlined, size: 54, color: AppColors.textMuted),
+        child: Icon(Icons.temple_hindu_outlined, size: 54, color: AppColors.textMuted),
       );
     }
     return Image.network(
@@ -84,7 +84,7 @@ class _NetworkImage extends StatelessWidget {
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => Container(
         color: AppColors.softSurface,
-        child: const Icon(Icons.broken_image_outlined, size: 44, color: AppColors.textMuted),
+        child: Icon(Icons.broken_image_outlined, size: 44, color: AppColors.textMuted),
       ),
     );
   }

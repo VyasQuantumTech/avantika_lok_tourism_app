@@ -95,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
                 height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F2F3),
+                  color: AppColors.softSurface,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Container(
@@ -103,9 +103,9 @@ class _LoginPageState extends State<LoginPage> {
                   width: double.infinity,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(22),
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
                         color: AppColors.shadow,
                         blurRadius: 4,
@@ -180,14 +180,14 @@ class _InlineError extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F2),
+        color: AppColors.errorSoft,
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: const Color(0xFFFFD6DB)),
+        border: Border.all(color: AppColors.error.withValues(alpha: .22)),
       ),
       child: Text(
         message,
         style: AppTypography.caption.copyWith(
-          color: const Color(0xFFB42335),
+          color: AppColors.error,
           fontSize: 11,
           height: 1.3,
         ),

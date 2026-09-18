@@ -21,7 +21,7 @@ class ServiceTile extends StatelessWidget {
         border: Border.all(color: AppColors.brandBorder),
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
           onTap: onTap,

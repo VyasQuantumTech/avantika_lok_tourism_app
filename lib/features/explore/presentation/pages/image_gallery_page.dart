@@ -35,7 +35,7 @@ class _ImageGalleryPageState extends State<ImageGalleryPage> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 16),
+          padding: EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 16),
           child: Column(
             children: [
               _GalleryHeader(title: 'Image Gallery', onBack: () => Navigator.of(context).pop()),
@@ -74,7 +74,7 @@ class _ImageGalleryPageState extends State<ImageGalleryPage> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: index == _index ? AppColors.primaryDark : Colors.transparent,
+                          color: index == _index ? AppColors.primaryDark : AppColors.transparent,
                           width: 2,
                         ),
                       ),
@@ -116,12 +116,12 @@ class _GalleryHeader extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 19),
+                child: Icon(Icons.arrow_back, color: AppColors.onPrimary, size: 19),
               ),
             ),
           ),
           Text(title, style: AppTypography.sectionTitle.copyWith(fontSize: 15)),
-          const Align(
+          Align(
             alignment: Alignment.centerRight,
             child: Icon(Icons.share_outlined, color: AppColors.textPrimary, size: 23),
           ),

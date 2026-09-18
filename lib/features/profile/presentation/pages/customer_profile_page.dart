@@ -6,6 +6,7 @@ import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/widgets/app_ui.dart';
 import '../../../auth/domain/usecases/logout_user.dart';
 import '../../domain/entities/profile_dashboard.dart';
 import '../../domain/usecases/get_my_profile_dashboard.dart';
@@ -36,9 +37,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   }
 
   void _soon(String label) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label is not exposed by the current backend API yet.')),
-    );
+    AppFeedback.info(context, '$label is not exposed by the current backend API yet.');
   }
 
   @override
@@ -48,13 +47,13 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: FutureBuilder<ProfileDashboard>(
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator(color: AppColors.primary));
+              return const AppLoadingView(message: 'Loading your profile…');
             }
             if (snapshot.hasError || snapshot.data == null) {
               final message = snapshot.error is ApiException
@@ -104,14 +103,14 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                               icon: Icons.receipt_long_outlined,
                               value: '${data.customer.totalBookings}',
                               label: 'My Orders',
-                              onTap: () => _soon('Order history'),
+                              onTap: () => Navigator.of(context).pushNamed(RouteNames.customerPoojaBookings),
                             ),
                             const SizedBox(width: 9),
                             ProfileStatTile(
                               icon: Icons.rate_review_outlined,
                               value: '${data.customer.reviewsGiven}',
                               label: 'Reviews',
-                              onTap: () => _soon('Reviews'),
+                              onTap: () => Navigator.of(context).pushNamed(RouteNames.customerPoojaBookings),
                             ),
                             const SizedBox(width: 9),
                             ProfileStatTile(
@@ -125,7 +124,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                               icon: Icons.upcoming_outlined,
                               value: '${data.customer.upcomingBookings}',
                               label: 'Upcoming',
-                              onTap: () => _soon('Upcoming bookings'),
+                              onTap: () => Navigator.of(context).pushNamed(RouteNames.customerPoojaBookings),
                             ),
                           ],
                         ),
@@ -140,10 +139,16 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                           },
                         ),
                         ProfileMenuRow(
+                          icon: Icons.temple_hindu_outlined,
+                          label: 'My Pooja Bookings',
+                          value: '${data.customer.totalBookings}',
+                          onTap: () => Navigator.of(context).pushNamed(RouteNames.customerPoojaBookings),
+                        ),
+                        ProfileMenuRow(
                           icon: Icons.task_alt_outlined,
                           label: 'Completed Bookings',
                           value: '${data.customer.completedBookings}',
-                          onTap: () => _soon('Completed booking list'),
+                          onTap: () => Navigator.of(context).pushNamed(RouteNames.customerPoojaBookings),
                         ),
                         ProfileMenuRow(
                           icon: Icons.favorite_outline,

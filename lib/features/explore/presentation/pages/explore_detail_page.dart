@@ -44,7 +44,7 @@ class _ExploreDetailPageState extends State<ExploreDetailPage> {
               slivers: [
                 SliverToBoxAdapter(child: _TopBar(title: place.name)),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: EdgeInsets.fromLTRB(
                     AppDimensions.pagePadding,
                     4,
                     AppDimensions.pagePadding,
@@ -95,7 +95,7 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 8),
+      padding: EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 8),
       child: SizedBox(
         height: 48,
         child: Stack(
@@ -110,7 +110,7 @@ class _TopBar extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                  child: Icon(Icons.arrow_back, color: AppColors.onPrimary, size: 20),
                 ),
               ),
             ),
@@ -143,7 +143,7 @@ class _HeroGallery extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
+        border: Border.all(color: AppColors.border),
       ),
       padding: const EdgeInsets.all(8),
       child: Column(
@@ -404,7 +404,7 @@ class _GalleryButton extends StatelessWidget {
           label,
           style: AppTypography.caption.copyWith(
             fontSize: 10,
-            color: active ? Colors.white : AppColors.textSecondary,
+            color: active ? AppColors.onPrimary : AppColors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -445,7 +445,7 @@ class _CardShell extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
+        border: Border.all(color: AppColors.border),
       ),
       child: child,
     );
@@ -459,7 +459,7 @@ class _ImagePlaceholder extends StatelessWidget {
     return Container(
       color: AppColors.softSurface,
       alignment: Alignment.center,
-      child: const Icon(Icons.broken_image_outlined, color: AppColors.textMuted, size: 48),
+      child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted, size: 48),
     );
   }
 }

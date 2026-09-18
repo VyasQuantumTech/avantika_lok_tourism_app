@@ -18,6 +18,7 @@ class RouteNames {
   static const String providerProfile = '/provider/profile';
   static const String providerProfileEdit = '/provider/profile/edit';
   static const String providerEarnings = '/provider/earnings';
+  static const String providerReviews = '/provider/reviews';
 
   // App
   static const String splash = '/';
@@ -32,6 +33,7 @@ class RouteNames {
   static const String poojaBooking = '/poojas/book';
   static const String poojaPayment = '/poojas/payment';
   static const String customerPoojaBookings = '/poojas/bookings';
+  static const String customerPoojaBookingDetail = '/poojas/bookings/detail';
 
   // Pooja - pandit provider
   static const String panditPoojaServices = '/provider/pandit/poojas';

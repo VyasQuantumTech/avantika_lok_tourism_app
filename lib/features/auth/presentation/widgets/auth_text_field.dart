@@ -69,11 +69,11 @@ class _AuthTextFieldState extends State<AuthTextField> {
               )
             : null,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(7),
-          borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(7),
@@ -81,11 +81,11 @@ class _AuthTextFieldState extends State<AuthTextField> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(7),
-          borderSide: const BorderSide(color: Colors.redAccent),
+          borderSide: BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(7),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+          borderSide: BorderSide(color: AppColors.error, width: 1.2),
         ),
       ),
     );

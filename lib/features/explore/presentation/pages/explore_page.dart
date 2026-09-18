@@ -5,6 +5,7 @@ import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/app_ui.dart';
 import '../../domain/entities/tourism_place.dart';
 import '../../domain/usecases/get_tourism_places.dart';
 import '../widgets/explore_bottom_navigation.dart';
@@ -47,10 +48,10 @@ class _ExplorePageState extends State<ExplorePage> {
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator(color: AppColors.primaryDark));
+              return const AppLoadingView(message: 'Discovering places…');
             }
             if (snapshot.hasError) {
-              return _ExploreError(onRetry: _reload);
+              return AppErrorState(message: 'Unable to load tourism places from the live API.', onRetry: _reload);
             }
 
             final places = snapshot.data ?? const <TourismPlace>[];
@@ -81,7 +82,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 SizedBox(
                   height: 44,
                   child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.pagePadding),
+                    padding: EdgeInsets.symmetric(horizontal: AppDimensions.pagePadding),
                     scrollDirection: Axis.horizontal,
                     itemCount: categories.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -95,7 +96,7 @@ class _ExplorePageState extends State<ExplorePage> {
                         showCheckmark: false,
                         labelStyle: AppTypography.caption.copyWith(
                           fontSize: 11,
-                          color: selected ? Colors.white : AppColors.textPrimary,
+                          color: selected ? AppColors.onPrimary : AppColors.textPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                         selectedColor: AppColors.accent,
@@ -110,7 +111,7 @@ class _ExplorePageState extends State<ExplorePage> {
                 const SizedBox(height: 8),
                 Expanded(
                   child: filtered.isEmpty
-                      ? const Center(child: Text('No tourism places found.'))
+                      ? const AppEmptyState(title: 'No places found', message: 'Try another search or category.', icon: Icons.travel_explore_rounded)
                       : RefreshIndicator(
                           color: AppColors.primaryDark,
                           onRefresh: () async {
@@ -120,7 +121,7 @@ class _ExplorePageState extends State<ExplorePage> {
                           },
                           child: ListView.separated(
                             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                            padding: const EdgeInsets.fromLTRB(
+                            padding: EdgeInsets.fromLTRB(
                               AppDimensions.pagePadding,
                               0,
                               AppDimensions.pagePadding,
@@ -160,7 +161,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppDimensions.pagePadding, 12, AppDimensions.pagePadding, 8),
+      padding: EdgeInsets.fromLTRB(AppDimensions.pagePadding, 12, AppDimensions.pagePadding, 8),
       child: Column(
         children: [
           SizedBox(
@@ -180,7 +181,7 @@ class _Header extends StatelessWidget {
                   'Explore Ujjain',
                   style: AppTypography.sectionTitle.copyWith(fontSize: 16),
                 ),
-                const Align(
+                Align(
                   alignment: Alignment.centerRight,
                   child: Icon(Icons.search, color: AppColors.textPrimary, size: 26),
                 ),
@@ -216,35 +217,11 @@ class _Header extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
-                child: const Icon(Icons.tune, color: Colors.white, size: 20),
+                child: Icon(Icons.tune, color: AppColors.onPrimary, size: 20),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ExploreError extends StatelessWidget {
-  const _ExploreError({required this.onRetry});
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.cloud_off_outlined, size: 48, color: AppColors.primaryDark),
-            const SizedBox(height: 12),
-            const Text('Unable to load tourism places from the live API.'),
-            const SizedBox(height: 14),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
       ),
     );
   }

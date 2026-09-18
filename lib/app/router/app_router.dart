@@ -11,6 +11,7 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/splash_page.dart';
 import '../../features/profile/presentation/pages/customer_profile_page.dart';
 import '../../features/pooja/domain/entities/pooja_entities.dart';
+import '../../features/pooja/presentation/pages/customer_pooja_booking_detail_page.dart';
 import '../../features/pooja/presentation/pages/customer_pooja_booking_page.dart';
 import '../../features/pooja/presentation/pages/customer_pooja_bookings_page.dart';
 import '../../features/pooja/presentation/pages/customer_pooja_detail_page.dart';
@@ -25,6 +26,7 @@ import '../../features/profile/presentation/pages/provider_earnings_page.dart';
 import '../../features/profile/presentation/pages/provider_profile_page.dart';
 import '../../features/provider/presentation/pages/provider_gate_page.dart';
 import '../../features/provider/presentation/pages/provider_registration_page.dart';
+import '../../features/reviews/presentation/pages/provider_reviews_page.dart';
 import '../../features/provider/presentation/pages/provider_kyc_page.dart';
 import '../../features/provider/presentation/pages/dashboards/accommodation_dashboard_page.dart';
 import '../../features/provider/presentation/pages/dashboards/pandit_dashboard_page.dart';
@@ -122,6 +124,13 @@ class AppRouter {
           settings: settings,
         );
 
+
+      case RouteNames.providerReviews:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderReviewsPage(),
+          settings: settings,
+        );
+
       // ---------------------------------------------------------------------
       // Home
       // ---------------------------------------------------------------------
@@ -199,6 +208,17 @@ class AppRouter {
       case RouteNames.customerPoojaBookings:
         return MaterialPageRoute<void>(
           builder: (_) => const CustomerPoojaBookingsPage(),
+          settings: settings,
+        );
+
+
+      case RouteNames.customerPoojaBookingDetail:
+        final bookingId = settings.arguments;
+        if (bookingId is! String || bookingId.trim().isEmpty) {
+          return _errorRoute(settings, 'Invalid Pooja booking identifier.');
+        }
+        return MaterialPageRoute<void>(
+          builder: (_) => CustomerPoojaBookingDetailPage(bookingId: bookingId),
           settings: settings,
         );
 

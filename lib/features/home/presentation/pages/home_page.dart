@@ -5,6 +5,7 @@ import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/app_ui.dart';
 import '../../domain/entities/home_dashboard.dart';
 import '../../domain/usecases/get_home_dashboard.dart';
 import '../widgets/accommodation_card.dart';
@@ -42,34 +43,15 @@ class _HomePageState extends State<HomePage> {
       future: _dashboardFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
-          );
+          return const Scaffold(body: AppLoadingView(message: 'Preparing Avantika Lok…'));
         }
 
         if (snapshot.hasError || snapshot.data == null) {
           return Scaffold(
             body: SafeArea(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(height: 12),
-                      const Text('Unable to load local dashboard data.'),
-                      const SizedBox(height: 14),
-                      FilledButton(onPressed: _reload, child: const Text('Retry')),
-                    ],
-                  ),
-                ),
+              child: AppErrorState(
+                message: 'Unable to load the home dashboard.',
+                onRetry: _reload,
               ),
             ),
           );
@@ -84,7 +66,7 @@ class _HomePageState extends State<HomePage> {
               slivers: [
                 SliverToBoxAdapter(child: _TopHeader(onFilterTap: () {})),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: EdgeInsets.fromLTRB(
                     AppDimensions.pagePadding,
                     12,
                     AppDimensions.pagePadding,
@@ -96,9 +78,9 @@ class _HomePageState extends State<HomePage> {
                         items: dashboard.services,
                         onExploreTap: () => Navigator.of(context).pushNamed(RouteNames.explore),
                       ),
-                      const SizedBox(height: AppDimensions.sectionGap),
+                      SizedBox(height: AppDimensions.sectionGap),
                       _DestinationsSection(items: dashboard.destinations),
-                      const SizedBox(height: AppDimensions.sectionGap),
+                      SizedBox(height: AppDimensions.sectionGap),
                       _AccommodationSection(items: dashboard.accommodations),
                     ]),
                   ),
@@ -158,7 +140,7 @@ class _TopHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppDimensions.pagePadding,
         14,
         AppDimensions.pagePadding,
@@ -236,9 +218,9 @@ class _TopHeader extends StatelessWidget {
                     color: AppColors.accent,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.tune,
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                     size: 20,
                   ),
                 ),
