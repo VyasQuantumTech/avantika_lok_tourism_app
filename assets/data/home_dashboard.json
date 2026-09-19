@@ -5,18 +5,52 @@
     "avatar": "assets/images/common/avatar.png"
   },
   "services": [
-    {"title": "Hotel", "icon": "hotel"},
-    {"title": "Puja", "icon": "puja"},
-    {"title": "Explore", "icon": "explore"},
-    {"title": "Panditji", "icon": "panditji"}
+    {
+      "title": "Hotel",
+      "icon": "hotel"
+    },
+    {
+      "title": "Puja",
+      "icon": "puja"
+    },
+    {
+      "title": "Explore",
+      "icon": "explore"
+    },
+    {
+      "title": "Panditji",
+      "icon": "panditji"
+    },
+    {
+      "title": "Transport",
+      "icon": "transport"
+    }
   ],
   "destinations": [
-    {"title": "Badrinath", "image": "assets/images/destinations/badrinath.jpg"},
-    {"title": "Somnath", "image": "assets/images/destinations/somnath.jpg"},
-    {"title": "Golden Temple", "image": "assets/images/destinations/golden_temple.jpg"},
-    {"title": "Kedarnath", "image": "assets/images/destinations/kedarnath.jpg"},
-    {"title": "Ujjain", "image": "assets/images/destinations/ujjain.jpg"},
-    {"title": "Meenakshi Temple", "image": "assets/images/destinations/meenakshi_temple.jpg"}
+    {
+      "title": "Badrinath",
+      "image": "assets/images/destinations/badrinath.jpg"
+    },
+    {
+      "title": "Somnath",
+      "image": "assets/images/destinations/somnath.jpg"
+    },
+    {
+      "title": "Golden Temple",
+      "image": "assets/images/destinations/golden_temple.jpg"
+    },
+    {
+      "title": "Kedarnath",
+      "image": "assets/images/destinations/kedarnath.jpg"
+    },
+    {
+      "title": "Ujjain",
+      "image": "assets/images/destinations/ujjain.jpg"
+    },
+    {
+      "title": "Meenakshi Temple",
+      "image": "assets/images/destinations/meenakshi_temple.jpg"
+    }
   ],
   "accommodations": [
     {
@@ -35,19 +69,55 @@
     }
   ],
   "menu": [
-    {"title": "Home", "icon": "home"},
-    {"title": "Your Destinations", "icon": "destinations"},
-    {"title": "Hotel", "icon": "hotel"},
-    {"title": "Puja", "icon": "puja"},
-    {"title": "Explore", "icon": "explore"},
-    {"title": "Panditji", "icon": "panditji"},
-    {"title": "Vehicle", "icon": "vehicle"},
-    {"title": "Settings", "icon": "settings"},
-    {"title": "Sign out", "icon": "signout"}
+    {
+      "title": "Home",
+      "icon": "home"
+    },
+    {
+      "title": "Your Destinations",
+      "icon": "destinations"
+    },
+    {
+      "title": "Hotel",
+      "icon": "hotel"
+    },
+    {
+      "title": "Puja",
+      "icon": "puja"
+    },
+    {
+      "title": "Explore",
+      "icon": "explore"
+    },
+    {
+      "title": "Panditji",
+      "icon": "panditji"
+    },
+    {
+      "title": "Vehicle",
+      "icon": "vehicle"
+    },
+    {
+      "title": "Settings",
+      "icon": "settings"
+    },
+    {
+      "title": "Sign out",
+      "icon": "signout"
+    }
   ],
   "secondaryMenu": [
-    {"title": "About", "icon": "about"},
-    {"title": "Help & Feedback", "icon": "help"},
-    {"title": "Term & Conditions", "icon": "terms"}
+    {
+      "title": "About",
+      "icon": "about"
+    },
+    {
+      "title": "Help & Feedback",
+      "icon": "help"
+    },
+    {
+      "title": "Term & Conditions",
+      "icon": "terms"
+    }
   ]
 }

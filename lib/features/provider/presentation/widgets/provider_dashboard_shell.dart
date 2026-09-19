@@ -187,7 +187,11 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
                                 icon: Icons.pending_actions_outlined,
                                 onTap: config.expectedProviderType == 'pandit'
                                     ? () => Navigator.of(context).pushNamed(RouteNames.panditPoojaBookings)
-                                    : null,
+                                    : config.expectedProviderType == 'hotel_manager'
+                                        ? () => Navigator.of(context).pushNamed(RouteNames.providerAccommodationBookings)
+                                        : config.expectedProviderType == 'vehicle_owner'
+                                            ? () => Navigator.of(context).pushNamed(RouteNames.providerTransportBookings)
+                                            : null,
                               ),
                             ),
                             SizedBox(
@@ -274,6 +278,24 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
       }
       if (index == 2) {
         Navigator.of(context).pushNamed(RouteNames.panditPoojaServices);
+        return;
+      }
+    } else if (config.expectedProviderType == 'hotel_manager') {
+      if (index == 1) {
+        Navigator.of(context).pushNamed(RouteNames.providerAccommodationBookings);
+        return;
+      }
+      if (index == 2) {
+        Navigator.of(context).pushNamed(RouteNames.providerAccommodationManagement);
+        return;
+      }
+    } else if (config.expectedProviderType == 'vehicle_owner') {
+      if (index == 1) {
+        Navigator.of(context).pushNamed(RouteNames.providerTransportBookings);
+        return;
+      }
+      if (index == 2) {
+        Navigator.of(context).pushNamed(RouteNames.providerTransportManagement);
         return;
       }
     }

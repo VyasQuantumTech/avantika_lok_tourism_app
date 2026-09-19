@@ -18,6 +18,7 @@ class HomeIconMapper {
       case 'panditji':
         return Icons.person_outline;
       case 'vehicle':
+      case 'transport':
         return Icons.directions_car_outlined;
       case 'settings':
         return Icons.settings_outlined;

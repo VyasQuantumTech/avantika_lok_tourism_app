@@ -9,6 +9,8 @@ import '../../features/explore/presentation/pages/image_gallery_page.dart';
 import '../../features/explore/presentation/pages/video_gallery_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/home/presentation/pages/splash_page.dart';
+import '../../features/marketplace/domain/entities/marketplace_entities.dart';
+import '../../features/marketplace/presentation/marketplace_pages.dart';
 import '../../features/profile/presentation/pages/customer_profile_page.dart';
 import '../../features/pooja/domain/entities/pooja_entities.dart';
 import '../../features/pooja/presentation/pages/customer_pooja_booking_detail_page.dart';
@@ -157,6 +159,60 @@ class AppRouter {
       case RouteNames.customerProfileEdit:
         return MaterialPageRoute<void>(
           builder: (_) => const CustomerProfileEditPage(),
+          settings: settings,
+        );
+
+      case RouteNames.customerBookings:
+        return MaterialPageRoute<void>(
+          builder: (_) => const CustomerBookingsHubPage(),
+          settings: settings,
+        );
+
+      case RouteNames.accommodations:
+        return MaterialPageRoute<void>(
+          builder: (_) => const CustomerMarketplaceListPage(type: MarketplaceType.accommodation),
+          settings: settings,
+        );
+
+      case RouteNames.transport:
+        return MaterialPageRoute<void>(
+          builder: (_) => const CustomerMarketplaceListPage(type: MarketplaceType.transport),
+          settings: settings,
+        );
+
+      case RouteNames.customerAccommodationBookings:
+        return MaterialPageRoute<void>(
+          builder: (_) => const CustomerMarketplaceBookingsPage(type: MarketplaceType.accommodation),
+          settings: settings,
+        );
+
+      case RouteNames.customerTransportBookings:
+        return MaterialPageRoute<void>(
+          builder: (_) => const CustomerMarketplaceBookingsPage(type: MarketplaceType.transport),
+          settings: settings,
+        );
+
+      case RouteNames.providerAccommodationManagement:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderMarketplaceManagementPage(type: MarketplaceType.accommodation),
+          settings: settings,
+        );
+
+      case RouteNames.providerTransportManagement:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderMarketplaceManagementPage(type: MarketplaceType.transport),
+          settings: settings,
+        );
+
+      case RouteNames.providerAccommodationBookings:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderMarketplaceBookingsPage(type: MarketplaceType.accommodation),
+          settings: settings,
+        );
+
+      case RouteNames.providerTransportBookings:
+        return MaterialPageRoute<void>(
+          builder: (_) => const ProviderMarketplaceBookingsPage(type: MarketplaceType.transport),
           settings: settings,
         );
 

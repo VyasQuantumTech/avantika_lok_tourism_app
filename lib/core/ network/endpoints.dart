@@ -5,11 +5,15 @@ class Endpoints {
   static const String tourismPlaces = '/api/v1/tourism/places';
 
   static const String poojas = '/api/v1/tourism/poojas';
+  static const String accommodations = '/api/v1/tourism/accommodations';
+  static const String transport = '/api/v1/tourism/transport';
   static const String bookings = '/api/v1/bookings';
   static const String payments = '/api/v1/payments';
   static const String reviews = '/api/v1/reviews';
 
   static const String providerPandit = '/api/v1/provider/pandit';
+  static const String providerAccommodations = '/api/v1/provider/accommodations';
+  static const String providerTransport = '/api/v1/provider/transport';
   static const String providerPanditPoojas = '/api/v1/provider/pandit/poojas';
   static const String providerPanditAvailability =
       '/api/v1/provider/pandit/availability';
