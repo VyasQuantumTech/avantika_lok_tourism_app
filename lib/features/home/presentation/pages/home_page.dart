@@ -97,7 +97,7 @@ class _HomePageState extends State<HomePage> {
               }
               setState(() => _selectedBottomIndex = index);
               if (index == 1) {
-                Navigator.of(context).pushNamed(RouteNames.customerPoojaBookings);
+                Navigator.of(context).pushNamed(RouteNames.customerBookings);
               } else if (index == 2) {
                 Navigator.of(context).pushNamed(RouteNames.explore);
               }
@@ -264,7 +264,11 @@ class _ServicesSection extends StatelessWidget {
                   ? onExploreTap
                   : (service == 'puja' || service == 'pooja' || service == 'panditji')
                       ? () => Navigator.of(context).pushNamed(RouteNames.poojas)
-                      : null,
+                      : (service == 'hotel' || service == 'stay' || service == 'accommodation')
+                          ? () => Navigator.of(context).pushNamed(RouteNames.accommodations)
+                          : (service == 'transport' || service == 'cab' || service == 'taxi')
+                              ? () => Navigator.of(context).pushNamed(RouteNames.transport)
+                              : null,
             );
           },
         ),

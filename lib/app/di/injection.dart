@@ -20,6 +20,10 @@ import '../../features/home/data/datasources/home_local_data_source.dart';
 import '../../features/home/data/repositories/home_repository_impl.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_home_dashboard.dart';
+import '../../features/marketplace/data/datasources/marketplace_remote_data_source.dart';
+import '../../features/marketplace/data/repositories/marketplace_repository_impl.dart';
+import '../../features/marketplace/domain/repositories/marketplace_repository.dart';
+import '../../features/marketplace/domain/usecases/marketplace_actions.dart';
 import '../../features/profile/data/datasources/profile_remote_data_source.dart';
 import '../../features/pooja/data/datasources/pooja_remote_data_source.dart';
 import '../../features/pooja/data/repositories/pooja_repository_impl.dart';
@@ -135,6 +139,16 @@ Future<void> configureDependencies(AppConfig config) async {
   );
   getIt.registerLazySingleton<PanditPoojaActions>(
     () => PanditPoojaActions(getIt<PoojaRepository>()),
+  );
+
+  getIt.registerLazySingleton<MarketplaceRemoteDataSource>(
+    () => MarketplaceRemoteDataSourceImpl(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<MarketplaceRepository>(
+    () => MarketplaceRepositoryImpl(getIt<MarketplaceRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<MarketplaceActions>(
+    () => MarketplaceActions(getIt<MarketplaceRepository>()),
   );
 
   getIt.registerLazySingleton<ProviderReviewRemoteDataSource>(

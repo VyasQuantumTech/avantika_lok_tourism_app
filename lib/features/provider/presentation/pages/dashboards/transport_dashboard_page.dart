@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../app/router/route_names.dart';
 import '../../widgets/provider_dashboard_shell.dart';
 
 class TransportDashboardPage extends StatelessWidget {
@@ -10,8 +11,8 @@ class TransportDashboardPage extends StatelessWidget {
       partnerTitle: 'Avantika Lok\nTransport Partner',
       domainTitle: 'Fleet & Route Summary',
       quickActions: [
-        ProviderQuickAction(icon: Icons.add_box_outlined, label: 'Add Vehicle'),
-        ProviderQuickAction(icon: Icons.directions_car_outlined, label: 'Manage Fleet'),
+        ProviderQuickAction(icon: Icons.directions_car_outlined, label: 'Manage Fleet', routeName: RouteNames.providerTransportManagement),
+        ProviderQuickAction(icon: Icons.route_outlined, label: 'Rides', routeName: RouteNames.providerTransportBookings),
         ProviderQuickAction(icon: Icons.account_balance_wallet_outlined, label: 'View Earnings'),
       ],
       bottomItems: [

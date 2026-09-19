@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../app/router/route_names.dart';
 import '../../widgets/provider_dashboard_shell.dart';
 
 class AccommodationDashboardPage extends StatelessWidget {
@@ -10,8 +11,8 @@ class AccommodationDashboardPage extends StatelessWidget {
       partnerTitle: 'Avantika Lok\nStay Partner',
       domainTitle: 'Accommodation Summary',
       quickActions: [
-        ProviderQuickAction(icon: Icons.hotel_outlined, label: 'Add Room/Offer'),
-        ProviderQuickAction(icon: Icons.calendar_month_outlined, label: 'Block Dates'),
+        ProviderQuickAction(icon: Icons.hotel_outlined, label: 'Manage Stays', routeName: RouteNames.providerAccommodationManagement),
+        ProviderQuickAction(icon: Icons.calendar_month_outlined, label: 'Bookings', routeName: RouteNames.providerAccommodationBookings),
         ProviderQuickAction(icon: Icons.account_balance_wallet_outlined, label: 'View Earnings'),
       ],
       bottomItems: [

@@ -25,6 +25,19 @@ class RouteNames {
   static const String home = '/home';
   static const String customerProfile = '/profile';
   static const String customerProfileEdit = '/profile/edit';
+  static const String customerBookings = '/bookings';
+
+  // Accommodation / transport - customer
+  static const String accommodations = '/accommodations';
+  static const String transport = '/transport';
+  static const String customerAccommodationBookings = '/accommodations/bookings';
+  static const String customerTransportBookings = '/transport/bookings';
+
+  // Accommodation / transport - provider
+  static const String providerAccommodationManagement = '/provider/accommodations';
+  static const String providerTransportManagement = '/provider/transport/manage';
+  static const String providerAccommodationBookings = '/provider/accommodation/bookings';
+  static const String providerTransportBookings = '/provider/transport/bookings';
 
 
   // Pooja - customer
