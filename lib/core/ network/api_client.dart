@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../errors/exceptions.dart';
 import '../storage/secure_storage_service.dart';
@@ -102,6 +103,100 @@ class ApiClient {
       headers: headers,
       authenticated: authenticated,
     );
+  }
+
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required Uint8List bytes,
+    required String fileName,
+    required String fieldName,
+    String? contentType,
+    Map<String, String> fields = const <String, String>{},
+    bool authenticated = false,
+  }) {
+    return _postMultipart(
+      path: path,
+      bytes: bytes,
+      fileName: fileName,
+      fieldName: fieldName,
+      contentType: contentType,
+      fields: fields,
+      authenticated: authenticated,
+    );
+  }
+
+  Future<Map<String, dynamic>> _postMultipart({
+    required String path,
+    required Uint8List bytes,
+    required String fileName,
+    required String fieldName,
+    required String? contentType,
+    required Map<String, String> fields,
+    required bool authenticated,
+    bool allowRefresh = true,
+  }) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Accept'] = 'application/json'
+      ..fields.addAll(fields);
+
+    if (authenticated) {
+      final accessToken = await _secureStorage.readAccessToken();
+      if (accessToken != null && accessToken.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $accessToken';
+      }
+    }
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        fieldName,
+        bytes,
+        filename: fileName,
+        contentType: contentType == null ? null : MediaType.parse(contentType),
+      ),
+    );
+
+    try {
+      final streamed = await _client
+          .send(request)
+          .timeout(const Duration(seconds: 45));
+      final response = await http.Response.fromStream(streamed);
+
+      if (response.statusCode == 401 &&
+          authenticated &&
+          allowRefresh &&
+          path != Endpoints.refresh) {
+        final refreshed = await _refreshAccessToken();
+        if (refreshed) {
+          return _postMultipart(
+            path: path,
+            bytes: bytes,
+            fileName: fileName,
+            fieldName: fieldName,
+            contentType: contentType,
+            fields: fields,
+            authenticated: authenticated,
+            allowRefresh: false,
+          );
+        }
+      }
+
+      final decoded = _decodeResponse(response);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw _toApiException(response, decoded);
+      }
+      return decoded;
+    } on ApiException {
+      rethrow;
+    } on TimeoutException {
+      throw const ApiException(
+        'The upload timed out. Please check your connection and try again.',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        'Unable to reach the server. Please check your internet connection.',
+      );
+    }
   }
 
   Future<Map<String, dynamic>> _postBytes({
