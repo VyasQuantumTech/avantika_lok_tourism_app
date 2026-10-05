@@ -8,7 +8,6 @@ import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/app_ui.dart';
 import '../../domain/entities/tourism_place.dart';
 import '../../domain/usecases/get_tourism_places.dart';
-import '../widgets/explore_bottom_navigation.dart';
 import '../widgets/tourism_place_card.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -147,7 +146,6 @@ class _ExplorePageState extends State<ExplorePage> {
           },
         ),
       ),
-      bottomNavigationBar: const ExploreBottomNavigation(),
     );
   }
 }

@@ -10,6 +10,12 @@ import '../../../../core/widgets/app_ui.dart';
 import '../../../auth/domain/usecases/logout_user.dart';
 import '../../../profile/domain/entities/profile_dashboard.dart';
 import '../../../profile/domain/usecases/get_my_profile_dashboard.dart';
+import '../../../marketplace/domain/entities/marketplace_entities.dart';
+import '../../../marketplace/presentation/marketplace_pages.dart';
+import '../../../pooja/presentation/pages/pandit_pooja_bookings_page.dart';
+import '../../../pooja/presentation/pages/pandit_pooja_services_page.dart';
+import '../../../profile/presentation/pages/provider_earnings_page.dart';
+import '../../../profile/presentation/pages/provider_profile_page.dart';
 
 class ProviderQuickAction {
   const ProviderQuickAction({
@@ -117,191 +123,193 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
         ? providerName
         : config.partnerTitle.replaceAll('\n', ' ');
 
+    final tabs = <Widget>[
+      _dashboardTab(displayName, provider),
+      _providerBookingsTab(config.expectedProviderType),
+      _providerManagementTab(config.expectedProviderType),
+      const ProviderEarningsPage(),
+      const ProviderProfilePage(),
+    ];
+
     return Scaffold(
       drawer: _ProviderDrawer(
         partnerTitle: config.partnerTitle,
         name: displayName,
         onLogout: _logout,
-        onProfile: () => Navigator.of(context).pushNamed(RouteNames.providerProfile),
+        onProfile: () => setState(() => _selectedIndex = 4),
       ),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _DashboardHeader(partnerTitle: config.partnerTitle),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  _reload();
-                  await _future;
-                },
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(
-                    AppDimensions.pagePadding,
-                    10,
-                    AppDimensions.pagePadding,
-                    AppDimensions.sectionGap,
-                  ),
-                  children: [
-                    _WelcomeCard(name: displayName, kycStatus: provider.kycStatus),
-                    SizedBox(height: AppDimensions.sectionGap),
-                    const AppSectionTitle(
-                      title: 'Quick actions',
-                      subtitle: 'Most-used provider operations',
-                    ),
-                    const SizedBox(height: 10),
-                    _QuickActions(
-                      actions: config.quickActions,
-                      onTap: _handleQuickAction,
-                    ),
-                    SizedBox(height: AppDimensions.sectionGap),
-                    const AppSectionTitle(
-                      title: 'Business overview',
-                      subtitle: 'Live figures from your provider dashboard',
-                    ),
-                    const SizedBox(height: 10),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final width = (constraints.maxWidth - 20) / 3;
-                        return Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: [
-                            SizedBox(
-                              width: width,
-                              child: AppMetricCard(
-                                label: 'Net collected',
-                                value: '₹${provider.financial.netCollected.toStringAsFixed(0)}',
-                                footer: provider.financial.currency,
-                                icon: Icons.account_balance_wallet_outlined,
-                                onTap: () => Navigator.of(context).pushNamed(RouteNames.providerEarnings),
-                              ),
-                            ),
-                            SizedBox(
-                              width: width,
-                              child: AppMetricCard(
-                                label: 'Pending action',
-                                value: '${provider.pendingActionBookings}',
-                                footer: '${provider.upcomingBookings} upcoming',
-                                icon: Icons.pending_actions_outlined,
-                                onTap: config.expectedProviderType == 'pandit'
-                                    ? () => Navigator.of(context).pushNamed(RouteNames.panditPoojaBookings)
-                                    : config.expectedProviderType == 'hotel_manager'
-                                        ? () => Navigator.of(context).pushNamed(RouteNames.providerAccommodationBookings)
-                                        : config.expectedProviderType == 'vehicle_owner'
-                                            ? () => Navigator.of(context).pushNamed(RouteNames.providerTransportBookings)
-                                            : null,
-                              ),
-                            ),
-                            SizedBox(
-                              width: width,
-                              child: AppMetricCard(
-                                label: 'Rating',
-                                value: provider.ratings.averageRating?.toStringAsFixed(1) ?? '—',
-                                footer: '${provider.ratings.count} reviews',
-                                icon: Icons.star_rounded,
-                                onTap: () => Navigator.of(context).pushNamed(RouteNames.providerReviews),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    SizedBox(height: AppDimensions.sectionGap),
-                    const AppSectionTitle(title: 'Booking summary'),
-                    const SizedBox(height: 10),
-                    _SummaryPanel(
-                      rows: [
-                        ('Total bookings', '${provider.totalBookings}', Icons.receipt_long_outlined),
-                        ('Upcoming', '${provider.upcomingBookings}', Icons.upcoming_outlined),
-                        ('Completed', '${provider.completedBookings}', Icons.task_alt_outlined),
-                        ('Pending action', '${provider.pendingActionBookings}', Icons.notification_important_outlined),
-                      ],
-                    ),
-                    SizedBox(height: AppDimensions.sectionGap),
-                    AppSectionTitle(title: config.domainTitle),
-                    const SizedBox(height: 10),
-                    _DomainPanel(provider: provider),
-                    SizedBox(height: AppDimensions.sectionGap),
-                    const AppSectionTitle(title: 'Financial snapshot'),
-                    const SizedBox(height: 10),
-                    _SummaryPanel(
-                      rows: [
-                        ('Gross captured', '₹${provider.financial.grossCaptured.toStringAsFixed(0)}', Icons.south_west_rounded),
-                        ('Processed refunds', '₹${provider.financial.processedRefunds.toStringAsFixed(0)}', Icons.replay_outlined),
-                        ('Net collected', '₹${provider.financial.netCollected.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: IndexedStack(index: _selectedIndex, children: tabs),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         height: 68,
-        onDestinationSelected: _navigateBottom,
+        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
         destinations: config.bottomItems,
       ),
     );
   }
 
+  Widget _dashboardTab(String displayName, ProviderDashboardSummary provider) {
+    final config = widget.config;
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        children: [
+          _DashboardHeader(partnerTitle: config.partnerTitle),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _reload();
+                await _future;
+              },
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  AppDimensions.pagePadding,
+                  10,
+                  AppDimensions.pagePadding,
+                  AppDimensions.sectionGap,
+                ),
+                children: [
+                  _WelcomeCard(name: displayName, kycStatus: provider.kycStatus),
+                  SizedBox(height: AppDimensions.sectionGap),
+                  const AppSectionTitle(
+                    title: 'Quick actions',
+                    subtitle: 'Most-used provider operations',
+                  ),
+                  const SizedBox(height: 10),
+                  _QuickActions(actions: config.quickActions, onTap: _handleQuickAction),
+                  SizedBox(height: AppDimensions.sectionGap),
+                  const AppSectionTitle(
+                    title: 'Business overview',
+                    subtitle: 'Live figures from your provider dashboard',
+                  ),
+                  const SizedBox(height: 10),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = (constraints.maxWidth - 20) / 3;
+                      return Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          SizedBox(
+                            width: width,
+                            child: AppMetricCard(
+                              label: 'Net collected',
+                              value: '₹${provider.financial.netCollected.toStringAsFixed(0)}',
+                              footer: provider.financial.currency,
+                              icon: Icons.account_balance_wallet_outlined,
+                              onTap: () => setState(() => _selectedIndex = 3),
+                            ),
+                          ),
+                          SizedBox(
+                            width: width,
+                            child: AppMetricCard(
+                              label: 'Pending action',
+                              value: '${provider.pendingActionBookings}',
+                              footer: '${provider.upcomingBookings} upcoming',
+                              icon: Icons.pending_actions_outlined,
+                              onTap: () => setState(() => _selectedIndex = 1),
+                            ),
+                          ),
+                          SizedBox(
+                            width: width,
+                            child: AppMetricCard(
+                              label: 'Rating',
+                              value: provider.ratings.averageRating?.toStringAsFixed(1) ?? '—',
+                              footer: '${provider.ratings.count} reviews',
+                              icon: Icons.star_rounded,
+                              onTap: () => Navigator.of(context).pushNamed(RouteNames.providerReviews),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  SizedBox(height: AppDimensions.sectionGap),
+                  const AppSectionTitle(title: 'Booking summary'),
+                  const SizedBox(height: 10),
+                  _SummaryPanel(
+                    rows: [
+                      ('Total bookings', '${provider.totalBookings}', Icons.receipt_long_outlined),
+                      ('Upcoming', '${provider.upcomingBookings}', Icons.upcoming_outlined),
+                      ('Completed', '${provider.completedBookings}', Icons.task_alt_outlined),
+                      ('Pending action', '${provider.pendingActionBookings}', Icons.notification_important_outlined),
+                    ],
+                  ),
+                  SizedBox(height: AppDimensions.sectionGap),
+                  AppSectionTitle(title: config.domainTitle),
+                  const SizedBox(height: 10),
+                  _DomainPanel(provider: provider),
+                  SizedBox(height: AppDimensions.sectionGap),
+                  const AppSectionTitle(title: 'Financial snapshot'),
+                  const SizedBox(height: 10),
+                  _SummaryPanel(
+                    rows: [
+                      ('Gross captured', '₹${provider.financial.grossCaptured.toStringAsFixed(0)}', Icons.south_west_rounded),
+                      ('Processed refunds', '₹${provider.financial.processedRefunds.toStringAsFixed(0)}', Icons.replay_outlined),
+                      ('Net collected', '₹${provider.financial.netCollected.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _providerBookingsTab(String providerType) {
+    switch (providerType) {
+      case 'pandit':
+        return const PanditPoojaBookingsPage();
+      case 'hotel_manager':
+        return const ProviderMarketplaceBookingsPage(type: MarketplaceType.accommodation);
+      case 'vehicle_owner':
+        return const ProviderMarketplaceBookingsPage(type: MarketplaceType.transport);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _providerManagementTab(String providerType) {
+    switch (providerType) {
+      case 'pandit':
+        return const PanditPoojaServicesPage();
+      case 'hotel_manager':
+        return const ProviderMarketplaceManagementPage(type: MarketplaceType.accommodation);
+      case 'vehicle_owner':
+        return const ProviderMarketplaceManagementPage(type: MarketplaceType.transport);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   void _handleQuickAction(ProviderQuickAction action) {
-    if (action.routeName != null) {
-      Navigator.of(context).pushNamed(action.routeName!);
+    final route = action.routeName;
+    if (route == RouteNames.panditPoojaBookings ||
+        route == RouteNames.providerAccommodationBookings ||
+        route == RouteNames.providerTransportBookings) {
+      setState(() => _selectedIndex = 1);
       return;
     }
-    if (action.label == 'View Earnings') {
-      Navigator.of(context).pushNamed(RouteNames.providerEarnings);
+    if (route == RouteNames.panditPoojaServices ||
+        route == RouteNames.providerAccommodationManagement ||
+        route == RouteNames.providerTransportManagement) {
+      setState(() => _selectedIndex = 2);
+      return;
+    }
+    if (action.label == 'View Earnings' || route == RouteNames.providerEarnings) {
+      setState(() => _selectedIndex = 3);
+      return;
+    }
+    if (route != null) {
+      Navigator.of(context).pushNamed(route);
       return;
     }
     _unavailable(action.label);
   }
 
-  void _navigateBottom(int index) {
-    final config = widget.config;
-    if (index == config.bottomItems.length - 1) {
-      Navigator.of(context).pushNamed(RouteNames.providerProfile);
-      return;
-    }
-    if (index == 3) {
-      Navigator.of(context).pushNamed(RouteNames.providerEarnings);
-      return;
-    }
-    if (config.expectedProviderType == 'pandit') {
-      if (index == 1) {
-        Navigator.of(context).pushNamed(RouteNames.panditPoojaBookings);
-        return;
-      }
-      if (index == 2) {
-        Navigator.of(context).pushNamed(RouteNames.panditPoojaServices);
-        return;
-      }
-    } else if (config.expectedProviderType == 'hotel_manager') {
-      if (index == 1) {
-        Navigator.of(context).pushNamed(RouteNames.providerAccommodationBookings);
-        return;
-      }
-      if (index == 2) {
-        Navigator.of(context).pushNamed(RouteNames.providerAccommodationManagement);
-        return;
-      }
-    } else if (config.expectedProviderType == 'vehicle_owner') {
-      if (index == 1) {
-        Navigator.of(context).pushNamed(RouteNames.providerTransportBookings);
-        return;
-      }
-      if (index == 2) {
-        Navigator.of(context).pushNamed(RouteNames.providerTransportManagement);
-        return;
-      }
-    }
-    setState(() => _selectedIndex = index);
-    if (index != 0) _unavailable(config.bottomItems[index].label);
-  }
 }
 
 class _DashboardHeader extends StatelessWidget {

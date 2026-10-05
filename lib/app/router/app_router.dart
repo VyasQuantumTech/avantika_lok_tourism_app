@@ -7,7 +7,7 @@ import '../../features/explore/presentation/pages/explore_detail_page.dart';
 import '../../features/explore/presentation/pages/explore_page.dart';
 import '../../features/explore/presentation/pages/image_gallery_page.dart';
 import '../../features/explore/presentation/pages/video_gallery_page.dart';
-import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/home/presentation/pages/customer_main_shell.dart';
 import '../../features/home/presentation/pages/splash_page.dart';
 import '../../features/marketplace/domain/entities/marketplace_entities.dart';
 import '../../features/marketplace/presentation/marketplace_pages.dart';
@@ -140,7 +140,7 @@ class AppRouter {
         return PageRouteBuilder<void>(
           settings: settings,
           transitionDuration: const Duration(milliseconds: 280),
-          pageBuilder: (_, animation, __) => const HomePage(),
+          pageBuilder: (_, animation, __) => const CustomerMainShell(),
           transitionsBuilder: (_, animation, __, child) {
             return FadeTransition(
               opacity: animation,
@@ -152,7 +152,7 @@ class AppRouter {
 
       case RouteNames.customerProfile:
         return MaterialPageRoute<void>(
-          builder: (_) => const CustomerProfilePage(),
+          builder: (_) => const CustomerMainShell(initialIndex: 4),
           settings: settings,
         );
 
@@ -164,7 +164,7 @@ class AppRouter {
 
       case RouteNames.customerBookings:
         return MaterialPageRoute<void>(
-          builder: (_) => const CustomerBookingsHubPage(),
+          builder: (_) => const CustomerMainShell(initialIndex: 1),
           settings: settings,
         );
 
@@ -313,7 +313,7 @@ class AppRouter {
       // ---------------------------------------------------------------------
       case RouteNames.explore:
         return MaterialPageRoute<void>(
-          builder: (_) => const ExplorePage(),
+          builder: (_) => const CustomerMainShell(initialIndex: 2),
           settings: settings,
         );
 

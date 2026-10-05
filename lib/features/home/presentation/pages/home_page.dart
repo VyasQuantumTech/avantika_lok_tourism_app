@@ -23,7 +23,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late Future<HomeDashboard> _dashboardFuture;
-  int _selectedBottomIndex = 0;
 
   @override
   void initState() {
@@ -87,44 +86,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-          ),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _selectedBottomIndex,
-            onTap: (index) {
-              if (index == 4) {
-                Navigator.of(context).pushNamed(RouteNames.customerProfile);
-                return;
-              }
-              setState(() => _selectedBottomIndex = index);
-              if (index == 1) {
-                Navigator.of(context).pushNamed(RouteNames.customerBookings);
-              } else if (index == 2) {
-                Navigator.of(context).pushNamed(RouteNames.explore);
-              }
-            },
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_month_outlined),
-                label: 'Booking',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.location_on_outlined),
-                label: 'Discover',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.favorite_border),
-                label: 'Favourite',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                label: 'Profile',
-              ),
-            ],
           ),
         );
       },
