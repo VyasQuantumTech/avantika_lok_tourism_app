@@ -8,7 +8,7 @@ class MarketplaceActions {
 
   Future<List<MarketplaceItem>> browse(MarketplaceType type, {String? query}) => repository.publicItems(type, query: query);
   Future<MarketplaceItem> detail(MarketplaceType type, String id) => repository.publicDetail(type, id);
-  Future<AccommodationAvailabilityQuote> checkAccommodationAvailability({required String identifier, required String checkIn, required String checkOut, required int guests, required int units}) => repository.accommodationAvailability(identifier: identifier, checkIn: checkIn, checkOut: checkOut, guests: guests, units: units);
+  Future<AccommodationAvailabilityQuote> checkAccommodationAvailability({required String identifier, required String checkIn, required String checkOut, required int adults, required int children, required int units}) => repository.accommodationAvailability(identifier: identifier, checkIn: checkIn, checkOut: checkOut, adults: adults, children: children, units: units);
   Future<List<MarketplaceBooking>> myBookings(MarketplaceType type) => repository.customerBookings(type);
   Future<MarketplaceBooking> booking(String id, {bool provider = false}) => repository.bookingDetail(id, provider: provider);
   Future<MarketplaceBooking> book(MarketplaceType type, Map<String, dynamic> body) => repository.createBooking(type, body);

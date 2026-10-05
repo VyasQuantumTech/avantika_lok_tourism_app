@@ -8,7 +8,8 @@ abstract class MarketplaceRepository {
     required String identifier,
     required String checkIn,
     required String checkOut,
-    required int guests,
+    required int adults,
+    required int children,
     required int units,
   });
 

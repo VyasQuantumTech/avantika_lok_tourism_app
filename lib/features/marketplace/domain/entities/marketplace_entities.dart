@@ -22,7 +22,7 @@ class MarketplaceItem {
   String get city => _first(['city', 'location_name', 'locationName', 'pickup_city', 'pickupCity']);
   String get state => _first(['state']);
   String get address => _first(['address', 'address_line_1', 'addressLine1']);
-  String get propertyType => _first(['property_type', 'propertyType']);
+  String get propertyType => _first(['accommodation_type', 'accommodationType', 'property_type', 'propertyType']);
   String get checkInTime => _first(['check_in_time', 'checkInTime']);
   String get checkOutTime => _first(['check_out_time', 'checkOutTime']);
   String get status => _first(
@@ -30,7 +30,19 @@ class MarketplaceItem {
         fallback: raw['is_active'] == false || raw['isActive'] == false ? 'inactive' : 'active',
       );
   bool get isActive => raw['is_active'] != false && raw['isActive'] != false;
-  double get price => _number(['price_amount', 'priceAmount', 'base_price', 'basePrice', 'price_per_night', 'pricePerNight', 'price', 'daily_rate', 'dailyRate', 'amount']);
+  double get price {
+    if (type == MarketplaceType.accommodation && units.isNotEmpty) {
+      final prices = units
+          .map((unit) => _valueNumber(unit['basePriceAmount'] ?? unit['base_price_amount']))
+          .where((value) => value > 0)
+          .toList();
+      if (prices.isNotEmpty) {
+        prices.sort();
+        return prices.first;
+      }
+    }
+    return _number(['price_amount', 'priceAmount', 'base_price_amount', 'basePriceAmount', 'base_price', 'basePrice', 'price_per_night', 'pricePerNight', 'price', 'daily_rate', 'dailyRate', 'amount']);
+  }
   String get currency => _first(['currency'], fallback: 'INR');
   List<Map<String, dynamic>> get units => _maps(raw['units']);
   List<Map<String, dynamic>> get vehicles => _maps(raw['vehicles']);
@@ -54,7 +66,7 @@ class MarketplaceItem {
       }
     }
 
-    for (final key in const ['media', 'images', 'gallery']) {
+    for (final key in const ['mediaAssets', 'media', 'images', 'gallery']) {
       final value = raw[key];
       if (value is List) {
         for (final item in value) add(item);
@@ -92,6 +104,9 @@ class MarketplaceItem {
   static List<String> _strings(dynamic value) => value is List
       ? value.map((e) => '$e'.trim()).where((e) => e.isNotEmpty).toList()
       : const [];
+
+  static double _valueNumber(dynamic value) =>
+      value is num ? value.toDouble() : double.tryParse('${value ?? ''}') ?? 0;
 }
 
 class AccommodationAvailabilityQuote {
@@ -112,11 +127,28 @@ class AccommodationAvailabilityQuote {
   String get currency => '${raw['currency'] ?? 'INR'}';
   String get message => '${raw['message'] ?? raw['reason'] ?? ''}';
   List<Map<String, dynamic>> get availableUnits {
-    final dynamic value = raw['available_units'] ?? raw['availableUnits'] ?? raw['units'] ?? raw['options'];
+    final dynamic value = raw['unitsAvailability'] ?? raw['units_availability'] ?? raw['available_units'] ?? raw['availableUnits'] ?? raw['units'] ?? raw['options'];
     return value is List
         ? value.whereType<Map>().map((e) => e.map((k, v) => MapEntry('$k', v))).toList()
         : const [];
   }
+
+  Map<String, dynamic>? unitAvailability(String unitId) {
+    for (final unit in availableUnits) {
+      final id = '${unit['unitId'] ?? unit['unit_id'] ?? unit['id'] ?? ''}';
+      if (id == unitId) return unit;
+    }
+    return null;
+  }
+
+  bool isUnitAvailable(String unitId) {
+    final unit = unitAvailability(unitId);
+    if (unit == null) return false;
+    final value = unit['available'] ?? unit['isAvailable'] ?? unit['is_available'];
+    return value == true || value == 1 || '$value'.toLowerCase() == 'true';
+  }
+
+  double unitTotalAmount(String unitId) => _double(unitAvailability(unitId)?['totalAmount'] ?? unitAvailability(unitId)?['total_amount']);
 
   static double _double(dynamic value) => value is num ? value.toDouble() : double.tryParse('${value ?? ''}') ?? 0;
 }
@@ -139,6 +171,12 @@ class MarketplaceBooking {
   Map<String, dynamic> get serviceSnapshot => _map(raw['service_snapshot'] ?? raw['serviceSnapshot']);
   String get displayName => '${pricingSnapshot['name'] ?? pricingSnapshot['property_name'] ?? pricingSnapshot['propertyName'] ?? serviceSnapshot['name'] ?? serviceSnapshot['property_name'] ?? serviceSnapshot['propertyName'] ?? raw['service_name'] ?? raw['serviceName'] ?? bookingType}';
   String get notes => '${raw['notes'] ?? ''}';
+  String get startOtp => '${raw['startOtp'] ?? raw['start_otp'] ?? ''}';
+  String get endOtp => '${raw['endOtp'] ?? raw['end_otp'] ?? ''}';
+  String get serviceStartedAt => '${raw['service_started_at'] ?? raw['serviceStartedAt'] ?? ''}';
+  String get serviceEndedAt => '${raw['service_ended_at'] ?? raw['serviceEndedAt'] ?? ''}';
+  bool get hasStarted => serviceStartedAt.trim().isNotEmpty;
+  bool get hasEnded => serviceEndedAt.trim().isNotEmpty;
   bool get isCompleted => status.toLowerCase() == 'completed';
   bool get isCancelled => const {'cancelled', 'canceled', 'rejected'}.contains(status.toLowerCase());
 

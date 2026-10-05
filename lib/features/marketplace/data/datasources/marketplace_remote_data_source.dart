@@ -11,7 +11,8 @@ abstract class MarketplaceRemoteDataSource {
     required String identifier,
     required String checkIn,
     required String checkOut,
-    required int guests,
+    required int adults,
+    required int children,
     required int units,
   });
 
@@ -76,11 +77,11 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   }
 
   @override
-  Future<AccommodationAvailabilityQuote> accommodationAvailability({required String identifier, required String checkIn, required String checkOut, required int guests, required int units}) async {
+  Future<AccommodationAvailabilityQuote> accommodationAvailability({required String identifier, required String checkIn, required String checkOut, required int adults, required int children, required int units}) async {
     final path = '${Endpoints.accommodations}/${Uri.encodeComponent(identifier)}/availability'
-        '?check_in=${Uri.encodeQueryComponent(checkIn)}'
-        '&check_out=${Uri.encodeQueryComponent(checkOut)}'
-        '&guests=$guests&units=$units';
+        '?checkIn=${Uri.encodeQueryComponent(checkIn)}'
+        '&checkOut=${Uri.encodeQueryComponent(checkOut)}'
+        '&adults=$adults&children=$children&units=$units';
     final response = await api.get(path);
     final data = _data(response);
     final quote = data['availability'] is Map
@@ -91,7 +92,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
 
   @override
   Future<List<MarketplaceBooking>> customerBookings(MarketplaceType type) async {
-    final response = await api.get('${Endpoints.bookings}?page=1&limit=100', authenticated: true);
+    final response = await api.get('${Endpoints.bookings}?page=1&pageSize=100&bookingType=${type.apiValue}', authenticated: true);
     return _items(response)
         .map(MarketplaceBooking.new)
         .where((booking) => _matchesType(booking, type))
@@ -125,7 +126,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       Endpoints.reviews,
       authenticated: true,
       body: <String, dynamic>{
-        'booking_id': bookingId,
+        'bookingId': bookingId,
         'rating': rating,
         'comment': comment.trim(),
         if (title?.trim().isNotEmpty == true) 'title': title!.trim(),
@@ -135,14 +136,15 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
 
   @override
   Future<String> uploadImage({required Uint8List bytes, required String fileName, required String mimeType}) async {
-    final response = await api.postMultipart(
+    final response = await api.postBytes(
       Endpoints.media,
       bytes: bytes,
-      fileName: fileName,
-      fieldName: 'file',
       contentType: _mime(mimeType, fileName),
-      fields: const {'purpose': 'general'},
       authenticated: true,
+      headers: <String, String>{
+        'x-file-name': fileName,
+        'x-media-visibility': 'public',
+      },
     );
     final data = _data(response);
     final nested = data['media'] ?? data['asset'];
@@ -158,16 +160,36 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     final response = await api.get('${_provider(type)}?page=1&limit=100', authenticated: true);
     if (type == MarketplaceType.transport) {
       final data = _data(response);
-      final vehicles = _maps(data['vehicles']);
-      return vehicles.map((e) => MarketplaceItem(type: type, raw: e)).toList();
+      final profile = data['transportProviderProfile'];
+      if (profile is! Map) return const <MarketplaceItem>[];
+      final normalizedProfile = profile.map((key, value) => MapEntry('$key', value));
+      final routes = _maps(normalizedProfile['routes']);
+      final vehicles = _maps(normalizedProfile['vehicles']);
+      return vehicles.map((vehicle) {
+        final raw = <String, dynamic>{...vehicle};
+        raw['routes'] = routes;
+        return MarketplaceItem(type: type, raw: raw);
+      }).toList();
     }
     return _items(response).map((e) => MarketplaceItem(type: type, raw: e)).toList();
   }
 
   @override
   Future<MarketplaceItem> providerItem(MarketplaceType type, String id) async {
-    final response = await api.get('${_provider(type)}/${Uri.encodeComponent(id)}', authenticated: true);
-    return MarketplaceItem(type: type, raw: _object(response, type == MarketplaceType.accommodation ? 'accommodation' : 'vehicle'));
+    if (type == MarketplaceType.transport) {
+      final profile = await transportProfile();
+      for (final vehicle in _maps(profile['vehicles'])) {
+        if ('${vehicle['id'] ?? ''}' == id) {
+          return MarketplaceItem(type: type, raw: vehicle);
+        }
+      }
+      throw StateError('Vehicle was not found in the provider transport profile.');
+    }
+    final response = await api.get(
+      '${Endpoints.providerAccommodations}/${Uri.encodeComponent(id)}',
+      authenticated: true,
+    );
+    return MarketplaceItem(type: type, raw: _object(response, 'accommodation'));
   }
 
   @override
@@ -215,11 +237,20 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
 
   @override
   Future<void> submitAccommodation(String id, {Map<String, dynamic>? body}) async {
-    await api.post('${Endpoints.providerAccommodations}/$id/submit', authenticated: true, body: body?.isEmpty == true ? null : body);
+    await api.post(
+      '${Endpoints.providerAccommodations}/$id/submit',
+      authenticated: true,
+    );
   }
 
   @override
-  Future<Map<String, dynamic>> transportProfile() async => _data(await api.get(Endpoints.providerTransport, authenticated: true));
+  Future<Map<String, dynamic>> transportProfile() async {
+    final data = _data(await api.get(Endpoints.providerTransport, authenticated: true));
+    final profile = data['transportProviderProfile'];
+    return profile is Map
+        ? profile.map((key, value) => MapEntry('$key', value))
+        : <String, dynamic>{};
+  }
   @override
   Future<Map<String, dynamic>> saveTransportProfile(Map<String, dynamic> body) async => _data(await api.put(Endpoints.providerTransport, authenticated: true, body: body));
   @override
@@ -272,23 +303,30 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
 
   @override
   Future<List<MarketplaceBooking>> providerBookings(MarketplaceType type) async {
-    final response = await api.get('${Endpoints.providerBookings}?page=1&limit=100', authenticated: true);
-    return _items(response)
-        .map(MarketplaceBooking.new)
-        .where((booking) => _matchesType(booking, type))
-        .toList();
+    final response = await api.get(
+      '${Endpoints.providerBookings}?bookingType=${type.apiValue}&page=1&pageSize=100',
+      authenticated: true,
+    );
+    return _items(response).map(MarketplaceBooking.new).toList();
   }
 
   @override
-  Future<MarketplaceBooking> providerBookingAction(MarketplaceType type, String id, String action, {Map<String, dynamic>? body}) async {
-    final path = type == MarketplaceType.accommodation
-        ? '${Endpoints.providerBookings}/$id/accommodation/$action'
-        : '${Endpoints.providerBookings}/$id/${type.apiValue}/$action';
-    final response = await api.post(path, authenticated: true, body: body);
-    final data = _data(response);
-    return MarketplaceBooking(data['booking'] is Map
-        ? (data['booking'] as Map).map((k, v) => MapEntry('$k', v))
-        : data);
+  Future<MarketplaceBooking> providerBookingAction(
+    MarketplaceType type,
+    String id,
+    String action, {
+    Map<String, dynamic>? body,
+  }) async {
+    const allowed = <String>{'accept', 'reject', 'cancel', 'start', 'complete'};
+    if (!allowed.contains(action)) {
+      throw ArgumentError('Unsupported ${type.apiValue} booking action: $action');
+    }
+    final response = await api.post(
+      '${Endpoints.providerBookings}/$id/${type.apiValue}/$action',
+      authenticated: true,
+      body: body,
+    );
+    return MarketplaceBooking(_object(response, 'booking'));
   }
 
   bool _matchesType(MarketplaceBooking booking, MarketplaceType type) {

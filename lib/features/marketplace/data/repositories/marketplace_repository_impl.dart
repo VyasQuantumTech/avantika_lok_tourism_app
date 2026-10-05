@@ -12,7 +12,7 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   @override
   Future<MarketplaceItem> publicDetail(MarketplaceType type, String id) => remote.publicDetail(type, id);
   @override
-  Future<AccommodationAvailabilityQuote> accommodationAvailability({required String identifier, required String checkIn, required String checkOut, required int guests, required int units}) => remote.accommodationAvailability(identifier: identifier, checkIn: checkIn, checkOut: checkOut, guests: guests, units: units);
+  Future<AccommodationAvailabilityQuote> accommodationAvailability({required String identifier, required String checkIn, required String checkOut, required int adults, required int children, required int units}) => remote.accommodationAvailability(identifier: identifier, checkIn: checkIn, checkOut: checkOut, adults: adults, children: children, units: units);
   @override
   Future<List<MarketplaceBooking>> customerBookings(MarketplaceType type) => remote.customerBookings(type);
   @override
