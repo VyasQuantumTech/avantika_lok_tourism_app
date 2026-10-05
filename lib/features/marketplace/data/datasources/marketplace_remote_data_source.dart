@@ -64,7 +64,31 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     final params = <String>['page=1', 'limit=100'];
     if (clean != null && clean.isNotEmpty) params.add('q=${Uri.encodeQueryComponent(clean)}');
     final response = await api.get('${_public(type)}?${params.join('&')}');
-    return _items(response).map((e) => MarketplaceItem(type: type, raw: e)).toList();
+    final items = _items(response);
+    if (type != MarketplaceType.transport) {
+      return items.map((e) => MarketplaceItem(type: type, raw: e)).toList();
+    }
+
+    // Public transport returns provider profiles containing approved vehicles.
+    // Flatten them for the existing marketplace list instead of introducing a
+    // second transport discovery flow.
+    final vehicles = <MarketplaceItem>[];
+    for (final profile in items) {
+      final routes = _maps(profile['routes']);
+      final provider = profile['providerProfile'] ?? profile['provider_profile'];
+      for (final vehicle in _maps(profile['vehicles'])) {
+        final raw = <String, dynamic>{...vehicle};
+        raw['routes'] = routes;
+        raw['transportProvider'] = profile;
+        if (provider is Map) {
+          raw['city'] ??= provider['city'];
+          raw['state'] ??= provider['state'];
+          raw['providerDisplayName'] ??= provider['displayName'] ?? provider['display_name'];
+        }
+        vehicles.add(MarketplaceItem(type: type, raw: raw));
+      }
+    }
+    return vehicles;
   }
 
   @override
@@ -73,7 +97,29 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
         ? '${Endpoints.transport}/vehicles/${Uri.encodeComponent(id)}'
         : '${Endpoints.accommodations}/${Uri.encodeComponent(id)}';
     final response = await api.get(path);
-    return MarketplaceItem(type: type, raw: _object(response, type == MarketplaceType.transport ? 'vehicle' : 'accommodation'));
+    final raw = _object(response, type == MarketplaceType.transport ? 'vehicle' : 'accommodation');
+    if (type == MarketplaceType.transport) {
+      final pricing = _maps(raw['pricing']);
+      final routes = <Map<String, dynamic>>[];
+      for (final price in pricing) {
+        final route = price['route'];
+        if (route is Map) {
+          final normalized = route.map((key, value) => MapEntry('$key', value));
+          final id = '${normalized['id'] ?? ''}';
+          if (id.isNotEmpty && !routes.any((item) => '${item['id'] ?? ''}' == id)) routes.add(normalized);
+        }
+      }
+      raw['routes'] = routes;
+      final provider = raw['transportProviderProfile'] ?? raw['transport_provider_profile'];
+      if (provider is Map) {
+        final providerProfile = provider['providerProfile'] ?? provider['provider_profile'];
+        if (providerProfile is Map) {
+          raw['city'] ??= providerProfile['city'];
+          raw['state'] ??= providerProfile['state'];
+        }
+      }
+    }
+    return MarketplaceItem(type: type, raw: raw);
   }
 
   @override

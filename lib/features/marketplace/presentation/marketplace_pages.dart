@@ -416,8 +416,29 @@ class _TransportCustomerDetail extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Routes', style: AppTypography.sectionTitle),
-              if (options.isEmpty) Text('No routes returned.', style: AppTypography.caption),
+              Text('Book transport', style: AppTypography.sectionTitle),
+              if (options.isEmpty) ...[
+                Text('This vehicle can be booked without a fixed route.', style: AppTypography.caption),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CustomerMarketplaceBookingPage(
+                          type: MarketplaceType.transport,
+                          item: item,
+                        ),
+                      ),
+                    ),
+                    icon: const Icon(Icons.directions_car_outlined),
+                    label: const Text('Book this vehicle'),
+                  ),
+                ),
+              ] else ...[
+                Text('Choose an available route.', style: AppTypography.caption),
+              ],
               ...options.map(
                 (option) => ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -543,11 +564,9 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
               _field(endTime, 'End time'),
               _numberField(passengers, 'Passengers', minimum: 1),
             ],
-            if (accommodation) ...[
-              _field(customerName, 'Guest / customer name', required: true),
-              _field(customerPhone, 'Contact phone', required: true),
-              _field(customerEmail, 'Contact email'),
-            ],
+            _field(customerName, accommodation ? 'Guest / customer name' : 'Passenger / customer name', required: true),
+            _field(customerPhone, 'Contact phone', required: true),
+            _field(customerEmail, 'Contact email'),
             _field(notes, 'Notes', lines: 3),
             const SizedBox(height: 12),
             FilledButton.icon(
@@ -688,12 +707,18 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
 
   Map<String, dynamic> _transportBookingBody() {
     final option = widget.option ?? const <String, dynamic>{};
-    final serviceId = _str(option, ['id', 'route_id', 'routeId'], fallback: widget.item.id);
+    final routeId = _str(option, ['id', 'route_id', 'routeId']);
+    if (widget.item.id.isEmpty) throw const ApiException('No bookable vehicle was returned.');
     return <String, dynamic>{
-      'service_type': 'transport',
-      'service_id': serviceId,
-      'scheduled_at': '${checkIn.text}T${startTime.text.trim()}:00+05:30',
-      'quantity': int.parse(passengers.text),
+      'vehicleId': widget.item.id,
+      if (routeId.isNotEmpty) 'routeId': routeId,
+      'serviceDate': checkIn.text,
+      'startTime': startTime.text.trim(),
+      'endTime': endTime.text.trim(),
+      'passengers': int.parse(passengers.text),
+      'customerName': customerName.text.trim(),
+      'customerPhone': customerPhone.text.trim(),
+      if (customerEmail.text.trim().isNotEmpty) 'customerEmail': customerEmail.text.trim(),
       if (notes.text.trim().isNotEmpty) 'notes': notes.text.trim(),
     };
   }
@@ -859,7 +884,7 @@ class _CustomerMarketplaceBookingDetailPageState extends State<CustomerMarketpla
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialog) => AlertDialog(
-          title: const Text('Review your stay'),
+          title: Text(widget.type == MarketplaceType.accommodation ? 'Review your stay' : 'Review your ride'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
