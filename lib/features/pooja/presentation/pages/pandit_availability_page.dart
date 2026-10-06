@@ -6,6 +6,7 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../domain/entities/pooja_entities.dart';
 import '../../domain/usecases/pooja_actions.dart';
 
@@ -127,15 +128,11 @@ class _PanditAvailabilityPageState extends State<PanditAvailabilityPage> {
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                AppPanel(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const AppSectionTitle(
-                        title: 'Add weekly slot',
-                        subtitle: 'Create a repeatable availability window',
-                      ),
-                      const SizedBox(height: 16),
+                ProviderFormSection(
+                  title: 'Add weekly slot',
+                  subtitle: 'Create a repeatable availability window',
+                  icon: Icons.add_task_rounded,
+                  children: [
                       DropdownButtonFormField<int>(
                         value: _weekday,
                         decoration: const InputDecoration(labelText: 'Weekday'),
@@ -165,19 +162,14 @@ class _PanditAvailabilityPageState extends State<PanditAvailabilityPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: _saving ? null : _add,
-                          icon: _saving
-                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Icon(Icons.add_rounded),
-                          label: const Text('Add availability'),
-                        ),
+                      ProviderActionButton(
+                        label: 'Add availability',
+                        onPressed: _saving ? null : _add,
+                        icon: Icons.add_rounded,
+                        loading: _saving,
+                        expand: true,
                       ),
                     ],
-                  ),
                 ),
                 SizedBox(height: AppDimensions.sectionGap),
                 AppSectionTitle(
@@ -199,16 +191,7 @@ class _PanditAvailabilityPageState extends State<PanditAvailabilityPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: AppColors.primarySoft,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(Icons.schedule_rounded, color: AppColors.primary),
-                            ),
+                            const ProviderIconBox(icon: Icons.schedule_rounded),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(

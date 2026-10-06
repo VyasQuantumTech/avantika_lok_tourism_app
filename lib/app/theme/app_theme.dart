@@ -85,11 +85,13 @@ class AppTheme {
           textStyle: AppTypography.label,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.smallRadius)),
           elevation: 0,
+          shadowColor: AppColors.primary.withValues(alpha: .18),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 48),
+          minimumSize: const Size(0, 46),
+          backgroundColor: AppColors.surface,
           foregroundColor: AppColors.primary,
           side: BorderSide(color: AppColors.border),
           textStyle: AppTypography.label,
@@ -159,7 +161,7 @@ class AppTheme {
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.navInactive,
         type: BottomNavigationBarType.fixed,
-        elevation: 10,
+        elevation: 14,
         selectedLabelStyle: AppTypography.tiny.copyWith(fontWeight: FontWeight.w700),
         unselectedLabelStyle: AppTypography.tiny,
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_dimensions.dart';
 import '../../app/theme/app_typography.dart';
+import 'app_button.dart';
 
 class AppPage extends StatelessWidget {
   const AppPage({
@@ -27,22 +28,43 @@ class AppPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title),
+            Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
             if (subtitle != null && subtitle!.trim().isNotEmpty)
-              Text(subtitle!, style: AppTypography.caption),
+              Text(
+                subtitle!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.caption,
+              ),
           ],
         ),
         actions: actions,
       ),
-      body: SafeArea(
-        top: false,
-        child: Padding(
-          padding: padding ?? EdgeInsets.all(AppDimensions.pagePadding),
-          child: child,
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.primarySoft.withValues(alpha: .34),
+              AppColors.background,
+              AppColors.background,
+            ],
+            stops: const [0, .18, 1],
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: padding ?? EdgeInsets.all(AppDimensions.pagePadding),
+            child: child,
+          ),
         ),
       ),
       bottomNavigationBar: bottomNavigationBar,
@@ -73,14 +95,14 @@ class AppPanel extends StatelessWidget {
       width: double.infinity,
       padding: padding ?? EdgeInsets.all(AppDimensions.cardPadding),
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surface,
+        color: backgroundColor ?? AppColors.surface.withValues(alpha: .97),
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         border: Border.all(color: borderColor ?? AppColors.border),
         boxShadow: [
           BoxShadow(
             color: AppColors.shadow,
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -413,7 +435,7 @@ class AppEmptyState extends StatelessWidget {
             Text(message, style: AppTypography.caption, textAlign: TextAlign.center),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 16),
-              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+              AppGradientButton(label: actionLabel!, onPressed: onAction, expand: false),
             ],
           ],
         ),

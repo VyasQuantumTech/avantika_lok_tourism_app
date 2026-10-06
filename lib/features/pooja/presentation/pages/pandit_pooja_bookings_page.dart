@@ -6,6 +6,7 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../domain/entities/pooja_entities.dart';
 import '../../domain/usecases/pooja_actions.dart';
 
@@ -411,61 +412,27 @@ class _BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(Icons.temple_hindu_outlined, color: AppColors.primary),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(poojaName, style: AppTypography.sectionTitle),
-                    const SizedBox(height: 3),
-                    Text(customerName, style: AppTypography.caption),
-                    const SizedBox(height: 4),
-                    Text('#${booking.bookingNumber}', style: AppTypography.tiny),
-                  ],
-                ),
-              ),
-              AppStatusChip(label: booking.status),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textMuted),
-              const SizedBox(width: 6),
-              Text('${booking.serviceDate} ${booking.startTime?.substring(0, 5) ?? ''}', style: AppTypography.caption),
-              const Spacer(),
-              Text('${booking.currency} ${booking.totalAmount.toStringAsFixed(0)}', style: AppTypography.label),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _BookingActions(
-            booking: booking,
-            onAccept: onAccept,
-            onReject: onReject,
-            onStart: onStart,
-            onEnd: onEnd,
-            onCancel: onCancel,
-            onDetails: onDetails,
-          ),
-        ],
-      ),
+    return ProviderListCard(
+      title: poojaName,
+      subtitle: '$customerName • #${booking.bookingNumber}',
+      placeholderIcon: Icons.temple_hindu_outlined,
+      status: booking.status,
+      meta: [
+        ProviderMetaItem(Icons.calendar_today_outlined, '${booking.serviceDate} ${booking.startTime?.substring(0, 5) ?? ''}'),
+        ProviderMetaItem(Icons.currency_rupee_rounded, '${booking.currency} ${booking.totalAmount.toStringAsFixed(0)}'),
+      ],
+      actions: [
+        _BookingActions(
+          booking: booking,
+          onAccept: onAccept,
+          onReject: onReject,
+          onStart: onStart,
+          onEnd: onEnd,
+          onCancel: onCancel,
+          onDetails: onDetails,
+        ),
+      ],
+      onTap: onDetails,
     );
   }
 }
@@ -496,17 +463,17 @@ class _BookingActions extends StatelessWidget {
       runSpacing: 8,
       children: [
         if (onAccept != null)
-          FilledButton.icon(onPressed: onAccept, icon: const Icon(Icons.check_rounded), label: const Text('Accept')),
+          ProviderActionButton(label: 'Accept', onPressed: onAccept, icon: Icons.check_rounded),
         if (onReject != null)
-          OutlinedButton.icon(onPressed: onReject, icon: const Icon(Icons.close_rounded), label: const Text('Reject')),
+          ProviderSecondaryButton(label: 'Reject', onPressed: onReject, icon: Icons.close_rounded),
         if (onStart != null)
-          FilledButton.icon(onPressed: onStart, icon: const Icon(Icons.play_arrow_rounded), label: const Text('Start Pooja')),
+          ProviderActionButton(label: 'Start Pooja', onPressed: onStart, icon: Icons.play_arrow_rounded),
         if (onEnd != null)
-          FilledButton.icon(onPressed: onEnd, icon: const Icon(Icons.stop_circle_outlined), label: const Text('End Pooja')),
+          ProviderActionButton(label: 'End Pooja', onPressed: onEnd, icon: Icons.stop_circle_outlined),
         if (onCancel != null)
-          TextButton.icon(onPressed: onCancel, icon: const Icon(Icons.cancel_outlined), label: const Text('Cancel')),
+          ProviderSecondaryButton(label: 'Cancel', onPressed: onCancel, icon: Icons.cancel_outlined, destructive: true),
         if (onDetails != null)
-          TextButton.icon(onPressed: onDetails, icon: const Icon(Icons.visibility_outlined), label: const Text('Details')),
+          ProviderSecondaryButton(label: 'Details', onPressed: onDetails, icon: Icons.visibility_outlined),
       ],
     );
   }

@@ -7,6 +7,7 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../domain/entities/pooja_entities.dart';
 import '../../domain/usecases/pooja_actions.dart';
 
@@ -162,10 +163,10 @@ class _PanditPoojaServicesPageState extends State<PanditPoojaServicesPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: ProviderFloatingActionButton(
         onPressed: () => _openForm(),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add service'),
+        icon: Icons.add_rounded,
+        label: 'Add service',
       ),
     );
   }
@@ -179,73 +180,45 @@ class _OfferingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppPanel(
-      onTap: onEdit,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(Icons.temple_hindu_outlined, color: AppColors.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(offering.name, style: AppTypography.sectionTitle),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${offering.currency} ${offering.priceAmount.toStringAsFixed(0)} • ${offering.serviceMode}',
-                      style: AppTypography.caption,
-                    ),
-                  ],
-                ),
-              ),
-              AppStatusChip(label: offering.approvalStatus),
-            ],
-          ),
-          if (offering.shortDescription?.trim().isNotEmpty == true) ...[
-            const SizedBox(height: 12),
-            Text(
+    return ProviderListCard(
+      title: offering.name,
+      subtitle: '${offering.currency} ${offering.priceAmount.toStringAsFixed(0)} • ${offering.serviceMode}${offering.durationMinutes == null ? '' : ' • ${offering.durationMinutes} min'}',
+      imageUrl: offering.media.isEmpty ? null : offering.media.first.url,
+      placeholderIcon: Icons.temple_hindu_rounded,
+      status: offering.approvalStatus,
+      meta: [
+        ProviderMetaItem(Icons.toggle_on_outlined, offering.isActive ? 'Active' : 'Inactive'),
+        ProviderMetaItem(Icons.photo_library_outlined, '${offering.media.length} images'),
+      ],
+      footer: offering.shortDescription?.trim().isNotEmpty == true
+          ? Text(
               offering.shortDescription!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              AppStatusChip(label: offering.isActive ? 'active' : 'inactive'),
-              if (offering.durationMinutes != null)
-                AppStatusChip(label: '${offering.durationMinutes} min', tone: AppStatusTone.neutral),
-              if (offering.media.isNotEmpty)
-                AppStatusChip(label: '${offering.media.length} images', tone: AppStatusTone.info),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('View / edit service'),
-            ),
-          ),
-        ],
-      ),
+              style: AppTypography.caption,
+            )
+          : null,
+      actions: [
+        ProviderSecondaryButton(
+          label: 'View / edit service',
+          onPressed: onEdit,
+          icon: Icons.edit_outlined,
+        ),
+      ],
+      onTap: onEdit,
     );
   }
+}
+
+
+class _PoojaPlaceholder extends StatelessWidget {
+  const _PoojaPlaceholder();
+  @override
+  Widget build(BuildContext context) => Container(
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(colors: [AppColors.primarySoft, AppColors.brandSoft]),
+    ),
+    child: Icon(Icons.temple_hindu_rounded, color: AppColors.primary, size: 30),
+  );
 }

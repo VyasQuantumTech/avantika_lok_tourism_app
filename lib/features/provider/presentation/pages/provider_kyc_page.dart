@@ -4,6 +4,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_dimensions.dart';
+import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../domain/entities/provider_kyc.dart';
 import '../../domain/usecases/manage_provider_kyc.dart';
@@ -246,34 +250,20 @@ class _ProviderKycPageState extends State<ProviderKycPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Provider KYC'),
-        backgroundColor: AppColors.onPrimary,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-      ),
-      body: FutureBuilder<ProviderKycSnapshot>(
+    return AppPage(
+      title: 'Provider KYC',
+      subtitle: 'Verification documents and approval status',
+      child: FutureBuilder<ProviderKycSnapshot>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: AppColors.primary));
+            return const AppLoadingView(message: 'Loading KYC…');
           }
           if (snapshot.hasError || snapshot.data == null) {
             final message = snapshot.error is ApiException
                 ? (snapshot.error! as ApiException).message
                 : 'Unable to load KYC information.';
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text(message, textAlign: TextAlign.center),
-                  const SizedBox(height: 12),
-                  FilledButton(onPressed: _refresh, child: const Text('Retry')),
-                ]),
-              ),
-            );
+            return AppErrorState(message: message, onRetry: _refresh);
           }
 
           final kyc = snapshot.data!;
@@ -281,75 +271,91 @@ class _ProviderKycPageState extends State<ProviderKycPage> {
             onRefresh: _refresh,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
               children: [
                 _StatusCard(snapshot: kyc),
                 if (kyc.reviewReason?.trim().isNotEmpty == true) ...[
                   const SizedBox(height: 12),
-                  _InfoCard(
-                    icon: Icons.admin_panel_settings_outlined,
+                  ProviderInfoBanner(
                     title: 'Administrator note',
-                    text: kyc.reviewReason!,
+                    message: kyc.reviewReason!,
+                    icon: Icons.admin_panel_settings_outlined,
                   ),
                 ],
-                const SizedBox(height: 18),
-                const Text('Required evidence', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                ...kyc.requirements.map((requirement) => Card(
-                      child: ListTile(
-                        leading: Icon(
-                          requirement.satisfied ? Icons.check_circle : Icons.pending_outlined,
-                          color: requirement.satisfied ? AppColors.success : AppColors.primary,
-                        ),
-                        title: Text(_pretty(requirement.key), style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: Text(
-                          requirement.satisfied
-                              ? '${requirement.matchingDocumentCount} document(s) supplied'
-                              : 'Accepted: ${requirement.acceptedTypes.map(_pretty).join(', ')}',
-                        ),
-                        trailing: kyc.canEdit && !requirement.satisfied
-                            ? TextButton(onPressed: _busy ? null : () => _addEvidence(requirement), child: const Text('Add'))
-                            : null,
+                SizedBox(height: AppDimensions.sectionGap),
+                ProviderFormSection(
+                  title: 'Required evidence',
+                  subtitle: 'Complete each requirement before submitting KYC',
+                  icon: Icons.verified_user_outlined,
+                  children: kyc.requirements.map((requirement) {
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: ProviderIconBox(
+                        icon: requirement.satisfied ? Icons.check_rounded : Icons.description_outlined,
+                        tone: requirement.satisfied ? ProviderIconTone.success : ProviderIconTone.primary,
                       ),
-                    )),
-                const SizedBox(height: 18),
-                const Text('Uploaded documents', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                if (kyc.documents.isEmpty)
-                  const _InfoCard(icon: Icons.description_outlined, title: 'No evidence yet', text: 'Add the required documents above to complete your KYC application.')
-                else
-                  ...kyc.documents.map((document) => Card(
-                        child: ListTile(
-                          leading: const Icon(Icons.description_outlined),
-                          title: Text(_pretty(document.documentType), style: const TextStyle(fontWeight: FontWeight.w700)),
-                          subtitle: Text([
-                            document.originalFileName,
-                            if (document.documentNumberLast4 != null) '•••• ${document.documentNumberLast4}',
-                          ].whereType<String>().join('\n')),
-                          trailing: kyc.canEdit
-                              ? IconButton(
-                                  onPressed: _busy ? null : () => _deleteDocument(document),
-                                  icon: const Icon(Icons.delete_outline),
-                                )
-                              : const Icon(Icons.lock_outline),
-                        ),
-                      )),
-                const SizedBox(height: 20),
+                      title: Text(_pretty(requirement.key), style: AppTypography.label),
+                      subtitle: Text(
+                        requirement.satisfied
+                            ? '${requirement.matchingDocumentCount} document(s) supplied'
+                            : 'Accepted: ${requirement.acceptedTypes.map(_pretty).join(', ')}',
+                        style: AppTypography.caption,
+                      ),
+                      trailing: kyc.canEdit && !requirement.satisfied
+                          ? ProviderSectionAction(
+                              label: 'Add',
+                              onPressed: _busy ? null : () => _addEvidence(requirement),
+                            )
+                          : null,
+                    );
+                  }).toList(),
+                ),
+                SizedBox(height: AppDimensions.sectionGap),
+                ProviderFormSection(
+                  title: 'Uploaded documents',
+                  subtitle: '${kyc.documents.length} document ${kyc.documents.length == 1 ? 'record' : 'records'}',
+                  icon: Icons.folder_copy_outlined,
+                  children: kyc.documents.isEmpty
+                      ? [Text('No evidence yet. Add the required documents above to complete your KYC application.', style: AppTypography.caption)]
+                      : kyc.documents.map((document) {
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const ProviderIconBox(icon: Icons.description_outlined),
+                            title: Text(_pretty(document.documentType), style: AppTypography.label),
+                            subtitle: Text(
+                              [
+                                document.originalFileName,
+                                if (document.documentNumberLast4 != null) '•••• ${document.documentNumberLast4}',
+                              ].whereType<String>().join('\n'),
+                              style: AppTypography.caption,
+                            ),
+                            trailing: kyc.canEdit
+                                ? IconButton(
+                                    onPressed: _busy ? null : () => _deleteDocument(document),
+                                    icon: Icon(Icons.delete_outline_rounded, color: AppColors.error),
+                                  )
+                                : const Icon(Icons.lock_outline_rounded),
+                          );
+                        }).toList(),
+                ),
+                SizedBox(height: AppDimensions.sectionGap),
                 if (kyc.canEdit)
-                  FilledButton.icon(
+                  ProviderActionButton(
+                    label: kyc.complete ? 'Submit KYC for review' : 'Complete all required evidence',
                     onPressed: _busy || !kyc.canSubmit ? null : () => _submit(kyc),
-                    icon: _busy
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.verified_user_outlined),
-                    label: Text(kyc.complete ? 'Submit KYC for review' : 'Complete all required evidence'),
-                    style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
+                    icon: Icons.verified_user_outlined,
+                    loading: _busy,
+                    expand: true,
                   ),
-                if (kyc.isApproved)
-                  FilledButton.icon(
+                if (kyc.isApproved) ...[
+                  if (kyc.canEdit) const SizedBox(height: 10),
+                  ProviderActionButton(
+                    label: 'Continue to provider dashboard',
                     onPressed: () => _continueToProviderDashboard(kyc),
-                    icon: const Icon(Icons.dashboard_outlined),
-                    label: const Text('Continue to provider dashboard'),
+                    icon: Icons.dashboard_outlined,
+                    expand: true,
                   ),
+                ],
+                const SizedBox(height: 16),
               ],
             ),
           );
@@ -366,25 +372,11 @@ class _StatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final approved = snapshot.isApproved;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.onPrimary,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(children: [
-        CircleAvatar(
-          backgroundColor: (approved ? AppColors.success : AppColors.primary).withOpacity(0.1),
-          child: Icon(approved ? Icons.verified : Icons.verified_user_outlined, color: approved ? AppColors.success : AppColors.primary),
-        ),
-        const SizedBox(width: 14),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(_pretty(snapshot.status), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 4),
-          Text(_statusMessage(snapshot.status)),
-        ])),
-      ]),
+    return ProviderHeroCard(
+      eyebrow: 'Verification status',
+      value: _pretty(snapshot.status),
+      subtitle: _statusMessage(snapshot.status),
+      icon: approved ? Icons.verified_rounded : Icons.verified_user_outlined,
     );
   }
 }
@@ -396,19 +388,10 @@ class _InfoCard extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(icon, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 4),
-              Text(text),
-            ])),
-          ]),
-        ),
+  Widget build(BuildContext context) => ProviderInfoBanner(
+        title: title,
+        message: text,
+        icon: icon,
       );
 }
 

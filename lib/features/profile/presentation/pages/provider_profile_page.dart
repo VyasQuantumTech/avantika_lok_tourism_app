@@ -9,6 +9,7 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../../auth/domain/usecases/logout_user.dart';
 import '../../domain/entities/profile_dashboard.dart';
 import '../../domain/usecases/get_my_profile_dashboard.dart';
@@ -320,16 +321,7 @@ class _MenuRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
-      leading: Container(
-        width: 38,
-        height: 38,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.primarySoft,
-          borderRadius: BorderRadius.circular(11),
-        ),
-        child: Icon(icon, color: AppColors.primary, size: 20),
-      ),
+      leading: ProviderIconBox(icon: icon, size: 38, iconSize: 20),
       title: Text(label, style: AppTypography.label),
       subtitle: Text(value, style: AppTypography.caption),
       trailing: const Icon(Icons.chevron_right_rounded),

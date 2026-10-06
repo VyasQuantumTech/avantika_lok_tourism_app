@@ -7,6 +7,7 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../../auth/domain/usecases/logout_user.dart';
 import '../../../profile/domain/entities/profile_dashboard.dart';
 import '../../../profile/domain/usecases/get_my_profile_dashboard.dart';
@@ -171,6 +172,12 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
                 ),
                 children: [
                   _WelcomeCard(name: displayName, kycStatus: provider.kycStatus),
+                  const SizedBox(height: 12),
+                  _EarningsHero(
+                    amount: provider.financial.netCollected,
+                    currency: provider.financial.currency,
+                    onTap: () => setState(() => _selectedIndex = 3),
+                  ),
                   SizedBox(height: AppDimensions.sectionGap),
                   const AppSectionTitle(
                     title: 'Quick actions',
@@ -398,6 +405,23 @@ class _WelcomeCard extends StatelessWidget {
   }
 }
 
+
+class _EarningsHero extends StatelessWidget {
+  const _EarningsHero({required this.amount, required this.currency, required this.onTap});
+  final double amount;
+  final String currency;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ProviderHeroCard(
+        eyebrow: 'Total earnings',
+        value: '₹ ${amount.toStringAsFixed(0)}',
+        subtitle: currency,
+        icon: Icons.bar_chart_rounded,
+        onTap: onTap,
+      );
+}
+
 class _QuickActions extends StatelessWidget {
   const _QuickActions({required this.actions, required this.onTap});
 
@@ -412,34 +436,10 @@ class _QuickActions extends StatelessWidget {
         return Expanded(
           child: Padding(
             padding: EdgeInsets.only(right: index == actions.length - 1 ? 0 : 10),
-            child: AppPanel(
+            child: ProviderQuickActionTile(
+              icon: action.icon,
+              label: action.label,
               onTap: () => onTap(action),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(action.icon, color: AppColors.primary, size: 21),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    action.label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: AppTypography.tiny.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         );

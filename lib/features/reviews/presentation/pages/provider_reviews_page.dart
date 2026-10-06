@@ -5,6 +5,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../data/datasources/provider_review_remote_data_source.dart';
 import '../../domain/entities/provider_review.dart';
 
@@ -119,26 +120,11 @@ class _ProviderReviewsPageState extends State<ProviderReviewsPage> {
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppMetricCard(
-                        label: 'Average rating',
-                        value: all.isEmpty ? '—' : average.toStringAsFixed(1),
-                        icon: Icons.star_rounded,
-                        footer: '${all.length} approved reviews',
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: AppMetricCard(
-                        label: 'Responses',
-                        value: '${all.where((e) => e.hasResponse).length}',
-                        icon: Icons.forum_outlined,
-                        footer: 'Provider responses posted',
-                      ),
-                    ),
-                  ],
+                ProviderHeroCard(
+                  eyebrow: 'Overall rating',
+                  value: all.isEmpty ? '—' : '${average.toStringAsFixed(1)} / 5',
+                  subtitle: '${all.length} approved reviews • ${all.where((e) => e.hasResponse).length} responses posted',
+                  icon: Icons.star_rounded,
                 ),
                 const SizedBox(height: 18),
                 AppSearchSortBar<String>(
@@ -265,13 +251,10 @@ class _ReviewCard extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onRespond,
-              icon: const Icon(Icons.reply_rounded),
-              label: Text(review.hasResponse ? 'Update response' : 'Respond to review'),
-            ),
+          ProviderSecondaryButton(
+            label: review.hasResponse ? 'Update response' : 'Respond to review',
+            onPressed: onRespond,
+            icon: Icons.reply_rounded,
           ),
         ],
       ),

@@ -4,6 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../app/di/injection.dart';
+import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/app_dimensions.dart';
+import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../domain/entities/pooja_entities.dart';
 import '../../domain/usecases/pooja_actions.dart';
@@ -208,192 +214,202 @@ class _PanditPoojaFormPageState extends State<PanditPoojaFormPage> {
   @override
   Widget build(BuildContext context) {
     final existingMedia = widget.offering?.media ?? const <PoojaMedia>[];
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_editing ? 'Edit Pooja Offering' : 'Add Pooja Offering'),
-      ),
-      body: Form(
+    return AppPage(
+      title: _editing ? 'Edit Pooja offering' : 'Add Pooja offering',
+      subtitle: _editing ? 'Update service details and resubmit for approval' : 'Create a service for customer bookings',
+      child: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            if (_editing)
-              Card(
-                child: ListTile(
-                  title: Text('Approval: ${widget.offering!.approvalStatus}'),
-                  subtitle: widget.offering!.moderationNote == null
-                      ? const Text(
-                          'Changing commercial/content terms sends the offering back for admin approval.',
-                        )
-                      : Text(widget.offering!.moderationNote!),
-                ),
+            if (_editing) ...[
+              ProviderInfoBanner(
+                title: 'Changes will be sent for admin approval',
+                message: widget.offering!.moderationNote ??
+                    'After submission, your changes will be reviewed by the admin team.',
               ),
-            TextFormField(
-              controller: _name,
-              decoration: const InputDecoration(labelText: 'Pooja name'),
-              validator: (v) => (v?.trim().length ?? 0) < 2
-                  ? 'Enter a valid name'
-                  : null,
-            ),
-            TextFormField(
-              controller: _shortDescription,
-              decoration: const InputDecoration(labelText: 'Short description'),
-            ),
-            TextFormField(
-              controller: _description,
-              maxLines: 5,
-              decoration: const InputDecoration(labelText: 'Description'),
-              validator: (v) => (v?.trim().length ?? 0) < 10
-                  ? 'Description must be at least 10 characters'
-                  : null,
-            ),
-            TextFormField(
-              controller: _price,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Price (INR)'),
-              validator: (v) {
-                final value = double.tryParse(v?.trim() ?? '');
-                if (value == null) return 'Enter a valid price';
-                if (value <= 0) return 'Price must be greater than 0';
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _duration,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Duration (minutes)'),
-              validator: (v) {
-                final value = int.tryParse(v?.trim() ?? '');
-                if (value == null) return 'Enter duration';
-                if (value <= 0) return 'Duration must be greater than 0';
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: _serviceMode,
-              decoration: const InputDecoration(labelText: 'Service mode'),
-              items: const [
-                DropdownMenuItem(value: 'temple', child: Text('Temple')),
-                DropdownMenuItem(value: 'home', child: Text('Home')),
-                DropdownMenuItem(value: 'online', child: Text('Online')),
-                DropdownMenuItem(value: 'flexible', child: Text('Flexible')),
-              ],
-              onChanged: (value) {
-                if (value != null) setState(() => _serviceMode = value);
-              },
-            ),
-            TextFormField(
-              controller: _notes,
-              maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Provider notes'),
-            ),
-            const SizedBox(height: 20),
-            Row(
+              SizedBox(height: AppDimensions.sectionGap),
+            ],
+            ProviderFormSection(
+              title: 'Service information',
+              subtitle: 'Keep the customer-facing information clear and concise',
+              icon: Icons.temple_hindu_outlined,
               children: [
-                const Expanded(
-                  child: Text(
-                    'Pooja Images',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-                  ),
+                TextFormField(
+                  controller: _name,
+                  decoration: const InputDecoration(labelText: 'Pooja name'),
+                  validator: (v) => (v?.trim().length ?? 0) < 2 ? 'Enter a valid name' : null,
                 ),
-                OutlinedButton.icon(
-                  onPressed: _saving || existingMedia.length + _newImages.length >= 8
-                      ? null
-                      : _pickImages,
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: const Text('Add images'),
+                TextFormField(
+                  controller: _shortDescription,
+                  decoration: const InputDecoration(labelText: 'Short description'),
+                ),
+                TextFormField(
+                  controller: _description,
+                  maxLines: 5,
+                  decoration: const InputDecoration(labelText: 'Detailed description'),
+                  validator: (v) => (v?.trim().length ?? 0) < 10
+                      ? 'Description must be at least 10 characters'
+                      : null,
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            const Text(
-              'You can add up to 8 images. The first image is used as the primary image when the backend does not provide a separate cover.',
-              style: TextStyle(fontSize: 12),
-            ),
-            if (existingMedia.isNotEmpty || _newImages.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 92,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
+            SizedBox(height: AppDimensions.sectionGap),
+            ProviderFormSection(
+              title: 'Pricing & service setup',
+              subtitle: 'These values are used when customers book the service',
+              icon: Icons.tune_rounded,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ...existingMedia.map(
-                      (media) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            media.url,
-                            width: 92,
-                            height: 92,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 92,
-                              height: 92,
-                              alignment: Alignment.center,
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              child: const Icon(Icons.broken_image_outlined),
-                            ),
-                          ),
-                        ),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _price,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Price (INR)'),
+                        validator: (v) {
+                          final value = double.tryParse(v?.trim() ?? '');
+                          if (value == null) return 'Enter a valid price';
+                          if (value <= 0) return 'Must be > 0';
+                          return null;
+                        },
                       ),
                     ),
-                    ..._newImages.asMap().entries.map(
-                      (entry) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: FutureBuilder<Uint8List>(
-                                future: entry.value.readAsBytes(),
-                                builder: (context, snapshot) {
-                                  final bytes = snapshot.data;
-                                  if (bytes == null) {
-                                    return Container(
-                                      width: 92,
-                                      height: 92,
-                                      alignment: Alignment.center,
-                                      child: const CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    );
-                                  }
-                                  return Image.memory(
-                                    bytes,
-                                    width: 92,
-                                    height: 92,
-                                    fit: BoxFit.cover,
-                                  );
-                                },
-                              ),
-                            ),
-                            Positioned(
-                              top: 2,
-                              right: 2,
-                              child: IconButton.filledTonal(
-                                visualDensity: VisualDensity.compact,
-                                iconSize: 16,
-                                onPressed: _saving
-                                    ? null
-                                    : () => setState(() => _newImages.removeAt(entry.key)),
-                                icon: const Icon(Icons.close),
-                              ),
-                            ),
-                          ],
-                        ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _duration,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Duration (min)'),
+                        validator: (v) {
+                          final value = int.tryParse(v?.trim() ?? '');
+                          if (value == null) return 'Enter duration';
+                          if (value <= 0) return 'Must be > 0';
+                          return null;
+                        },
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _saving ? null : _save,
-              child: Text(_saving ? 'Saving…' : 'Submit'),
+                DropdownButtonFormField<String>(
+                  value: _serviceMode,
+                  decoration: const InputDecoration(labelText: 'Service mode'),
+                  items: const [
+                    DropdownMenuItem(value: 'temple', child: Text('Temple')),
+                    DropdownMenuItem(value: 'home', child: Text('Home')),
+                    DropdownMenuItem(value: 'online', child: Text('Online')),
+                    DropdownMenuItem(value: 'flexible', child: Text('Flexible')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) setState(() => _serviceMode = value);
+                  },
+                ),
+                TextFormField(
+                  controller: _notes,
+                  maxLines: 3,
+                  decoration: const InputDecoration(labelText: 'Provider notes'),
+                ),
+              ],
             ),
+            SizedBox(height: AppDimensions.sectionGap),
+            ProviderFormSection(
+              title: 'Pooja images',
+              subtitle: 'Use real service images when available. Up to 8 images can be attached.',
+              icon: Icons.photo_library_outlined,
+              trailing: ProviderSectionAction(
+                label: 'Add images',
+                icon: Icons.add_photo_alternate_outlined,
+                onPressed: _saving || existingMedia.length + _newImages.length >= 8 ? null : _pickImages,
+              ),
+              children: [
+                if (existingMedia.isEmpty && _newImages.isEmpty)
+                  Container(
+                    height: 104,
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [AppColors.primarySoft, AppColors.brandSoft]),
+                      borderRadius: BorderRadius.circular(AppDimensions.smallRadius),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.temple_hindu_rounded, color: AppColors.primary, size: 32),
+                        const SizedBox(height: 6),
+                        Text('No image selected', style: AppTypography.caption),
+                      ],
+                    ),
+                  )
+                else
+                  SizedBox(
+                    height: 96,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        ...existingMedia.map(
+                          (media) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ProviderMediaThumb(
+                              imageUrl: media.url,
+                              placeholderIcon: Icons.temple_hindu_rounded,
+                              width: 96,
+                              height: 96,
+                            ),
+                          ),
+                        ),
+                        ..._newImages.asMap().entries.map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(13),
+                                  child: FutureBuilder<Uint8List>(
+                                    future: entry.value.readAsBytes(),
+                                    builder: (context, snapshot) {
+                                      final bytes = snapshot.data;
+                                      if (bytes == null) {
+                                        return Container(
+                                          width: 96,
+                                          height: 96,
+                                          alignment: Alignment.center,
+                                          color: AppColors.softSurface,
+                                          child: const CircularProgressIndicator(strokeWidth: 2),
+                                        );
+                                      }
+                                      return Image.memory(bytes, width: 96, height: 96, fit: BoxFit.cover);
+                                    },
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 3,
+                                  right: 3,
+                                  child: IconButton.filledTonal(
+                                    visualDensity: VisualDensity.compact,
+                                    iconSize: 16,
+                                    onPressed: _saving ? null : () => setState(() => _newImages.removeAt(entry.key)),
+                                    icon: const Icon(Icons.close_rounded),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(height: AppDimensions.sectionGap),
+            AppGradientButton(
+              label: _editing ? 'Update & send for approval' : 'Submit for approval',
+              onPressed: _saving ? null : _save,
+              loading: _saving,
+              icon: Icons.send_rounded,
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

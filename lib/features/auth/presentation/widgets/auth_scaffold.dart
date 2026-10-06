@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/app_button.dart';
 
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({
@@ -105,47 +106,11 @@ class AuthPrimaryButton extends StatelessWidget {
   final bool loading;
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 46,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd],
-          ),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: ElevatedButton(
-          onPressed: loading ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            backgroundColor: AppColors.transparent,
-            disabledBackgroundColor: AppColors.transparent,
-            shadowColor: AppColors.transparent,
-            foregroundColor: AppColors.onPrimary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-          ),
-          child: loading
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.onPrimary),
-                  ),
-                )
-              : Text(
-                  label,
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.onPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppGradientButton(
+        label: label,
+        onPressed: onPressed,
+        loading: loading,
+      );
 }
 
 class AuthSwitchLink extends StatelessWidget {

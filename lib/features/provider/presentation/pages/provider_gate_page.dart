@@ -4,6 +4,8 @@ import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_ui.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../auth/domain/usecases/logout_user.dart';
 import '../../domain/entities/provider_account_status.dart';
@@ -103,64 +105,29 @@ class _ProviderGatePageState extends State<ProviderGatePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.onPrimary,
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Center(
             child: _checking
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(color: AppColors.primary),
-                      const SizedBox(height: 18),
-                      Text(
-                        'Checking provider profile...',
-                        style: AppTypography.body.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  )
+                ? const AppLoadingView(message: 'Checking provider profile…')
                 : Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.cloud_off_outlined,
-                        size: 44,
-                        color: AppColors.primary,
+                      AppEmptyState(
+                        icon: Icons.cloud_off_outlined,
+                        title: 'Could not open provider dashboard',
+                        message: _error ?? 'Please try again.',
                       ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Could not open provider dashboard',
-                        textAlign: TextAlign.center,
-                        style: AppTypography.sectionTitle,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _error ?? 'Please try again.',
-                        textAlign: TextAlign.center,
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _checkProviderStatus,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.onPrimary,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text('Retry'),
-                        ),
+                      AppGradientButton(
+                        label: 'Retry',
+                        onPressed: _checkProviderStatus,
+                        icon: Icons.refresh_rounded,
                       ),
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: _loggingOut ? null : _logout,
-                        child: Text(_loggingOut ? 'Signing out...' : 'Sign out'),
+                        child: Text(_loggingOut ? 'Signing out…' : 'Sign out'),
                       ),
                     ],
                   ),

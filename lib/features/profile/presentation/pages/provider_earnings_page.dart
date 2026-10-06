@@ -6,6 +6,7 @@ import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../domain/entities/profile_dashboard.dart';
 import '../../domain/usecases/get_my_profile_dashboard.dart';
 
@@ -56,42 +57,11 @@ class _ProviderEarningsPageState extends State<ProviderEarningsPage> {
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd],
-                    ),
-                    borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.shadow,
-                        blurRadius: 22,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Net collected',
-                        style: AppTypography.caption.copyWith(color: AppColors.onPrimary.withValues(alpha: .70)),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${financial.currency} ${financial.netCollected.toStringAsFixed(2)}',
-                        style: AppTypography.display.copyWith(color: AppColors.onPrimary),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Based on captured payment transactions returned by the backend.',
-                        style: AppTypography.caption.copyWith(color: AppColors.onPrimary.withValues(alpha: .70)),
-                      ),
-                    ],
-                  ),
+                ProviderHeroCard(
+                  eyebrow: 'Net collected',
+                  value: '${financial.currency} ${financial.netCollected.toStringAsFixed(2)}',
+                  subtitle: 'Captured payments after processed refunds',
+                  icon: Icons.account_balance_wallet_rounded,
                 ),
                 SizedBox(height: AppDimensions.sectionGap),
                 Row(
@@ -145,17 +115,9 @@ class _ProviderEarningsPageState extends State<ProviderEarningsPage> {
                 ),
                 const SizedBox(height: 14),
                 if (financial.note?.trim().isNotEmpty == true)
-                  AppPanel(
-                    backgroundColor: AppColors.infoSoft,
-                    borderColor: AppColors.info.withValues(alpha: .2),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.info_outline_rounded, color: AppColors.info),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(financial.note!, style: AppTypography.caption)),
-                      ],
-                    ),
+                  ProviderInfoBanner(
+                    title: 'Earnings note',
+                    message: financial.note!,
                   ),
                 if (financial.payoutBalance == null) ...[
                   const SizedBox(height: 12),

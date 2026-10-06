@@ -4,9 +4,11 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/di/injection.dart';
 import '../../../app/router/route_names.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_dimensions.dart';
 import '../../../app/theme/app_typography.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/widgets/app_ui.dart';
+import '../../../core/widgets/provider_ui.dart';
 import '../domain/entities/marketplace_entities.dart';
 import '../domain/usecases/marketplace_actions.dart';
 
@@ -732,20 +734,79 @@ class CustomerMarketplaceBookingsPage extends StatefulWidget {
   State<CustomerMarketplaceBookingsPage> createState() => _CustomerMarketplaceBookingsPageState();
 }
 
-class _CustomerMarketplaceBookingsPageState extends State<CustomerMarketplaceBookingsPage> {
+enum _MarketplaceBookingSort { newest, oldest, amountHigh, amountLow }
+
+class _CustomerMarketplaceBookingsPageState extends State<CustomerMarketplaceBookingsPage>
+    with SingleTickerProviderStateMixin {
   late Future<List<MarketplaceBooking>> future;
+  late TabController _tabs;
+  final TextEditingController _search = TextEditingController();
+  String _query = '';
+  _MarketplaceBookingSort _sort = _MarketplaceBookingSort.newest;
 
   @override
   void initState() {
     super.initState();
+    _tabs = TabController(length: 4, vsync: this)..addListener(() => setState(() {}));
     reload();
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    _search.dispose();
+    super.dispose();
   }
 
   void reload() => future = getIt<MarketplaceActions>().myBookings(widget.type);
 
+  bool _matchesTab(MarketplaceBooking booking) {
+    switch (_tabs.index) {
+      case 0:
+        return !booking.isCompleted && !booking.isCancelled;
+      case 1:
+        return booking.isCompleted;
+      case 2:
+        return booking.isCancelled;
+      default:
+        return true;
+    }
+  }
+
+  List<MarketplaceBooking> _visible(List<MarketplaceBooking> source) {
+    final query = _query.trim().toLowerCase();
+    final items = source.where((booking) {
+      if (!_matchesTab(booking)) return false;
+      if (query.isEmpty) return true;
+      return '${booking.displayName} ${booking.bookingNumber} ${booking.status}'
+          .toLowerCase()
+          .contains(query);
+    }).toList();
+
+    DateTime date(MarketplaceBooking booking) =>
+        DateTime.tryParse(booking.serviceDate) ?? DateTime(1970);
+    switch (_sort) {
+      case _MarketplaceBookingSort.newest:
+        items.sort((a, b) => date(b).compareTo(date(a)));
+        break;
+      case _MarketplaceBookingSort.oldest:
+        items.sort((a, b) => date(a).compareTo(date(b)));
+        break;
+      case _MarketplaceBookingSort.amountHigh:
+        items.sort((a, b) => b.totalAmount.compareTo(a.totalAmount));
+        break;
+      case _MarketplaceBookingSort.amountLow:
+        items.sort((a, b) => a.totalAmount.compareTo(b.totalAmount));
+        break;
+    }
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) => AppPage(
         title: 'My ${widget.type.title} Bookings',
+        subtitle: 'Track upcoming and completed services',
+        padding: EdgeInsets.zero,
         child: FutureBuilder<List<MarketplaceBooking>>(
           future: future,
           builder: (context, snapshot) {
@@ -757,43 +818,121 @@ class _CustomerMarketplaceBookingsPageState extends State<CustomerMarketplaceBoo
             }
             final bookings = snapshot.data ?? const <MarketplaceBooking>[];
             if (bookings.isEmpty) {
-              return const AppEmptyState(title: 'No bookings yet', message: 'Bookings will appear here.', icon: Icons.receipt_long_outlined);
+              return const AppEmptyState(
+                title: 'No bookings yet',
+                message: 'Bookings will appear here.',
+                icon: Icons.receipt_long_outlined,
+              );
             }
-            return RefreshIndicator(
-              onRefresh: () async {
-                setState(reload);
-                await future;
-              },
-              child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: bookings.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, index) {
-                  final booking = bookings[index];
-                  return AppPanel(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CustomerMarketplaceBookingDetailPage(type: widget.type, bookingId: booking.id),
-                      ),
-                    ),
-                    child: Row(
+            final visible = _visible(bookings);
+            return Column(
+              children: [
+                Material(
+                  color: AppColors.surface,
+                  child: TabBar(
+                    controller: _tabs,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    tabs: const [
+                      Tab(text: 'Upcoming'),
+                      Tab(text: 'Completed'),
+                      Tab(text: 'Cancelled'),
+                      Tab(text: 'All'),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      setState(reload);
+                      await future;
+                    },
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(booking.displayName, style: AppTypography.label),
-                              Text('${_dateOnly(booking.serviceDate)} • ${booking.bookingNumber}', style: AppTypography.caption),
-                            ],
-                          ),
+                        AppSearchSortBar<_MarketplaceBookingSort>(
+                          controller: _search,
+                          hintText: 'Search service or booking no.',
+                          sortValue: _sort,
+                          onChanged: (value) => setState(() => _query = value),
+                          onSortChanged: (value) {
+                            if (value != null) setState(() => _sort = value);
+                          },
+                          sortItems: const [
+                            DropdownMenuItem(value: _MarketplaceBookingSort.newest, child: Text('Newest')),
+                            DropdownMenuItem(value: _MarketplaceBookingSort.oldest, child: Text('Oldest')),
+                            DropdownMenuItem(value: _MarketplaceBookingSort.amountHigh, child: Text('Amount ↓')),
+                            DropdownMenuItem(value: _MarketplaceBookingSort.amountLow, child: Text('Amount ↑')),
+                          ],
                         ),
-                        AppStatusChip(label: booking.status.isEmpty ? 'booked' : booking.status),
+                        const SizedBox(height: 14),
+                        if (visible.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 54),
+                            child: AppEmptyState(
+                              title: 'Nothing here',
+                              message: 'No bookings match the selected tab and search.',
+                              icon: Icons.search_off_rounded,
+                            ),
+                          )
+                        else
+                          ...visible.map((booking) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: AppPanel(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CustomerMarketplaceBookingDetailPage(
+                                        type: widget.type,
+                                        bookingId: booking.id,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 42,
+                                        height: 42,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primarySoft,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Icon(
+                                          widget.type == MarketplaceType.accommodation
+                                              ? Icons.hotel_outlined
+                                              : Icons.directions_car_outlined,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(booking.displayName, style: AppTypography.label),
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              '${_dateOnly(booking.serviceDate)} • ${booking.bookingNumber}',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: AppTypography.caption,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      AppStatusChip(label: booking.status.isEmpty ? 'booked' : booking.status),
+                                    ],
+                                  ),
+                                ),
+                              )),
                       ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             );
           },
         ),
@@ -953,10 +1092,10 @@ class _ProviderMarketplaceManagementPageState extends State<ProviderMarketplaceM
           if (widget.type == MarketplaceType.transport)
             IconButton(onPressed: _transportProfile, icon: const Icon(Icons.business_outlined)),
         ],
-        floatingActionButton: FloatingActionButton.extended(
+        floatingActionButton: ProviderFloatingActionButton(
           onPressed: () => _edit(null),
-          icon: const Icon(Icons.add),
-          label: Text(widget.type == MarketplaceType.accommodation ? 'Add property' : 'Add vehicle'),
+          icon: Icons.add_rounded,
+          label: widget.type == MarketplaceType.accommodation ? 'Add property' : 'Add vehicle',
         ),
         child: FutureBuilder<List<MarketplaceItem>>(
           future: future,
@@ -987,37 +1126,41 @@ class _ProviderMarketplaceManagementPageState extends State<ProviderMarketplaceM
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (_, index) {
                   final item = items[index];
-                  return AppPanel(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(child: Text(item.name, style: AppTypography.sectionTitle)),
-                            AppStatusChip(label: item.status),
-                          ],
-                        ),
-                        if (item.city.isNotEmpty) Text(item.city, style: AppTypography.caption),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            OutlinedButton.icon(onPressed: () => _edit(item), icon: const Icon(Icons.edit_outlined), label: const Text('Edit')),
-                            OutlinedButton.icon(
-                              onPressed: () => _manage(item),
-                              icon: const Icon(Icons.settings_outlined),
-                              label: Text(widget.type == MarketplaceType.accommodation ? 'Rooms & availability' : 'Operations'),
-                            ),
-                            FilledButton.tonal(
-                              onPressed: () => _submitForApproval(item),
-                              child: const Text('Submit for approval'),
-                            ),
-                            IconButton(tooltip: 'Delete', onPressed: () => _remove(item), icon: const Icon(Icons.delete_outline)),
-                          ],
-                        ),
-                      ],
-                    ),
+                  return ProviderListCard(
+                    title: item.name,
+                    subtitle: [item.city, item.state].where((e) => e.trim().isNotEmpty).join(', '),
+                    imageUrl: item.imageUrls.isEmpty ? null : item.imageUrls.first,
+                    placeholderIcon: widget.type == MarketplaceType.accommodation
+                        ? Icons.apartment_outlined
+                        : Icons.directions_car_outlined,
+                    status: item.status,
+                    meta: [
+                      if (item.price > 0) ProviderMetaItem(Icons.currency_rupee_rounded, _money(item.currency, item.price)),
+                      ProviderMetaItem(
+                        widget.type == MarketplaceType.accommodation ? Icons.bed_outlined : Icons.settings_outlined,
+                        widget.type == MarketplaceType.accommodation ? '${item.units.length} room records' : 'Vehicle service',
+                      ),
+                    ],
+                    actions: [
+                      ProviderSecondaryButton(label: 'Edit', onPressed: () => _edit(item), icon: Icons.edit_outlined),
+                      ProviderSecondaryButton(
+                        label: widget.type == MarketplaceType.accommodation ? 'Rooms & availability' : 'Operations',
+                        onPressed: () => _manage(item),
+                        icon: Icons.settings_outlined,
+                      ),
+                      ProviderActionButton(
+                        label: 'Submit for approval',
+                        onPressed: () => _submitForApproval(item),
+                        icon: Icons.send_rounded,
+                      ),
+                      ProviderSecondaryButton(
+                        label: 'Delete',
+                        onPressed: () => _remove(item),
+                        icon: Icons.delete_outline,
+                        destructive: true,
+                      ),
+                    ],
+                    onTap: () => _manage(item),
                   );
                 },
               ),
@@ -1170,79 +1313,104 @@ class _AccommodationFormPageState extends State<_AccommodationFormPage> {
   @override
   Widget build(BuildContext context) => AppPage(
         title: widget.item == null ? 'Create accommodation' : 'Edit accommodation',
+        subtitle: 'Property details, guest information and service media',
         child: Form(
           key: formKey,
           child: ListView(
             children: [
-              _field(name, 'Property name', required: true),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: DropdownButtonFormField<String>(
-                  value: accommodationType,
-                  decoration: const InputDecoration(labelText: 'Accommodation type'),
-                  items: accommodationTypes
-                      .map((value) => DropdownMenuItem(value: value, child: Text(value.replaceAll('_', ' '))))
-                      .toList(),
-                  onChanged: (value) => setState(() => accommodationType = value ?? 'hotel'),
+              if (widget.item != null) ...[
+                const ProviderInfoBanner(
+                  title: 'Changes follow the approval workflow',
+                  message: 'Updated provider content remains subject to the existing admin approval rules.',
                 ),
-              ),
-              _field(shortDescription, 'Short description', lines: 2),
-              _field(description, 'Description', lines: 4),
-              _field(addressLine1, 'Address line 1', required: true),
-              _field(addressLine2, 'Address line 2'),
-              Row(children: [
-                Expanded(child: _field(city, 'City', required: true)),
-                const SizedBox(width: 10),
-                Expanded(child: _field(state, 'State', required: true)),
-              ]),
-              Row(children: [
-                Expanded(child: _field(postalCode, 'Postal code')),
-                const SizedBox(width: 10),
-                Expanded(child: _field(countryCode, 'Country code', required: true)),
-              ]),
-              Row(children: [
-                Expanded(child: _field(contactPhone, 'Contact phone')),
-                const SizedBox(width: 10),
-                Expanded(child: _field(contactEmail, 'Contact email')),
-              ]),
-              Row(children: [
-                Expanded(child: _field(checkIn, 'Check-in time')),
-                const SizedBox(width: 10),
-                Expanded(child: _field(checkOut, 'Check-out time')),
-              ]),
-              _field(amenities, 'Amenities (comma separated)', lines: 2),
-              const SizedBox(height: 4),
-              Text('Property images', style: AppTypography.sectionTitle),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: uploading ? null : _pickImages,
-                icon: uploading
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.add_photo_alternate_outlined),
-                label: Text(uploading ? 'Uploading images…' : 'Add multiple images'),
-              ),
-              if (mediaIds.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: List.generate(
-                    mediaIds.length,
-                    (index) => InputChip(
-                      label: Text('Image ${index + 1}'),
-                      onDeleted: () => setState(() => mediaIds.removeAt(index)),
-                    ),
-                  ),
-                ),
+                SizedBox(height: AppDimensions.sectionGap),
               ],
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: saving || uploading ? null : _save,
-                icon: saving
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.save_outlined),
-                label: Text(saving ? 'Saving…' : 'Save accommodation'),
+              ProviderFormSection(
+                title: 'Property information',
+                subtitle: 'Customer-facing property details',
+                icon: Icons.apartment_outlined,
+                children: [
+                  _field(name, 'Property name', required: true),
+                  DropdownButtonFormField<String>(
+                    value: accommodationType,
+                    decoration: const InputDecoration(labelText: 'Accommodation type'),
+                    items: accommodationTypes
+                        .map((value) => DropdownMenuItem(value: value, child: Text(value.replaceAll('_', ' '))))
+                        .toList(),
+                    onChanged: (value) => setState(() => accommodationType = value ?? 'hotel'),
+                  ),
+                  _field(shortDescription, 'Short description', lines: 2),
+                  _field(description, 'Description', lines: 4),
+                  _field(amenities, 'Amenities (comma separated)', lines: 2),
+                ],
               ),
+              SizedBox(height: AppDimensions.sectionGap),
+              ProviderFormSection(
+                title: 'Address & contact',
+                subtitle: 'Location and guest communication details',
+                icon: Icons.location_on_outlined,
+                children: [
+                  _field(addressLine1, 'Address line 1', required: true),
+                  _field(addressLine2, 'Address line 2'),
+                  Row(children: [
+                    Expanded(child: _field(city, 'City', required: true)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _field(state, 'State', required: true)),
+                  ]),
+                  Row(children: [
+                    Expanded(child: _field(postalCode, 'Postal code')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _field(countryCode, 'Country code', required: true)),
+                  ]),
+                  Row(children: [
+                    Expanded(child: _field(contactPhone, 'Contact phone')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _field(contactEmail, 'Contact email')),
+                  ]),
+                  Row(children: [
+                    Expanded(child: _field(checkIn, 'Check-in time')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _field(checkOut, 'Check-out time')),
+                  ]),
+                ],
+              ),
+              SizedBox(height: AppDimensions.sectionGap),
+              ProviderFormSection(
+                title: 'Property images',
+                subtitle: 'Use actual property images when available',
+                icon: Icons.photo_library_outlined,
+                trailing: ProviderSectionAction(
+                  label: uploading ? 'Uploading…' : 'Add images',
+                  icon: Icons.add_photo_alternate_outlined,
+                  onPressed: uploading ? null : _pickImages,
+                ),
+                children: [
+                  if (mediaIds.isEmpty)
+                    Text('No images attached yet.', style: AppTypography.caption)
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: List.generate(
+                        mediaIds.length,
+                        (index) => InputChip(
+                          avatar: const Icon(Icons.image_outlined, size: 16),
+                          label: Text('Image ${index + 1}'),
+                          onDeleted: () => setState(() => mediaIds.removeAt(index)),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              SizedBox(height: AppDimensions.sectionGap),
+              ProviderActionButton(
+                label: 'Save accommodation',
+                onPressed: saving || uploading ? null : _save,
+                icon: Icons.save_outlined,
+                loading: saving,
+                expand: true,
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -1388,77 +1556,98 @@ class _VehicleFormPageState extends State<_VehicleFormPage> {
   @override
   Widget build(BuildContext context) => AppPage(
         title: widget.item == null ? 'Create vehicle' : 'Edit vehicle',
+        subtitle: 'Vehicle details, capacity, amenities and service media',
         child: Form(
           key: formKey,
           child: ListView(
             children: [
-              _field(registrationNumber, 'Registration number', required: true),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: DropdownButtonFormField<String>(
-                  value: vehicleType,
-                  decoration: const InputDecoration(labelText: 'Vehicle type'),
-                  items: vehicleTypes
-                      .map((value) => DropdownMenuItem(value: value, child: Text(value.replaceAll('_', ' '))))
-                      .toList(),
-                  onChanged: (value) => setState(() => vehicleType = value ?? 'car'),
+              if (widget.item != null) ...[
+                const ProviderInfoBanner(
+                  title: 'Changes follow the approval workflow',
+                  message: 'Updated vehicle details remain subject to the existing admin approval rules.',
                 ),
-              ),
-              Row(
-                children: [
-                  Expanded(child: _field(make, 'Make')),
-                  const SizedBox(width: 10),
-                  Expanded(child: _field(model, 'Model')),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(child: _field(year, 'Year', number: true)),
-                  const SizedBox(width: 10),
-                  Expanded(child: _field(seatCapacity, 'Seat capacity', required: true, number: true)),
-                ],
-              ),
-              _field(luggageCapacity, 'Luggage capacity', number: true),
-              _field(amenities, 'Amenities (comma separated)', lines: 2),
-              _field(operationalNotes, 'Operational notes', lines: 3),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Air conditioned'),
-                value: airConditioned,
-                onChanged: (value) => setState(() => airConditioned = value),
-              ),
-              const SizedBox(height: 4),
-              Text('Vehicle images', style: AppTypography.sectionTitle),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: uploading ? null : _pickImages,
-                icon: uploading
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.add_photo_alternate_outlined),
-                label: Text(uploading ? 'Uploading images…' : 'Add multiple images'),
-              ),
-              if (mediaIds.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: List.generate(
-                    mediaIds.length,
-                    (index) => InputChip(
-                      label: Text('Image ${index + 1}'),
-                      onDeleted: () => setState(() => mediaIds.removeAt(index)),
-                    ),
-                  ),
-                ),
+                SizedBox(height: AppDimensions.sectionGap),
               ],
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: saving || uploading ? null : _save,
-                icon: saving
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.save_outlined),
-                label: Text(saving ? 'Saving…' : 'Save vehicle'),
+              ProviderFormSection(
+                title: 'Vehicle information',
+                subtitle: 'Core vehicle identity and capacity',
+                icon: Icons.directions_car_outlined,
+                children: [
+                  _field(registrationNumber, 'Registration number', required: true),
+                  DropdownButtonFormField<String>(
+                    value: vehicleType,
+                    decoration: const InputDecoration(labelText: 'Vehicle type'),
+                    items: vehicleTypes
+                        .map((value) => DropdownMenuItem(value: value, child: Text(value.replaceAll('_', ' '))))
+                        .toList(),
+                    onChanged: (value) => setState(() => vehicleType = value ?? 'car'),
+                  ),
+                  Row(children: [
+                    Expanded(child: _field(make, 'Make')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _field(model, 'Model')),
+                  ]),
+                  Row(children: [
+                    Expanded(child: _field(year, 'Year', number: true)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _field(seatCapacity, 'Seat capacity', required: true, number: true)),
+                  ]),
+                  _field(luggageCapacity, 'Luggage capacity', number: true),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Air conditioned', style: AppTypography.label),
+                    value: airConditioned,
+                    onChanged: (value) => setState(() => airConditioned = value),
+                  ),
+                ],
               ),
+              SizedBox(height: AppDimensions.sectionGap),
+              ProviderFormSection(
+                title: 'Service details',
+                subtitle: 'Amenities and provider operational notes',
+                icon: Icons.tune_rounded,
+                children: [
+                  _field(amenities, 'Amenities (comma separated)', lines: 2),
+                  _field(operationalNotes, 'Operational notes', lines: 3),
+                ],
+              ),
+              SizedBox(height: AppDimensions.sectionGap),
+              ProviderFormSection(
+                title: 'Vehicle images',
+                subtitle: 'Use actual vehicle images when available',
+                icon: Icons.photo_library_outlined,
+                trailing: ProviderSectionAction(
+                  label: uploading ? 'Uploading…' : 'Add images',
+                  icon: Icons.add_photo_alternate_outlined,
+                  onPressed: uploading ? null : _pickImages,
+                ),
+                children: [
+                  if (mediaIds.isEmpty)
+                    Text('No images attached yet.', style: AppTypography.caption)
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: List.generate(
+                        mediaIds.length,
+                        (index) => InputChip(
+                          avatar: const Icon(Icons.image_outlined, size: 16),
+                          label: Text('Image ${index + 1}'),
+                          onDeleted: () => setState(() => mediaIds.removeAt(index)),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              SizedBox(height: AppDimensions.sectionGap),
+              ProviderActionButton(
+                label: 'Save vehicle',
+                onPressed: saving || uploading ? null : _save,
+                icon: Icons.save_outlined,
+                loading: saving,
+                expand: true,
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -1548,10 +1737,10 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
     return AppPage(
       title: 'Rooms & availability',
       subtitle: widget.item.name,
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: ProviderFloatingActionButton(
         onPressed: () => _editUnit(null),
-        icon: const Icon(Icons.add),
-        label: const Text('Add room'),
+        icon: Icons.add_rounded,
+        label: 'Add room',
       ),
       child: FutureBuilder<MarketplaceItem>(
         future: future,
@@ -1593,56 +1782,52 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
     final rates = unit['rates'] is List
         ? (unit['rates'] as List).whereType<Map>().map((e) => e.map((k, v) => MapEntry('$k', v))).toList()
         : <Map<String, dynamic>>[];
-    return AppPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(_str(unit, ['name'], fallback: 'Room'), style: AppTypography.sectionTitle)),
-              if (_num(unit, ['basePriceAmount', 'base_price_amount']) > 0)
-                Text(_money('INR', _num(unit, ['basePriceAmount', 'base_price_amount']).toDouble()), style: AppTypography.label),
-            ],
-          ),
-          Text(
-            [
-              _str(unit, ['unit_type', 'unitType']),
-              if (_num(unit, ['maxAdults', 'max_adults']) > 0) '${_num(unit, ['maxAdults', 'max_adults'])} adults',
-            ].where((e) => e.isNotEmpty).join(' • '),
-            style: AppTypography.caption,
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              OutlinedButton.icon(onPressed: () => _editUnit(unit), icon: const Icon(Icons.edit_outlined), label: const Text('Edit room')),
-              OutlinedButton.icon(onPressed: () => _inventory(unitId), icon: const Icon(Icons.inventory_2_outlined), label: const Text('Inventory')),
-              OutlinedButton.icon(onPressed: () => _editRate(unitId, null), icon: const Icon(Icons.currency_rupee), label: const Text('Add rate')),
-              IconButton(onPressed: () => _deleteUnit(unitId), tooltip: 'Delete room', icon: const Icon(Icons.delete_outline)),
-            ],
-          ),
-          if (rates.isNotEmpty) ...[
-            const Divider(height: 24),
-            Text('Rates', style: AppTypography.label),
-            ...rates.map(
-              (rate) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                title: Text(_str(rate, ['rateType', 'rate_type'], fallback: 'standard')),
-                subtitle: Text('${_money(_str(rate, ['currency'], fallback: 'INR'), _num(rate, ['priceAmount', 'price_amount']).toDouble())} • ${_str(rate, ['start_date', 'startDate'])} - ${_str(rate, ['end_date', 'endDate'])}'),
-                trailing: Wrap(
-                  spacing: 0,
-                  children: [
-                    IconButton(onPressed: () => _editRate(unitId, rate), icon: const Icon(Icons.edit_outlined)),
-                    IconButton(onPressed: () => _deleteRate(_str(rate, ['id', 'rate_id', 'rateId'])), icon: const Icon(Icons.delete_outline)),
-                  ],
+    final price = _num(unit, ['basePriceAmount', 'base_price_amount']).toDouble();
+    final roomType = _str(unit, ['unit_type', 'unitType']);
+    final adults = _num(unit, ['maxAdults', 'max_adults']);
+    return ProviderListCard(
+      title: _str(unit, ['name'], fallback: 'Room'),
+      subtitle: [roomType, if (adults > 0) '$adults adults'].where((e) => e.isNotEmpty).join(' • '),
+      placeholderIcon: Icons.bed_outlined,
+      meta: [
+        if (price > 0) ProviderMetaItem(Icons.currency_rupee_rounded, _money('INR', price)),
+        ProviderMetaItem(Icons.sell_outlined, '${rates.length} rate ${rates.length == 1 ? 'rule' : 'rules'}'),
+      ],
+      footer: rates.isEmpty
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Rates', style: AppTypography.label),
+                const SizedBox(height: 6),
+                ...rates.take(3).map(
+                  (rate) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${_str(rate, ['rateType', 'rate_type'], fallback: 'standard')} • ${_money(_str(rate, ['currency'], fallback: 'INR'), _num(rate, ['priceAmount', 'price_amount']).toDouble())}',
+                            style: AppTypography.caption,
+                          ),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => _editRate(unitId, rate),
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ],
-      ),
+      actions: [
+        ProviderSecondaryButton(label: 'Edit room', onPressed: () => _editUnit(unit), icon: Icons.edit_outlined),
+        ProviderSecondaryButton(label: 'Inventory', onPressed: () => _inventory(unitId), icon: Icons.inventory_2_outlined),
+        ProviderActionButton(label: 'Add rate', onPressed: () => _editRate(unitId, null), icon: Icons.currency_rupee_rounded),
+        ProviderSecondaryButton(label: 'Delete', onPressed: () => _deleteUnit(unitId), icon: Icons.delete_outline, destructive: true),
+      ],
     );
   }
 
@@ -1847,72 +2032,96 @@ class _AccommodationUnitFormPageState extends State<_AccommodationUnitFormPage> 
   @override
   Widget build(BuildContext context) => AppPage(
         title: widget.unit == null ? 'Add room' : 'Edit room',
+        subtitle: 'Room setup, capacity, pricing and inventory',
         child: Form(
           key: formKey,
           child: ListView(
             children: [
-              _field(name, 'Unit name', required: true),
-              _field(code, 'Room / unit code'),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: DropdownButtonFormField<String>(
-                  value: unitType,
-                  decoration: const InputDecoration(labelText: 'Unit type'),
-                  items: unitTypes.map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
-                  onChanged: (value) => setState(() => unitType = value ?? 'room'),
-                ),
-              ),
-              _field(description, 'Description', lines: 3),
-              Row(children: [
-                Expanded(child: _field(maxAdults, 'Max adults', required: true, number: true)),
-                const SizedBox(width: 10),
-                Expanded(child: _field(maxChildren, 'Max children', required: true, number: true)),
-              ]),
-              Row(children: [
-                Expanded(child: _field(bedCount, 'Bed count', required: true, number: true)),
-                const SizedBox(width: 10),
-                Expanded(child: _field(bathroomCount, 'Bathroom count', required: true, number: true)),
-              ]),
-              Row(children: [
-                Expanded(child: _field(basePrice, 'Base price', required: true, number: true)),
-                const SizedBox(width: 10),
-                Expanded(child: _field(currency, 'Currency', required: true)),
-              ]),
-              _field(totalInventory, 'Total inventory', required: true, number: true),
-              _field(amenities, 'Amenities (comma separated)', lines: 2),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Active / bookable'),
-                subtitle: const Text('Requires approved provider KYC on the backend.'),
-                value: isActive,
-                onChanged: (value) => setState(() => isActive = value),
-              ),
-              OutlinedButton.icon(
-                onPressed: uploading ? null : _pickImages,
-                icon: uploading
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.add_photo_alternate_outlined),
-                label: Text(uploading ? 'Uploading images…' : 'Add room images'),
-              ),
-              if (mediaIds.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: List.generate(
-                    mediaIds.length,
-                    (index) => InputChip(label: Text('Image ${index + 1}'), onDeleted: () => setState(() => mediaIds.removeAt(index))),
+              ProviderFormSection(
+                title: 'Room information',
+                subtitle: 'Customer-facing room details',
+                icon: Icons.bed_outlined,
+                children: [
+                  _field(name, 'Unit name', required: true),
+                  _field(code, 'Room / unit code'),
+                  DropdownButtonFormField<String>(
+                    value: unitType,
+                    decoration: const InputDecoration(labelText: 'Unit type'),
+                    items: unitTypes.map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
+                    onChanged: (value) => setState(() => unitType = value ?? 'room'),
                   ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: saving || uploading ? null : _save,
-                icon: saving
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.save_outlined),
-                label: Text(saving ? 'Saving…' : 'Save room'),
+                  _field(description, 'Description', lines: 3),
+                  _field(amenities, 'Amenities (comma separated)', lines: 2),
+                ],
               ),
+              SizedBox(height: AppDimensions.sectionGap),
+              ProviderFormSection(
+                title: 'Capacity & pricing',
+                subtitle: 'Booking capacity, room setup and base price',
+                icon: Icons.tune_rounded,
+                children: [
+                  Row(children: [
+                    Expanded(child: _field(maxAdults, 'Max adults', required: true, number: true)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _field(maxChildren, 'Max children', required: true, number: true)),
+                  ]),
+                  Row(children: [
+                    Expanded(child: _field(bedCount, 'Bed count', required: true, number: true)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _field(bathroomCount, 'Bathroom count', required: true, number: true)),
+                  ]),
+                  Row(children: [
+                    Expanded(child: _field(basePrice, 'Base price', required: true, number: true)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _field(currency, 'Currency', required: true)),
+                  ]),
+                  _field(totalInventory, 'Total inventory', required: true, number: true),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Active / bookable', style: AppTypography.label),
+                    subtitle: const Text('Requires approved provider KYC on the backend.'),
+                    value: isActive,
+                    onChanged: (value) => setState(() => isActive = value),
+                  ),
+                ],
+              ),
+              SizedBox(height: AppDimensions.sectionGap),
+              ProviderFormSection(
+                title: 'Room images',
+                subtitle: 'Attach actual room images when available',
+                icon: Icons.photo_library_outlined,
+                trailing: ProviderSectionAction(
+                  label: uploading ? 'Uploading…' : 'Add images',
+                  icon: Icons.add_photo_alternate_outlined,
+                  onPressed: uploading ? null : _pickImages,
+                ),
+                children: [
+                  if (mediaIds.isEmpty)
+                    Text('No images attached yet.', style: AppTypography.caption)
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: List.generate(
+                        mediaIds.length,
+                        (index) => InputChip(
+                          avatar: const Icon(Icons.image_outlined, size: 16),
+                          label: Text('Image ${index + 1}'),
+                          onDeleted: () => setState(() => mediaIds.removeAt(index)),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              SizedBox(height: AppDimensions.sectionGap),
+              ProviderActionButton(
+                label: 'Save room',
+                onPressed: saving || uploading ? null : _save,
+                icon: Icons.save_outlined,
+                loading: saving,
+                expand: true,
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -2166,37 +2375,14 @@ class _TransportResourcePageState extends State<_TransportResourcePage> {
     required VoidCallback onAdd,
     required List<Widget> children,
   }) =>
-      AppPanel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: AppTypography.sectionTitle),
-                      Text(subtitle, style: AppTypography.caption),
-                    ],
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: onAdd,
-                  icon: const Icon(Icons.add),
-                  label: Text(addLabel),
-                ),
-              ],
-            ),
-            if (children.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text('Nothing configured yet.', style: AppTypography.caption),
-              )
-            else
-              ...children,
-          ],
-        ),
+      ProviderFormSection(
+        title: title,
+        subtitle: subtitle,
+        icon: Icons.tune_rounded,
+        trailing: ProviderSectionAction(label: addLabel, onPressed: onAdd),
+        children: children.isEmpty
+            ? [Text('Nothing configured yet.', style: AppTypography.caption)]
+            : children,
       );
 
   Widget _resourceTile({
@@ -2375,31 +2561,22 @@ class _ProviderMarketplaceBookingsPageState extends State<ProviderMarketplaceBoo
     final canStart = const {'confirmed', 'accepted'}.contains(status) && !booking.hasStarted;
     final canComplete = const {'confirmed', 'accepted'}.contains(status) && booking.hasStarted && !booking.hasEnded;
     final canCancel = !booking.isCompleted && !booking.isCancelled;
-    return AppPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(booking.displayName, style: AppTypography.label)),
-              AppStatusChip(label: booking.status.isEmpty ? 'pending' : booking.status),
-            ],
-          ),
-          Text('${_dateOnly(booking.serviceDate)} • ${booking.bookingNumber}', style: AppTypography.caption),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (canAccept) FilledButton(onPressed: () => _action(booking, 'accept'), child: const Text('Accept')),
-              if (canAccept) OutlinedButton(onPressed: () => _reason(booking, 'reject'), child: const Text('Reject')),
-              if (canStart) FilledButton.tonal(onPressed: () => _otp(booking, 'start'), child: Text(widget.type == MarketplaceType.accommodation ? 'Start stay' : 'Start trip')),
-              if (canComplete) FilledButton.tonal(onPressed: () => _otp(booking, 'complete'), child: Text(widget.type == MarketplaceType.accommodation ? 'Complete stay' : 'Complete trip')),
-              if (canCancel) TextButton(onPressed: () => _reason(booking, 'cancel'), child: const Text('Cancel')),
-            ],
-          ),
-        ],
-      ),
+    return ProviderListCard(
+      title: booking.displayName,
+      subtitle: '#${booking.bookingNumber}',
+      placeholderIcon: widget.type == MarketplaceType.accommodation ? Icons.hotel_outlined : Icons.directions_car_outlined,
+      status: booking.status.isEmpty ? 'pending' : booking.status,
+      meta: [
+        ProviderMetaItem(Icons.calendar_today_outlined, _dateOnly(booking.serviceDate)),
+        if (booking.totalAmount > 0) ProviderMetaItem(Icons.currency_rupee_rounded, _money(booking.currency, booking.totalAmount)),
+      ],
+      actions: [
+        if (canAccept) ProviderActionButton(label: 'Accept', onPressed: () => _action(booking, 'accept'), icon: Icons.check_rounded),
+        if (canAccept) ProviderSecondaryButton(label: 'Reject', onPressed: () => _reason(booking, 'reject'), icon: Icons.close_rounded),
+        if (canStart) ProviderActionButton(label: widget.type == MarketplaceType.accommodation ? 'Start stay' : 'Start trip', onPressed: () => _otp(booking, 'start'), icon: Icons.play_arrow_rounded),
+        if (canComplete) ProviderActionButton(label: widget.type == MarketplaceType.accommodation ? 'Complete stay' : 'Complete trip', onPressed: () => _otp(booking, 'complete'), icon: Icons.stop_circle_outlined),
+        if (canCancel) ProviderSecondaryButton(label: 'Cancel', onPressed: () => _reason(booking, 'cancel'), icon: Icons.cancel_outlined, destructive: true),
+      ],
     );
   }
 
