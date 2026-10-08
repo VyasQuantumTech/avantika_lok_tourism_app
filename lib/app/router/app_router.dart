@@ -1,17 +1,20 @@
+import '../di/injection.dart';
+import '../../core/services/notification_service.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/notifications/presentation/pages/notification_detail_page.dart';
+import '../../features/notifications/presentation/pages/notification_preferences_page.dart';
 import 'package:flutter/material.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/explore/domain/entities/tourism_place.dart';
 import '../../features/explore/presentation/pages/explore_detail_page.dart';
-import '../../features/explore/presentation/pages/explore_page.dart';
 import '../../features/explore/presentation/pages/image_gallery_page.dart';
 import '../../features/explore/presentation/pages/video_gallery_page.dart';
 import '../../features/home/presentation/pages/customer_main_shell.dart';
 import '../../features/home/presentation/pages/splash_page.dart';
 import '../../features/marketplace/domain/entities/marketplace_entities.dart';
 import '../../features/marketplace/presentation/marketplace_pages.dart';
-import '../../features/profile/presentation/pages/customer_profile_page.dart';
 import '../../features/pooja/domain/entities/pooja_entities.dart';
 import '../../features/pooja/presentation/pages/customer_pooja_booking_detail_page.dart';
 import '../../features/pooja/presentation/pages/customer_pooja_booking_page.dart';
@@ -39,7 +42,41 @@ class AppRouter {
   const AppRouter._();
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    if (const [
+          RouteNames.notifications,
+          RouteNames.notificationDetail,
+          RouteNames.notificationPreferences
+        ].contains(settings.name) &&
+        !getIt<NotificationService>().active) {
+      return MaterialPageRoute<void>(
+          builder: (_) => const LoginPage(),
+          settings: const RouteSettings(name: RouteNames.login));
+    }
     switch (settings.name) {
+      case RouteNames.notifications:
+        return MaterialPageRoute<void>(
+            builder: (_) => const NotificationsPage(), settings: settings);
+      case RouteNames.notificationPreferences:
+        return MaterialPageRoute<void>(
+            builder: (_) => const NotificationPreferencesPage(),
+            settings: settings);
+      case RouteNames.notificationDetail:
+        final arguments = settings.arguments;
+        final id = arguments is String
+            ? arguments
+            : arguments is Map
+                ? arguments['id']
+                : null;
+        if (id is! String || id.isEmpty) {
+          return _errorRoute(settings, 'Invalid notification identifier.');
+        }
+        final channel = arguments is Map && arguments['channel'] == 'push'
+            ? 'push'
+            : 'in_app';
+        return MaterialPageRoute<void>(
+            builder: (_) => NotificationDetailPage(id: id, channel: channel),
+            settings: settings);
+
       // ---------------------------------------------------------------------
       // Splash
       // ---------------------------------------------------------------------
@@ -85,7 +122,6 @@ class AppRouter {
           settings: settings,
         );
 
-
       // ---------------------------------------------------------------------
       // Provider dashboards
       // ---------------------------------------------------------------------
@@ -107,7 +143,6 @@ class AppRouter {
           settings: settings,
         );
 
-
       case RouteNames.providerProfile:
         return MaterialPageRoute<void>(
           builder: (_) => const ProviderProfilePage(),
@@ -125,7 +160,6 @@ class AppRouter {
           builder: (_) => const ProviderEarningsPage(),
           settings: settings,
         );
-
 
       case RouteNames.providerReviews:
         return MaterialPageRoute<void>(
@@ -149,7 +183,6 @@ class AppRouter {
           },
         );
 
-
       case RouteNames.customerProfile:
         return MaterialPageRoute<void>(
           builder: (_) => const CustomerMainShell(initialIndex: 4),
@@ -170,52 +203,59 @@ class AppRouter {
 
       case RouteNames.accommodations:
         return MaterialPageRoute<void>(
-          builder: (_) => const CustomerMarketplaceListPage(type: MarketplaceType.accommodation),
+          builder: (_) => const CustomerMarketplaceListPage(
+              type: MarketplaceType.accommodation),
           settings: settings,
         );
 
       case RouteNames.transport:
         return MaterialPageRoute<void>(
-          builder: (_) => const CustomerMarketplaceListPage(type: MarketplaceType.transport),
+          builder: (_) => const CustomerMarketplaceListPage(
+              type: MarketplaceType.transport),
           settings: settings,
         );
 
       case RouteNames.customerAccommodationBookings:
         return MaterialPageRoute<void>(
-          builder: (_) => const CustomerMarketplaceBookingsPage(type: MarketplaceType.accommodation),
+          builder: (_) => const CustomerMarketplaceBookingsPage(
+              type: MarketplaceType.accommodation),
           settings: settings,
         );
 
       case RouteNames.customerTransportBookings:
         return MaterialPageRoute<void>(
-          builder: (_) => const CustomerMarketplaceBookingsPage(type: MarketplaceType.transport),
+          builder: (_) => const CustomerMarketplaceBookingsPage(
+              type: MarketplaceType.transport),
           settings: settings,
         );
 
       case RouteNames.providerAccommodationManagement:
         return MaterialPageRoute<void>(
-          builder: (_) => const ProviderMarketplaceManagementPage(type: MarketplaceType.accommodation),
+          builder: (_) => const ProviderMarketplaceManagementPage(
+              type: MarketplaceType.accommodation),
           settings: settings,
         );
 
       case RouteNames.providerTransportManagement:
         return MaterialPageRoute<void>(
-          builder: (_) => const ProviderMarketplaceManagementPage(type: MarketplaceType.transport),
+          builder: (_) => const ProviderMarketplaceManagementPage(
+              type: MarketplaceType.transport),
           settings: settings,
         );
 
       case RouteNames.providerAccommodationBookings:
         return MaterialPageRoute<void>(
-          builder: (_) => const ProviderMarketplaceBookingsPage(type: MarketplaceType.accommodation),
+          builder: (_) => const ProviderMarketplaceBookingsPage(
+              type: MarketplaceType.accommodation),
           settings: settings,
         );
 
       case RouteNames.providerTransportBookings:
         return MaterialPageRoute<void>(
-          builder: (_) => const ProviderMarketplaceBookingsPage(type: MarketplaceType.transport),
+          builder: (_) => const ProviderMarketplaceBookingsPage(
+              type: MarketplaceType.transport),
           settings: settings,
         );
-
 
       // ---------------------------------------------------------------------
       // Customer Pooja
@@ -266,7 +306,6 @@ class AppRouter {
           builder: (_) => const CustomerPoojaBookingsPage(),
           settings: settings,
         );
-
 
       case RouteNames.customerPoojaBookingDetail:
         final bookingId = settings.arguments;

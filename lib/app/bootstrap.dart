@@ -1,3 +1,4 @@
+import '../core/services/notification_service.dart';
 import 'package:flutter/material.dart';
 
 import 'app.dart';
@@ -9,5 +10,6 @@ Future<void> bootstrap(AppConfig config) async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppThemeConfig.load(config.flavor);
   await configureDependencies(config);
+  await getIt<NotificationService>().initialize();
   runApp(AvantikaLokApp(config: config));
 }

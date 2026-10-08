@@ -1,3 +1,4 @@
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
@@ -126,6 +127,7 @@ class _TopHeader extends StatelessWidget {
                     ),
                   ),
                 ),
+                const Align(alignment: Alignment.centerRight, child: NotificationBell()),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

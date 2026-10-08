@@ -1,3 +1,10 @@
+import '../../core/services/notification_service.dart';
+import '../../core/services/notification_push_client.dart';
+import '../../core/storage/notification_device_storage.dart';
+import '../../features/notifications/data/datasources/notification_remote_data_source.dart';
+import '../../features/notifications/data/repositories/notification_repository_impl.dart';
+import '../../features/notifications/domain/repositories/notification_repository.dart';
+import '../../features/notifications/domain/usecases/notification_actions.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
@@ -69,6 +76,21 @@ Future<void> configureDependencies(AppConfig config) async {
     ),
   );
 
+  getIt.registerLazySingleton<NotificationRemoteDataSource>(
+      () => NotificationRemoteDataSource(getIt<ApiClient>()));
+  getIt.registerLazySingleton<NotificationRepository>(
+      () => NotificationRepositoryImpl(getIt<NotificationRemoteDataSource>()));
+  getIt.registerLazySingleton<NotificationActions>(
+      () => NotificationActions(getIt<NotificationRepository>()));
+  getIt.registerLazySingleton<NotificationPushClient>(
+      FirebaseNotificationPushClient.new);
+  getIt.registerLazySingleton<NotificationDeviceStorage>(
+      () => NotificationDeviceStorage(getIt<FlutterSecureStorage>()));
+  getIt.registerLazySingleton<NotificationService>(
+      () => NotificationService(getIt<NotificationActions>(), config,
+          getIt<NotificationPushClient>(), getIt<NotificationDeviceStorage>()),
+      dispose: (service) => service.dispose());
+
   getIt.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(getIt<ApiClient>()),
   );
@@ -76,6 +98,7 @@ Future<void> configureDependencies(AppConfig config) async {
     () => AuthRepositoryImpl(
       getIt<AuthRemoteDataSource>(),
       getIt<SecureStorageService>(),
+      notifications: getIt<NotificationService>(),
     ),
   );
   getIt.registerLazySingleton<LoginUser>(
@@ -90,7 +113,6 @@ Future<void> configureDependencies(AppConfig config) async {
   getIt.registerLazySingleton<LogoutUser>(
     () => LogoutUser(getIt<AuthRepository>()),
   );
-
 
   getIt.registerLazySingleton<ProfileRemoteDataSource>(
     () => ProfileRemoteDataSourceImpl(getIt<ApiClient>()),
@@ -126,7 +148,6 @@ Future<void> configureDependencies(AppConfig config) async {
   getIt.registerLazySingleton<ManageProviderKyc>(
     () => ManageProviderKyc(getIt<ProviderRepository>()),
   );
-
 
   getIt.registerLazySingleton<PoojaRemoteDataSource>(
     () => PoojaRemoteDataSourceImpl(getIt<ApiClient>()),

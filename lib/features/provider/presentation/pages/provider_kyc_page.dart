@@ -1,3 +1,4 @@
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -252,6 +253,7 @@ class _ProviderKycPageState extends State<ProviderKycPage> {
   Widget build(BuildContext context) {
     return AppPage(
       title: 'Provider KYC',
+      actions: const [NotificationBell()],
       subtitle: 'Verification documents and approval status',
       child: FutureBuilder<ProviderKycSnapshot>(
         future: _future,

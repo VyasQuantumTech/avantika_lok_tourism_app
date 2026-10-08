@@ -20,6 +20,10 @@ class RouteNames {
   static const String providerEarnings = '/provider/earnings';
   static const String providerReviews = '/provider/reviews';
 
+  static const notifications = '/notifications';
+  static const notificationDetail = '/notifications/detail';
+  static const notificationPreferences = '/notifications/preferences';
+
   // App
   static const String splash = '/';
   static const String home = '/home';
@@ -30,15 +34,19 @@ class RouteNames {
   // Accommodation / transport - customer
   static const String accommodations = '/accommodations';
   static const String transport = '/transport';
-  static const String customerAccommodationBookings = '/accommodations/bookings';
+  static const String customerAccommodationBookings =
+      '/accommodations/bookings';
   static const String customerTransportBookings = '/transport/bookings';
 
   // Accommodation / transport - provider
-  static const String providerAccommodationManagement = '/provider/accommodations';
-  static const String providerTransportManagement = '/provider/transport/manage';
-  static const String providerAccommodationBookings = '/provider/accommodation/bookings';
-  static const String providerTransportBookings = '/provider/transport/bookings';
-
+  static const String providerAccommodationManagement =
+      '/provider/accommodations';
+  static const String providerTransportManagement =
+      '/provider/transport/manage';
+  static const String providerAccommodationBookings =
+      '/provider/accommodation/bookings';
+  static const String providerTransportBookings =
+      '/provider/transport/bookings';
 
   // Pooja - customer
   static const String poojas = '/poojas';

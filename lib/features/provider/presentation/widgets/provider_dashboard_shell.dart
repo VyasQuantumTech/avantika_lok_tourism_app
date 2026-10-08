@@ -1,3 +1,4 @@
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
@@ -363,7 +364,7 @@ class _DashboardHeader extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 48),
+          const NotificationBell(),
         ],
       ),
     );
@@ -580,6 +581,15 @@ class _ProviderDrawer extends StatelessWidget {
               leading: const Icon(Icons.account_balance_wallet_outlined),
               title: const Text('Earnings'),
               onTap: () => Navigator.of(context).pushNamed(RouteNames.providerEarnings),
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications_outlined),
+              title: const Text('Notifications'),
+              onTap: () {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                navigator.pushNamed(RouteNames.notifications);
+              },
             ),
             const Spacer(),
             Padding(

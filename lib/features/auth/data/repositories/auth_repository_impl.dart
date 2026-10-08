@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/storage/secure_storage_service.dart';
 import '../../domain/entities/auth_user.dart';
@@ -7,11 +9,13 @@ import '../datasources/auth_remote_data_source.dart';
 class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl(
     this._remoteDataSource,
-    this._secureStorage,
-  );
+    this._secureStorage, {
+    NotificationService? notifications,
+  }) : _notifications = notifications;
 
   final AuthRemoteDataSource _remoteDataSource;
   final SecureStorageService _secureStorage;
+  final NotificationService? _notifications;
 
   @override
   Future<AuthUser> register({
@@ -53,6 +57,7 @@ class AuthRepositoryImpl implements AuthRepository {
       refreshToken: session.refreshToken,
     );
 
+    unawaited(_notifications?.startSession());
     return session.user;
   }
 
@@ -69,6 +74,7 @@ class AuthRepositoryImpl implements AuthRepository {
       // access token has expired. A successful refresh persists the rotated
       // access/refresh token pair again.
       await _remoteDataSource.currentUser();
+      unawaited(_notifications?.startSession());
       return true;
     } on ApiException catch (error) {
       if (error.statusCode == 401 || error.statusCode == 403) {
@@ -81,9 +87,11 @@ class AuthRepositoryImpl implements AuthRepository {
       // A temporary timeout/server/connectivity problem must not destroy a
       // locally persisted login. The next authenticated request can retry and
       // refresh once connectivity is available again.
+      unawaited(_notifications?.startSession());
       return true;
     } catch (_) {
       // Preserve an already-persisted session for non-authentication failures.
+      unawaited(_notifications?.startSession());
       return true;
     }
   }
@@ -99,6 +107,7 @@ class AuthRepositoryImpl implements AuthRepository {
     await _secureStorage.markSessionInactive();
 
     try {
+      await _notifications?.stopSession();
       if (refreshToken != null && refreshToken.trim().isNotEmpty) {
         await _remoteDataSource.logout(refreshToken: refreshToken);
       }

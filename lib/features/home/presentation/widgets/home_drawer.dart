@@ -1,3 +1,4 @@
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
@@ -67,6 +68,15 @@ class HomeDrawer extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   const SizedBox(height: 8),
+                  ListTile(
+                    leading: const Icon(Icons.notifications_outlined),
+                    title: const Text('Notifications'),
+                    onTap: () {
+                      final navigator = Navigator.of(context, rootNavigator: true);
+                      navigator.pop();
+                      navigator.pushNamed(RouteNames.notifications);
+                    },
+                  ),
                   ...dashboard.menu.map(
                     (item) => _DrawerItem(
                       item: item,
@@ -173,19 +183,7 @@ class _ProfileHeader extends StatelessWidget {
           Positioned(
             right: 0,
             top: 0,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.onPrimary.withOpacity(0.96),
-              ),
-              child: Icon(
-                Icons.notifications_none,
-                color: AppColors.primary,
-                size: 16,
-              ),
-            ),
+            child: const NotificationBell(),
           ),
         ],
       ),
