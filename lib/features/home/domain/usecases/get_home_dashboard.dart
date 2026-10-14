@@ -6,5 +6,10 @@ class GetHomeDashboard {
 
   final HomeRepository _repository;
 
+  Future<HomeFeedPage> section(String type, int page) =>
+      _repository.getSection(type, page);
+
+  Future<HomePackageDetail> package(String id) => _repository.getPackage(id);
+
   Future<HomeDashboard> call() => _repository.getDashboard();
 }

@@ -1,3 +1,6 @@
+import '../../../../app/di/injection.dart';
+import '../../../favorites/presentation/favorites_page.dart';
+import '../../../favorites/presentation/favorites_controller.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -27,13 +30,14 @@ class _CustomerMainShellState extends State<CustomerMainShell> {
     HomePage(),
     CustomerBookingsHubPage(),
     ExplorePage(),
-    _CustomerFavouritesTab(),
+    FavoritesPage(),
     CustomerProfilePage(),
   ];
 
   @override
   void initState() {
     super.initState();
+    getIt<FavoritesController>().reset();
     _selectedIndex = widget.initialIndex.clamp(0, _tabs.length - 1);
   }
 
@@ -44,7 +48,10 @@ class _CustomerMainShellState extends State<CustomerMainShell> {
       body: IndexedStack(index: _selectedIndex, children: _tabs),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+          if (index == 3) getIt<FavoritesController>().load(force: true);
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
@@ -72,34 +79,6 @@ class _CustomerMainShellState extends State<CustomerMainShell> {
             label: 'Profile',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CustomerFavouritesTab extends StatelessWidget {
-  const _CustomerFavouritesTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SafeArea(
-      child: Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.favorite_border_rounded, size: 52),
-              SizedBox(height: 12),
-              Text('Favourites', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              SizedBox(height: 6),
-              Text(
-                'Your saved places and services will appear here when favourites are available.',
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import '../../favorites/presentation/favorite_button.dart';
 import 'accommodation_calendar_page.dart';
 import '../../bookings/presentation/widgets/booking_lifecycle_panel.dart';
 import '../../bookings/presentation/widgets/ride_tracking_panel.dart';
@@ -243,7 +244,7 @@ class _MarketplaceCustomerCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right),
+          FavoriteButton(type: item.type.apiValue, targetId: item.id),
         ],
       ),
     );
@@ -292,7 +293,7 @@ class _CustomerMarketplaceDetailPageState extends State<CustomerMarketplaceDetai
                       : _TransportCustomerDetail(item: item);
           return AppPage(
             title: widget.type.title,
-            child: child,
+            actions: [if (ready) FavoriteButton(type: item.type.apiValue, targetId: item.id)],
             bottomNavigationBar: !ready ? null : SafeArea(
               top: false,
               child: Padding(
@@ -306,6 +307,7 @@ class _CustomerMarketplaceDetailPageState extends State<CustomerMarketplaceDetai
                 ),
               ),
             ),
+            child: child,
           );
         },
       );

@@ -1,3 +1,8 @@
+import '../../features/favorites/data/datasources/favorites_remote_data_source.dart';
+import '../../features/favorites/data/repositories/favorites_repository_impl.dart';
+import '../../features/favorites/domain/repositories/favorites_repository.dart';
+import '../../features/favorites/domain/usecases/favorites_actions.dart';
+import '../../features/favorites/presentation/favorites_controller.dart';
 import '../../features/bookings/data/datasources/booking_remote_data_source.dart';
 import '../../features/bookings/data/repositories/booking_repository_impl.dart';
 import '../../features/bookings/domain/repositories/booking_repository.dart';
@@ -27,7 +32,7 @@ import '../../features/explore/data/repositories/tourism_repository_impl.dart';
 import '../../features/explore/domain/repositories/tourism_repository.dart';
 import '../../features/explore/domain/usecases/get_tourism_place_detail.dart';
 import '../../features/explore/domain/usecases/get_tourism_places.dart';
-import '../../features/home/data/datasources/home_local_data_source.dart';
+import '../../features/home/data/datasources/home_remote_data_source.dart';
 import '../../features/home/data/repositories/home_repository_impl.dart';
 import '../../features/home/domain/repositories/home_repository.dart';
 import '../../features/home/domain/usecases/get_home_dashboard.dart';
@@ -197,11 +202,19 @@ Future<void> configureDependencies(AppConfig config) async {
     () => GetServiceHealth(getIt<SystemRepository>()),
   );
 
-  getIt.registerLazySingleton<HomeLocalDataSource>(
-    HomeLocalDataSourceImpl.new,
+  getIt.registerLazySingleton<FavoritesRemoteDataSource>(
+      () => FavoritesRemoteDataSource(getIt<ApiClient>()));
+  getIt.registerLazySingleton<FavoritesRepository>(
+      () => FavoritesRepositoryImpl(getIt<FavoritesRemoteDataSource>()));
+  getIt.registerLazySingleton<FavoritesActions>(
+      () => FavoritesActions(getIt<FavoritesRepository>()));
+  getIt.registerLazySingleton<FavoritesController>(
+      () => FavoritesController(getIt<FavoritesActions>()));
+  getIt.registerLazySingleton<HomeRemoteDataSource>(
+    () => HomeRemoteDataSourceImpl(getIt<ApiClient>()),
   );
   getIt.registerLazySingleton<HomeRepository>(
-    () => HomeRepositoryImpl(getIt<HomeLocalDataSource>()),
+    () => HomeRepositoryImpl(getIt<HomeRemoteDataSource>()),
   );
   getIt.registerLazySingleton<GetHomeDashboard>(
     () => GetHomeDashboard(getIt<HomeRepository>()),

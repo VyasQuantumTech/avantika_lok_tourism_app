@@ -72,7 +72,8 @@ class HomeDrawer extends StatelessWidget {
                     leading: const Icon(Icons.notifications_outlined),
                     title: const Text('Notifications'),
                     onTap: () {
-                      final navigator = Navigator.of(context, rootNavigator: true);
+                      final navigator =
+                          Navigator.of(context, rootNavigator: true);
                       navigator.pop();
                       navigator.pushNamed(RouteNames.notifications);
                     },
@@ -94,14 +95,28 @@ class HomeDrawer extends StatelessWidget {
                               .pushNamed(RouteNames.poojas);
                           return;
                         }
-                        if (title == 'explore' || title == 'your destinations') {
+                        if (title == 'explore' ||
+                            title == 'your destinations') {
                           Navigator.of(context).pop();
                           Navigator.of(context, rootNavigator: true)
                               .pushNamed(RouteNames.explore);
                           return;
                         }
+                        final route = title == 'hotel'
+                            ? RouteNames.accommodations
+                            : title == 'vehicle'
+                                ? RouteNames.transport
+                                : null;
+                        if (route != null) {
+                          final navigator =
+                              Navigator.of(context, rootNavigator: true);
+                          navigator.pop();
+                          navigator.pushNamed(route);
+                          return;
+                        }
                         if (title != 'home') {
-                          AppFeedback.info(context, '${item.title} screen is not connected to a backend module yet.');
+                          AppFeedback.info(context,
+                              '${item.title} screen is not connected to a backend module yet.');
                         }
                         Navigator.of(context).maybePop();
                       },
@@ -112,7 +127,8 @@ class HomeDrawer extends StatelessWidget {
                     (item) => _DrawerItem(
                       item: item,
                       onTap: () {
-                        AppFeedback.info(context, '${item.title} screen is not connected to a backend module yet.');
+                        AppFeedback.info(context,
+                            '${item.title} screen is not connected to a backend module yet.');
                         Navigator.of(context).maybePop();
                       },
                     ),
@@ -153,7 +169,12 @@ class _ProfileHeader extends StatelessWidget {
               CircleAvatar(
                 radius: 28,
                 backgroundColor: AppColors.onPrimary,
-                backgroundImage: AssetImage(profile.avatar),
+                backgroundImage: profile.avatar.isEmpty
+                    ? null
+                    : NetworkImage(profile.avatar),
+                child: profile.avatar.isEmpty
+                    ? const Icon(Icons.person_outline)
+                    : null,
               ),
               const SizedBox(height: 14),
               Text(
@@ -172,10 +193,12 @@ class _ProfileHeader extends StatelessWidget {
                       profile.email,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption.copyWith(color: AppColors.onPrimary),
+                      style: AppTypography.caption
+                          .copyWith(color: AppColors.onPrimary),
                     ),
                   ),
-                  Icon(Icons.keyboard_arrow_down, color: AppColors.onPrimary, size: 18),
+                  Icon(Icons.keyboard_arrow_down,
+                      color: AppColors.onPrimary, size: 18),
                 ],
               ),
             ],

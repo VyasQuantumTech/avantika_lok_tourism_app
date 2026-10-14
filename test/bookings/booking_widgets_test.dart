@@ -1,3 +1,7 @@
+import 'package:avantika_lok_tourism_app/features/favorites/domain/entities/saved_item.dart';
+import 'package:avantika_lok_tourism_app/features/favorites/domain/repositories/favorites_repository.dart';
+import 'package:avantika_lok_tourism_app/features/favorites/domain/usecases/favorites_actions.dart';
+import 'package:avantika_lok_tourism_app/features/favorites/presentation/favorites_controller.dart';
 import 'package:avantika_lok_tourism_app/core/widgets/provider_ui.dart';
 import 'dart:convert';
 import 'package:avantika_lok_tourism_app/features/pooja/data/datasources/pooja_remote_data_source.dart';
@@ -26,6 +30,15 @@ import 'package:avantika_lok_tourism_app/features/marketplace/data/datasources/m
 import 'package:avantika_lok_tourism_app/features/marketplace/data/repositories/marketplace_repository_impl.dart';
 import 'package:avantika_lok_tourism_app/features/marketplace/presentation/marketplace_pages.dart';
 import 'booking_contract_test.dart' as fixtures;
+
+class _EmptyFavoritesRepository implements FavoritesRepository {
+  @override
+  Future<List<SavedItem>> list() async => [];
+  @override
+  Future<String> save(String type, String id) async => 'saved';
+  @override
+  Future<void> remove(String id) async {}
+}
 
 class FakeBookingRepository implements BookingRepository {
   int codeRequests = 0;
@@ -56,6 +69,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() async {
     await getIt.reset();
+    getIt.registerSingleton(FavoritesController(FavoritesActions(_EmptyFavoritesRepository())));
     font_testing.assetManifest = _FontAssets();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler('flutter/assets', (message) async {

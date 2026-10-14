@@ -5,6 +5,8 @@ class HomeIconMapper {
 
   static IconData fromKey(String key) {
     switch (key) {
+      case 'package':
+        return Icons.inventory_2_outlined;
       case 'home':
         return Icons.home_outlined;
       case 'destinations':

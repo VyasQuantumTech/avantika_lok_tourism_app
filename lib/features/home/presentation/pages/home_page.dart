@@ -1,3 +1,5 @@
+import 'feed_section_page.dart';
+import '../widgets/feed_item_card.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
 import 'package:flutter/material.dart';
 
@@ -9,8 +11,6 @@ import '../../../../app/theme/app_typography.dart';
 import '../../../../core/widgets/app_ui.dart';
 import '../../domain/entities/home_dashboard.dart';
 import '../../domain/usecases/get_home_dashboard.dart';
-import '../widgets/accommodation_card.dart';
-import '../widgets/destination_card.dart';
 import '../widgets/home_drawer.dart';
 import '../widgets/home_section_header.dart';
 import '../widgets/service_tile.dart';
@@ -43,7 +43,8 @@ class _HomePageState extends State<HomePage> {
       future: _dashboardFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: AppLoadingView(message: 'Preparing Avantika Lok…'));
+          return const Scaffold(
+              body: AppLoadingView(message: 'Preparing Avantika Lok…'));
         }
 
         if (snapshot.hasError || snapshot.data == null) {
@@ -61,31 +62,57 @@ class _HomePageState extends State<HomePage> {
         return Scaffold(
           drawer: HomeDrawer(dashboard: dashboard),
           body: SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(child: _TopHeader(onFilterTap: () {})),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppDimensions.pagePadding,
-                    12,
-                    AppDimensions.pagePadding,
-                    104,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _reload();
+                await _dashboardFuture;
+              },
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                      child: _TopHeader(
+                          onFilterTap: () => Navigator.of(context)
+                              .pushNamed(RouteNames.explore))),
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppDimensions.pagePadding,
+                      12,
+                      AppDimensions.pagePadding,
+                      104,
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        _ServicesSection(
+                          items: dashboard.services,
+                          onExploreTap: () => Navigator.of(context)
+                              .pushNamed(RouteNames.explore),
+                        ),
+                        SizedBox(height: AppDimensions.sectionGap),
+                        for (final section in dashboard.sections) ...[
+                          HomeSectionHeader(
+                              title: section.title,
+                              onAction: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute<void>(
+                                      builder: (_) => FeedSectionPage(
+                                          type: section.type,
+                                          title: section.title)))),
+                          if (section.items.isEmpty)
+                            Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                child: Text(
+                                    'No ${section.title.toLowerCase()} available yet.')),
+                          ...section.items
+                              .map((item) => FeedItemCard(item: item)),
+                          SizedBox(height: AppDimensions.sectionGap),
+                        ],
+                      ]),
+                    ),
                   ),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      _ServicesSection(
-                        items: dashboard.services,
-                        onExploreTap: () => Navigator.of(context).pushNamed(RouteNames.explore),
-                      ),
-                      SizedBox(height: AppDimensions.sectionGap),
-                      _DestinationsSection(items: dashboard.destinations),
-                      SizedBox(height: AppDimensions.sectionGap),
-                      _AccommodationSection(items: dashboard.accommodations),
-                    ]),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -127,7 +154,9 @@ class _TopHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Align(alignment: Alignment.centerRight, child: NotificationBell()),
+                const Align(
+                    alignment: Alignment.centerRight,
+                    child: NotificationBell()),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -162,7 +191,7 @@ class _TopHeader extends StatelessWidget {
                       const SizedBox(width: 9),
                       Expanded(
                         child: Text(
-                          'Ujjain, Madhya Pradesh',
+                          'Explore destinations and services',
                           style: AppTypography.caption.copyWith(fontSize: 11),
                         ),
                       ),
@@ -225,65 +254,30 @@ class _ServicesSection extends StatelessWidget {
               item: item,
               onTap: service == 'explore'
                   ? onExploreTap
-                  : (service == 'puja' || service == 'pooja' || service == 'panditji')
+                  : (service == 'puja' ||
+                          service == 'pooja' ||
+                          service == 'panditji')
                       ? () => Navigator.of(context).pushNamed(RouteNames.poojas)
-                      : (service == 'hotel' || service == 'stay' || service == 'accommodation')
-                          ? () => Navigator.of(context).pushNamed(RouteNames.accommodations)
-                          : (service == 'transport' || service == 'cab' || service == 'taxi')
-                              ? () => Navigator.of(context).pushNamed(RouteNames.transport)
-                              : null,
+                      : (service == 'hotel' ||
+                              service == 'stay' ||
+                              service == 'accommodation')
+                          ? () => Navigator.of(context)
+                              .pushNamed(RouteNames.accommodations)
+                          : (service == 'transport' ||
+                                  service == 'cab' ||
+                                  service == 'taxi')
+                              ? () => Navigator.of(context)
+                                  .pushNamed(RouteNames.transport)
+                              : service == 'packages'
+                                  ? () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute<void>(
+                                          builder: (_) => const FeedSectionPage(
+                                              type: 'package',
+                                              title: 'Packages')))
+                                  : null,
             );
           },
-        ),
-      ],
-    );
-  }
-}
-
-class _DestinationsSection extends StatelessWidget {
-  const _DestinationsSection({required this.items});
-
-  final List<DestinationItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const HomeSectionHeader(title: 'Popular Destination'),
-        const SizedBox(height: 10),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.02,
-          ),
-          itemBuilder: (context, index) => DestinationCard(item: items[index]),
-        ),
-      ],
-    );
-  }
-}
-
-class _AccommodationSection extends StatelessWidget {
-  const _AccommodationSection({required this.items});
-
-  final List<AccommodationItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const HomeSectionHeader(title: 'Trending Accommodation'),
-        const SizedBox(height: 10),
-        ...items.map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: AccommodationCard(item: item),
-          ),
         ),
       ],
     );

@@ -1,3 +1,4 @@
+import '../../../favorites/presentation/favorite_button.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
@@ -80,6 +81,7 @@ class _CustomerPoojaDetailPageState extends State<CustomerPoojaDetailPage> {
         final images = _gallery(pooja);
         return AppPage(
           title: pooja.name,
+          actions: [FavoriteButton(type: 'pooja', targetId: pooja.id)],
           subtitle: 'Choose your preferred verified Pandit',
           padding: EdgeInsets.zero,
           child: RefreshIndicator(
