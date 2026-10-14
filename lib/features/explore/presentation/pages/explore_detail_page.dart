@@ -2,7 +2,9 @@ import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
-import '../../../../app/router/route_names.dart';
+import 'image_gallery_page.dart';
+import 'video_gallery_page.dart';
+import '../widgets/youtube_media.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
@@ -56,7 +58,8 @@ class _ExploreDetailPageState extends State<ExploreDetailPage> {
                       _HeroGallery(
                         place: place,
                         index: _heroIndex,
-                        onChanged: (value) => setState(() => _heroIndex = value),
+                        onChanged: (value) =>
+                            setState(() => _heroIndex = value),
                       ),
                       const SizedBox(height: 14),
                       _AboutCard(place: place),
@@ -67,15 +70,18 @@ class _ExploreDetailPageState extends State<ExploreDetailPage> {
                         ...place.detailSections.map(
                           (section) => Padding(
                             padding: const EdgeInsets.only(bottom: 10),
-                            child: _InfoCard(title: section.title, body: section.content),
+                            child: _InfoCard(
+                                title: section.title, body: section.content),
                           ),
                         ),
                       ],
                       const SizedBox(height: 4),
                       _GalleryCard(place: place),
-                      if (snapshot.connectionState == ConnectionState.waiting) ...[
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) ...[
                         const SizedBox(height: 12),
-                        LinearProgressIndicator(minHeight: 2, color: AppColors.primaryDark),
+                        LinearProgressIndicator(
+                            minHeight: 2, color: AppColors.primaryDark),
                       ],
                     ]),
                   ),
@@ -96,7 +102,8 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 8),
+      padding: EdgeInsets.fromLTRB(
+          AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 8),
       child: SizedBox(
         height: 48,
         child: Stack(
@@ -110,8 +117,14 @@ class _TopBar extends StatelessWidget {
                 child: Container(
                   width: 38,
                   height: 38,
-                  decoration: BoxDecoration(gradient: LinearGradient(colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd]), shape: BoxShape.circle),
-                  child: Icon(Icons.arrow_back, color: AppColors.onPrimary, size: 20),
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [
+                        AppColors.brandGradientStart,
+                        AppColors.brandGradientEnd
+                      ]),
+                      shape: BoxShape.circle),
+                  child: Icon(Icons.arrow_back,
+                      color: AppColors.onPrimary, size: 20),
                 ),
               ),
             ),
@@ -132,7 +145,8 @@ class _TopBar extends StatelessWidget {
 }
 
 class _HeroGallery extends StatelessWidget {
-  const _HeroGallery({required this.place, required this.index, required this.onChanged});
+  const _HeroGallery(
+      {required this.place, required this.index, required this.onChanged});
   final TourismPlace place;
   final int index;
   final ValueChanged<int> onChanged;
@@ -158,10 +172,23 @@ class _HeroGallery extends StatelessWidget {
                   : PageView.builder(
                       itemCount: images.length,
                       onPageChanged: onChanged,
-                      itemBuilder: (_, i) => Image.network(
-                        images[i].url,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImagePlaceholder(),
+                      itemBuilder: (_, i) => GestureDetector(
+                        onTap: () => Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ImageGalleryPage(place: place, initialIndex: i),
+                          ),
+                        ),
+                        child: Semantics(
+                          button: true,
+                          label: 'Open image ${i + 1} fullscreen',
+                          child: Image.network(
+                            images[i].url,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const _ImagePlaceholder(),
+                          ),
+                        ),
                       ),
                     ),
             ),
@@ -178,7 +205,9 @@ class _HeroGallery extends StatelessWidget {
                   width: i == index ? 8 : 6,
                   height: i == index ? 8 : 6,
                   decoration: BoxDecoration(
-                    color: i == index ? AppColors.primaryDark : AppColors.textMuted,
+                    color: i == index
+                        ? AppColors.primaryDark
+                        : AppColors.textMuted,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -197,25 +226,32 @@ class _AboutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final body = place.description.isNotEmpty ? place.description : place.shortDescription;
+    final body = place.description.isNotEmpty
+        ? place.description
+        : place.shortDescription;
     return _CardShell(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'About ${place.name}',
-            style: AppTypography.body.copyWith(fontSize: 13, fontWeight: FontWeight.w700),
+            style: AppTypography.body
+                .copyWith(fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          Text(body.isEmpty ? 'Details will be available soon.' : body, style: AppTypography.body),
+          Text(body.isEmpty ? 'Details will be available soon.' : body,
+              style: AppTypography.body),
           if (place.address.isNotEmpty) ...[
             const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.location_on_outlined, color: AppColors.accent, size: 18),
+                Icon(Icons.location_on_outlined,
+                    color: AppColors.accent, size: 18),
                 const SizedBox(width: 6),
-                Expanded(child: Text(place.address, style: AppTypography.caption.copyWith(fontSize: 11))),
+                Expanded(
+                    child: Text(place.address,
+                        style: AppTypography.caption.copyWith(fontSize: 11))),
               ],
             ),
           ],
@@ -235,10 +271,21 @@ class _VisitorInfoCard extends StatelessWidget {
     if (info.isEmpty) return const SizedBox.shrink();
 
     final ordered = <MapEntry<String, dynamic>>[];
-    const preferred = ['darshanTiming', 'darshan_timing', 'aartiTiming', 'aarti_timing', 'dressCode', 'dress_code', 'photography', 'prasad'];
+    const preferred = [
+      'darshanTiming',
+      'darshan_timing',
+      'aartiTiming',
+      'aarti_timing',
+      'dressCode',
+      'dress_code',
+      'photography',
+      'prasad'
+    ];
     final used = <String>{};
     for (final key in preferred) {
-      if (info.containsKey(key) && used.add(key)) ordered.add(MapEntry(key, info[key]));
+      if (info.containsKey(key) && used.add(key)) {
+        ordered.add(MapEntry(key, info[key]));
+      }
     }
     for (final entry in info.entries) {
       if (used.add(entry.key)) ordered.add(entry);
@@ -248,9 +295,12 @@ class _VisitorInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Temple Times And Detail', style: AppTypography.body.copyWith(fontSize: 13, fontWeight: FontWeight.w700)),
+          Text('Temple Times And Detail',
+              style: AppTypography.body
+                  .copyWith(fontSize: 13, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
-          ...ordered.map((entry) => _VisitorRow(label: _humanize(entry.key), value: _formatValue(entry.value))),
+          ...ordered.map((entry) => _VisitorRow(
+              label: _humanize(entry.key), value: _formatValue(entry.value))),
         ],
       ),
     );
@@ -272,7 +322,8 @@ class _VisitorRow extends StatelessWidget {
           Container(
             width: 22,
             height: 22,
-            decoration: BoxDecoration(color: AppColors.brandSoft, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+                color: AppColors.brandSoft, shape: BoxShape.circle),
             child: Icon(_iconFor(label), color: AppColors.accent, size: 14),
           ),
           const SizedBox(width: 8),
@@ -280,9 +331,13 @@ class _VisitorRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+                Text(label,
+                    style: AppTypography.body
+                        .copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(value, style: AppTypography.caption.copyWith(fontSize: 11, height: 1.4)),
+                Text(value,
+                    style: AppTypography.caption
+                        .copyWith(fontSize: 11, height: 1.4)),
               ],
             ),
           ),
@@ -307,108 +362,83 @@ class _GalleryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final videos = place.externalMedia.where((item) => item.isVideo).toList(growable: false);
+    final videos = place.externalMedia
+        .where((item) => item.isVideo)
+        .toList(growable: false);
     return _CardShell(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Gallery', style: AppTypography.body.copyWith(fontSize: 13, fontWeight: FontWeight.w700)),
+          Text('Videos',
+              style: AppTypography.body
+                  .copyWith(fontSize: 13, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _GalleryButton(
-                  label: 'Images',
-                  active: place.images.isNotEmpty,
-                  onTap: place.images.isEmpty
-                      ? null
-                      : () => Navigator.of(context).pushNamed(RouteNames.imageGallery, arguments: place),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _GalleryButton(
-                  label: 'Video',
-                  active: videos.isNotEmpty,
-                  onTap: videos.isEmpty
-                      ? null
-                      : () => Navigator.of(context).pushNamed(RouteNames.videoGallery, arguments: place),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _GalleryButton(label: 'Stories', active: place.stories.isNotEmpty, onTap: null),
-              ),
-            ],
-          ),
-          if (place.images.isNotEmpty) ...[
-            const SizedBox(height: 10),
+          if (videos.isEmpty)
+            Text('No videos available yet.', style: AppTypography.caption)
+          else
             SizedBox(
-              height: 82,
+              height: 100,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: place.images.length.clamp(0, 4).toInt(),
+                itemCount: videos.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, index) => ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: SizedBox(
-                    width: 82,
-                    child: Image.network(
-                      place.images[index].thumbnailUrl.isNotEmpty
-                          ? place.images[index].thumbnailUrl
-                          : place.images[index].url,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const _ImagePlaceholder(),
+                itemBuilder: (_, index) {
+                  final video = videos[index];
+                  final thumbnail = video.thumbnailUrl.isNotEmpty
+                      ? video.thumbnailUrl
+                      : youtubeThumbnail(video.url);
+                  return Semantics(
+                    button: true,
+                    label: video.title.isEmpty
+                        ? 'Play video ${index + 1} fullscreen'
+                        : 'Play ${video.title} fullscreen',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(7),
+                      onTap: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) => VideoGalleryPage(
+                              place: place, initialIndex: index),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(7),
+                        child: SizedBox(
+                          width: 150,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              if (thumbnail.isNotEmpty)
+                                Image.network(thumbnail,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        const _ImagePlaceholder())
+                              else
+                                const _ImagePlaceholder(),
+                              ColoredBox(color: AppColors.scrim),
+                              Center(
+                                  child: Icon(Icons.play_circle_fill,
+                                      color: AppColors.onMedia, size: 36)),
+                              if (video.title.isNotEmpty)
+                                Positioned(
+                                  left: 6,
+                                  right: 6,
+                                  bottom: 5,
+                                  child: Text(video.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.caption
+                                          .copyWith(color: AppColors.onMedia)),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
-          ],
-          if (place.stories.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ...place.stories.take(2).map(
-              (story) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text('${story.title}\n${story.content}', style: AppTypography.caption.copyWith(fontSize: 11, height: 1.4)),
-              ),
-            ),
-          ],
         ],
-      ),
-    );
-  }
-}
-
-class _GalleryButton extends StatelessWidget {
-  const _GalleryButton({required this.label, required this.active, required this.onTap});
-  final String label;
-  final bool active;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(5),
-      child: Container(
-        height: 28,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          gradient: active
-              ? LinearGradient(colors: [AppColors.accent, AppColors.primaryDark])
-              : null,
-          color: active ? null : AppColors.softSurface,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.caption.copyWith(
-            fontSize: 10,
-            color: active ? AppColors.onPrimary : AppColors.textSecondary,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
       ),
     );
   }
@@ -425,7 +455,10 @@ class _InfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (title.isNotEmpty) Text(title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
+          if (title.isNotEmpty)
+            Text(title,
+                style:
+                    AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
           if (title.isNotEmpty && body.isNotEmpty) const SizedBox(height: 6),
           if (body.isNotEmpty) Text(body, style: AppTypography.body),
         ],
@@ -460,7 +493,8 @@ class _ImagePlaceholder extends StatelessWidget {
     return Container(
       color: AppColors.softSurface,
       alignment: Alignment.center,
-      child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted, size: 48),
+      child: Icon(Icons.broken_image_outlined,
+          color: AppColors.textMuted, size: 48),
     );
   }
 }
@@ -468,7 +502,8 @@ class _ImagePlaceholder extends StatelessWidget {
 String _humanize(String value) {
   final spaced = value
       .replaceAll('_', ' ')
-      .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (match) => '${match.group(1)} ${match.group(2)}')
+      .replaceAllMapped(RegExp(r'([a-z])([A-Z])'),
+          (match) => '${match.group(1)} ${match.group(2)}')
       .trim();
   if (spaced.isEmpty) return 'Information';
   return spaced.split(RegExp(r'\s+')).map((word) {
@@ -482,7 +517,10 @@ String _formatValue(dynamic value) {
   if (value is String || value is num || value is bool) return value.toString();
   if (value is List) return value.map(_formatValue).join('\n');
   if (value is Map) {
-    return value.entries.map((entry) => '${_humanize(entry.key.toString())}: ${_formatValue(entry.value)}').join('\n');
+    return value.entries
+        .map((entry) =>
+            '${_humanize(entry.key.toString())}: ${_formatValue(entry.value)}')
+        .join('\n');
   }
   return value.toString();
 }

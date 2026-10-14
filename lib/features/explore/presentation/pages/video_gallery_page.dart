@@ -1,185 +1,114 @@
-import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../domain/entities/tourism_place.dart';
+import '../widgets/media_viewer_shell.dart';
+import '../widgets/youtube_media.dart';
 
+/// The player is created only after opening this full-page route.
 class VideoGalleryPage extends StatefulWidget {
-  const VideoGalleryPage({required this.place, super.key});
+  const VideoGalleryPage(
+      {required this.place, this.initialIndex = 0, super.key});
   final TourismPlace place;
+  final int initialIndex;
 
   @override
   State<VideoGalleryPage> createState() => _VideoGalleryPageState();
 }
 
 class _VideoGalleryPageState extends State<VideoGalleryPage> {
-  int _index = 0;
-
   @override
   Widget build(BuildContext context) {
-    final videos = widget.place.externalMedia.where((item) => item.isVideo).toList(growable: false);
-    final current = videos[_index];
-    final thumb = current.thumbnailUrl.isNotEmpty ? current.thumbnailUrl : _youtubeThumbnail(current.url);
-
-    return TempleScaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Header(onBack: () => Navigator.of(context).pop()),
-              const SizedBox(height: 12),
-              AspectRatio(
-                aspectRatio: 0.72,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.mediaBackground,
-                    borderRadius: BorderRadius.circular(7),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (thumb.isNotEmpty)
-                        Image.network(
-                          thumb,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                        ),
-                      Container(color: AppColors.mediaBackground.withValues(alpha: .26)),
-                      Center(
-                        child: InkWell(
-                          onTap: () => _showVideoLink(context, current.url),
-                          child: Container(
-                            width: 58,
-                            height: 58,
-                            decoration: BoxDecoration(color: AppColors.onPrimary.withValues(alpha: .70), shape: BoxShape.circle),
-                            child: Icon(Icons.play_arrow, color: AppColors.primaryDark, size: 36),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (current.title.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(current.title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-              ],
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 62,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: videos.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 9),
-                  itemBuilder: (_, index) {
-                    final video = videos[index];
-                    final thumbnail = video.thumbnailUrl.isNotEmpty ? video.thumbnailUrl : _youtubeThumbnail(video.url);
-                    return InkWell(
-                      onTap: () => setState(() => _index = index),
-                      child: Container(
-                        width: 62,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: index == _index ? AppColors.primaryDark : AppColors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            if (thumbnail.isNotEmpty) Image.network(thumbnail, fit: BoxFit.cover),
-                            Center(child: Icon(Icons.play_circle_fill, color: AppColors.onPrimary, size: 24)),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showVideoLink(BuildContext context, String url) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Video URL', style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
-              SelectableText(url, style: AppTypography.caption.copyWith(fontSize: 11)),
-            ],
-          ),
-        ),
-      ),
+    final videos = widget.place.externalMedia
+        .where((item) => item.isVideo)
+        .toList(growable: false);
+    final video = videos.isEmpty
+        ? null
+        : videos[widget.initialIndex.clamp(0, videos.length - 1)];
+    return MediaViewerShell(
+      title: video == null || video.title.isEmpty ? 'Videos' : video.title,
+      child: video == null
+          ? Center(
+              child: Text('No videos available.',
+                  style: TextStyle(color: AppColors.textPrimary)))
+          : _FullscreenVideo(url: video.url),
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.onBack});
-  final VoidCallback onBack;
+class _FullscreenVideo extends StatefulWidget {
+  const _FullscreenVideo({required this.url});
+  final String url;
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: InkWell(
-              onTap: onBack,
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(gradient: LinearGradient(colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd]), shape: BoxShape.circle),
-                child: Icon(Icons.arrow_back, color: AppColors.onPrimary, size: 19),
-              ),
-            ),
-          ),
-          Text('Video Gallery', style: AppTypography.sectionTitle.copyWith(fontSize: 15)),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Icon(Icons.share_outlined, color: AppColors.textPrimary, size: 23),
-          ),
-        ],
-      ),
-    );
-  }
+  State<_FullscreenVideo> createState() => _FullscreenVideoState();
 }
 
-String _youtubeThumbnail(String url) {
-  final uri = Uri.tryParse(url);
-  if (uri == null) return '';
-  String id = '';
-  if (uri.host.contains('youtu.be')) {
-    id = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : '';
-  } else if (uri.host.contains('youtube.com')) {
-    id = uri.queryParameters['v'] ?? '';
-    if (id.isEmpty) {
-      final segments = uri.pathSegments;
-      final embedIndex = segments.indexOf('embed');
-      if (embedIndex >= 0 && embedIndex + 1 < segments.length) id = segments[embedIndex + 1];
+class _FullscreenVideoState extends State<_FullscreenVideo>
+    with WidgetsBindingObserver {
+  YoutubePlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final id = youtubeVideoId(widget.url);
+    if (id != null) {
+      _controller = YoutubePlayerController(
+        initialVideoId: id,
+        flags: const YoutubePlayerFlags(autoPlay: true, enableCaption: true),
+      );
     }
   }
-  return id.isEmpty ? '' : 'https://img.youtube.com/vi/$id/hqdefault.jpg';
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _controller?.pause();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller?.pause();
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (controller == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text('This video does not have a valid YouTube URL.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body.copyWith(color: AppColors.textPrimary)),
+        ),
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) => Center(
+        child: YoutubePlayer(
+          width:
+              constraints.maxWidth.clamp(0.0, constraints.maxHeight * 16 / 9),
+          controller: controller,
+          showVideoProgressIndicator: true,
+          progressIndicatorColor: AppColors.accent,
+          progressColors: ProgressBarColors(
+              playedColor: AppColors.primaryDark,
+              handleColor: AppColors.accent),
+          // Already in the fullscreen viewer: keep playback controls here.
+          bottomActions: [
+            const CurrentPosition(),
+            ProgressBar(isExpanded: true),
+            const RemainingDuration(),
+            const PlaybackSpeedButton(),
+          ],
+        ),
+      ),
+    );
+  }
 }

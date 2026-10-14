@@ -1,14 +1,15 @@
-import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../domain/entities/tourism_place.dart';
+import '../widgets/media_viewer_shell.dart';
 
 class ImageGalleryPage extends StatefulWidget {
-  const ImageGalleryPage({required this.place, super.key});
+  const ImageGalleryPage(
+      {required this.place, this.initialIndex = 0, super.key});
   final TourismPlace place;
+  final int initialIndex;
 
   @override
   State<ImageGalleryPage> createState() => _ImageGalleryPageState();
@@ -16,12 +17,15 @@ class ImageGalleryPage extends StatefulWidget {
 
 class _ImageGalleryPageState extends State<ImageGalleryPage> {
   late final PageController _controller;
-  int _index = 0;
+  late int _index;
 
   @override
   void initState() {
     super.initState();
-    _controller = PageController();
+    _index = widget.place.images.isEmpty
+        ? 0
+        : widget.initialIndex.clamp(0, widget.place.images.length - 1);
+    _controller = PageController(initialPage: _index);
   }
 
   @override
@@ -30,104 +34,80 @@ class _ImageGalleryPageState extends State<ImageGalleryPage> {
     super.dispose();
   }
 
+  void _move(int offset) => _controller.animateToPage(
+        _index + offset,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+
   @override
   Widget build(BuildContext context) {
     final images = widget.place.images;
-    return TempleScaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 16),
-          child: Column(
-            children: [
-              _GalleryHeader(title: 'Image Gallery', onBack: () => Navigator.of(context).pop()),
-              const SizedBox(height: 12),
-              AspectRatio(
-                aspectRatio: 0.92,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: PageView.builder(
-                    controller: _controller,
-                    itemCount: images.length,
-                    onPageChanged: (value) => setState(() => _index = value),
-                    itemBuilder: (_, index) => Image.network(
-                      images[index].url,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image_outlined, size: 48)),
-                    ),
+    return MediaViewerShell(
+      title: widget.place.name,
+      footer: images.isEmpty
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (images[_index].caption.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(images[_index].caption,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.caption),
                   ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 62,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: images.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 9),
-                  itemBuilder: (_, index) => InkWell(
-                    onTap: () => _controller.animateToPage(
-                      index,
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOut,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton.filled(
+                      tooltip: 'Previous image',
+                      style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primaryDark,
+                          foregroundColor: AppColors.onPrimary),
+                      onPressed: _index > 0 ? () => _move(-1) : null,
+                      icon: const Icon(Icons.chevron_left),
                     ),
-                    child: Container(
-                      width: 62,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: index == _index ? AppColors.primaryDark : AppColors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.network(
-                        images[index].thumbnailUrl.isNotEmpty ? images[index].thumbnailUrl : images[index].url,
-                        fit: BoxFit.cover,
-                      ),
+                    Text('${_index + 1} / ${images.length}',
+                        style: AppTypography.body),
+                    IconButton.filled(
+                      tooltip: 'Next image',
+                      style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primaryDark,
+                          foregroundColor: AppColors.onPrimary),
+                      onPressed:
+                          _index < images.length - 1 ? () => _move(1) : null,
+                      icon: const Icon(Icons.chevron_right),
                     ),
-                  ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GalleryHeader extends StatelessWidget {
-  const _GalleryHeader({required this.title, required this.onBack});
-  final String title;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: InkWell(
-              onTap: onBack,
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(gradient: LinearGradient(colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd]), shape: BoxShape.circle),
-                child: Icon(Icons.arrow_back, color: AppColors.onPrimary, size: 19),
+              ],
+            ),
+      child: images.isEmpty
+          ? Center(
+              child: Text('No images available.',
+                  style: TextStyle(color: AppColors.textPrimary)))
+          : PageView.builder(
+              controller: _controller,
+              itemCount: images.length,
+              onPageChanged: (value) => setState(() => _index = value),
+              itemBuilder: (_, index) => Image.network(
+                images[index].url,
+                semanticLabel: images[index].altText,
+                fit: BoxFit.contain,
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : Center(
+                        child:
+                            CircularProgressIndicator(color: AppColors.accent)),
+                errorBuilder: (_, __, ___) => Center(
+                  child: Icon(Icons.broken_image_outlined,
+                      color: AppColors.textPrimary, size: 48),
+                ),
               ),
             ),
-          ),
-          Text(title, style: AppTypography.sectionTitle.copyWith(fontSize: 15)),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Icon(Icons.share_outlined, color: AppColors.textPrimary, size: 23),
-          ),
-        ],
-      ),
     );
   }
 }
