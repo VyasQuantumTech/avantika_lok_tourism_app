@@ -7,6 +7,7 @@ import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/widgets/temple_surface.dart';
 import '../../../../core/utils/validators.dart';
 import '../../domain/usecases/login_user.dart';
 import '../widgets/auth_scaffold.dart';
@@ -61,8 +62,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (_) {
       if (!mounted) return;
       setState(
-        () => _serverError =
-            'Unable to sign in right now. Please try again.',
+        () => _serverError = 'Unable to sign in right now. Please try again.',
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -103,7 +103,7 @@ class _LoginPageState extends State<LoginPage> {
                   width: double.infinity,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    gradient: TempleArt.brandGradient,
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
@@ -115,7 +115,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: Text(
                     'Email',
-                    style: AppTypography.body.copyWith(fontSize: 12),
+                    style: AppTypography.body.copyWith(
+                        fontSize: 12,
+                        color: AppColors.onPrimary,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

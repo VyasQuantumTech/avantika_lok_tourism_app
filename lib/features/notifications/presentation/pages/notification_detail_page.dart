@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../app/config/app_config.dart';
@@ -82,8 +83,8 @@ class _NotificationDetailPageState extends State<NotificationDetailPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Notification')),
+  Widget build(BuildContext context) => TempleScaffold(
+      appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),title: const Text('Notification')),
       body: FutureBuilder<AppNotification>(
           future: _future,
           builder: (context, snapshot) {

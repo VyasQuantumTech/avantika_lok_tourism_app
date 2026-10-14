@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -27,11 +28,8 @@ class ProfileHeader extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.brandGradientEnd, AppColors.brandGradientStart],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        image: TempleArt.headerImage(strong: true),
+        gradient: TempleArt.brandGradient,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(AppDimensions.cardRadius + 14),
           bottomRight: Radius.circular(AppDimensions.cardRadius + 14),
@@ -244,7 +242,8 @@ class ProfileMenuRow extends StatelessWidget {
               height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: destructive ? AppColors.errorSoft : AppColors.primarySoft,
+                color:
+                    destructive ? AppColors.errorSoft : AppColors.primarySoft,
                 borderRadius: BorderRadius.circular(11),
               ),
               child: Icon(

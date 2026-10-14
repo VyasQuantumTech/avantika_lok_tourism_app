@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
 import 'package:flutter/material.dart';
 
@@ -91,19 +92,19 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: AppLoadingView(message: 'Loading dashboard…'));
+          return const TempleScaffold(body: AppLoadingView(message: 'Loading dashboard…'));
         }
         if (snapshot.hasError || snapshot.data?.provider == null) {
           final message = snapshot.error is ApiException
               ? (snapshot.error! as ApiException).message
               : 'Unable to load provider dashboard.';
-          return Scaffold(body: AppErrorState(message: message, onRetry: _reload));
+          return TempleScaffold(body: AppErrorState(message: message, onRetry: _reload));
         }
 
         final dashboard = snapshot.data!;
         final provider = dashboard.provider!;
         if (provider.providerType != widget.config.expectedProviderType) {
-          return Scaffold(
+          return TempleScaffold(
             body: AppEmptyState(
               icon: Icons.sync_problem_outlined,
               title: 'Provider profile mismatch',
@@ -133,7 +134,7 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
       const ProviderProfilePage(),
     ];
 
-    return Scaffold(
+    return TempleScaffold(
       drawer: _ProviderDrawer(
         partnerTitle: config.partnerTitle,
         name: displayName,
@@ -141,7 +142,7 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
         onProfile: () => setState(() => _selectedIndex = 4),
       ),
       body: IndexedStack(index: _selectedIndex, children: tabs),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: TempleNavigationBar(
         selectedIndex: _selectedIndex,
         height: 68,
         onDestinationSelected: (index) => setState(() => _selectedIndex = index),

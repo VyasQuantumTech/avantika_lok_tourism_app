@@ -10,7 +10,7 @@ class AppThemeConfig {
 
   final Map<String, dynamic> _data;
 
-  static late AppThemeConfig _instance;
+  static AppThemeConfig _instance = AppThemeConfig._(const {});
 
   static AppThemeConfig get instance => _instance;
 

@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 import '../../../../app/di/injection.dart';
 import '../../domain/usecases/get_home_dashboard.dart';
@@ -28,8 +29,8 @@ Future<void> openFeedItem(BuildContext context, HomeFeedItem item) async {
     } else if (item.type == 'package') {
       page = CustomerPackagePage(id: item.id);
     } else {
-      page = Scaffold(
-          appBar: AppBar(title: Text(item.title)),
+      page = TempleScaffold(
+          appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),title: Text(item.title)),
           body: SingleChildScrollView(
               padding: const EdgeInsets.all(20), child: Text(item.summary)));
     }
@@ -96,8 +97,8 @@ class _CustomerPackagePageState extends State<CustomerPackagePage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(
+  Widget build(BuildContext context) => TempleScaffold(
+      appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),
           title: const Text('Package'),
           actions: [FavoriteButton(type: 'package', targetId: widget.id)]),
       body: FutureBuilder<HomePackageDetail>(

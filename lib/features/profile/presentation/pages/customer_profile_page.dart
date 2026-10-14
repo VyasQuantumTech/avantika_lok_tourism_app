@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/config/app_config.dart';
@@ -43,10 +44,10 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   @override
   Widget build(BuildContext context) {
     if (getIt<AppConfig>().flavor == AppFlavor.provider) {
-      return const Scaffold(body: Center(child: Text('Customer profile is unavailable in provider flavor.')));
+      return const TempleScaffold(body: Center(child: Text('Customer profile is unavailable in provider flavor.')));
     }
 
-    return Scaffold(
+    return TempleScaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: FutureBuilder<ProfileDashboard>(

@@ -16,7 +16,13 @@ class ServiceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.surface,
+              AppColors.brandSoft.withValues(alpha: .55)
+            ]),
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         border: Border.all(color: AppColors.brandBorder),
       ),

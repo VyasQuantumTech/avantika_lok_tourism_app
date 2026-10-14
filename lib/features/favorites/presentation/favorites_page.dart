@@ -1,3 +1,4 @@
+import '../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 import '../../../app/di/injection.dart';
 import '../../../core/widgets/app_ui.dart';
@@ -30,8 +31,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
     final c = getIt<FavoritesController>();
     return DefaultTabController(
         length: types.length,
-        child: Scaffold(
-          appBar: AppBar(
+        child: TempleScaffold(
+          appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),
               title: const Text('Favourites'),
               automaticallyImplyLeading: false,
               actions: [

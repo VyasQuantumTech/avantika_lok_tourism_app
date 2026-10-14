@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -18,7 +20,7 @@ class AuthScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TempleScaffold(
       backgroundColor: AppColors.surface,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -26,7 +28,8 @@ class AuthScaffold extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: Column(
@@ -36,11 +39,8 @@ class AuthScaffold extends StatelessWidget {
                         constraints: const BoxConstraints(minHeight: 205),
                         padding: const EdgeInsets.fromLTRB(24, 54, 24, 34),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd],
-                          ),
+                          image: TempleArt.headerImage(strong: true),
+                          gradient: TempleArt.brandGradient,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +59,8 @@ class AuthScaffold extends StatelessWidget {
                             Text(
                               subtitle,
                               style: AppTypography.caption.copyWith(
-                                color: AppColors.onPrimary.withValues(alpha: .95),
+                                color:
+                                    AppColors.onPrimary.withValues(alpha: .95),
                                 fontSize: 11,
                               ),
                             ),
@@ -71,12 +72,20 @@ class AuthScaffold extends StatelessWidget {
                         child: Container(
                           width: double.infinity,
                           constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight - 187,
+                            minHeight: math.max(0, constraints.maxHeight - 187),
                           ),
                           padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+                            color: AppColors.surface.withValues(alpha: .96),
+                            border: Border.all(color: AppColors.brandBorder),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: AppColors.shadow,
+                                  blurRadius: 24,
+                                  offset: const Offset(0, -4))
+                            ],
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(26)),
                           ),
                           child: child,
                         ),

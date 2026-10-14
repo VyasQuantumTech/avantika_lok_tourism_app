@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import '../../../../app/di/injection.dart';
 import '../../../favorites/presentation/favorites_page.dart';
 import '../../../favorites/presentation/favorites_controller.dart';
@@ -43,10 +44,10 @@ class _CustomerMainShellState extends State<CustomerMainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TempleScaffold(
       backgroundColor: AppColors.background,
       body: IndexedStack(index: _selectedIndex, children: _tabs),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: TempleNavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);

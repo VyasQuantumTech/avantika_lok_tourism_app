@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/route_names.dart';
@@ -106,8 +107,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Notifications'), actions: [
+  Widget build(BuildContext context) => TempleScaffold(
+      appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),title: const Text('Notifications'), actions: [
         IconButton(
             tooltip: 'Notification settings',
             icon: const Icon(Icons.settings_outlined),

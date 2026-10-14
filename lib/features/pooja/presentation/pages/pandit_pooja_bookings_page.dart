@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
@@ -165,8 +166,8 @@ class _PanditPoojaBookingsPageState extends State<PanditPoojaBookingsPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return TempleScaffold(
+      appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

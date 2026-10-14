@@ -66,7 +66,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         hintStyle: AppTypography.body.copyWith(color: AppColors.textMuted),
         labelStyle: AppTypography.body.copyWith(color: AppColors.textSecondary),
         enabledBorder: inputBorder,
@@ -74,8 +75,10 @@ class AppTheme {
         focusedBorder: inputBorder.copyWith(
           borderSide: BorderSide(color: AppColors.primary, width: 1.4),
         ),
-        errorBorder: inputBorder.copyWith(borderSide: BorderSide(color: AppColors.error)),
-        focusedErrorBorder: inputBorder.copyWith(borderSide: BorderSide(color: AppColors.error, width: 1.4)),
+        errorBorder: inputBorder.copyWith(
+            borderSide: BorderSide(color: AppColors.error)),
+        focusedErrorBorder: inputBorder.copyWith(
+            borderSide: BorderSide(color: AppColors.error, width: 1.4)),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -83,9 +86,23 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
           textStyle: AppTypography.label,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.smallRadius)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.smallRadius)),
           elevation: 0,
           shadowColor: AppColors.primary.withValues(alpha: .18),
+        ).copyWith(
+          backgroundBuilder: (context, states, child) => DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: states.contains(WidgetState.disabled)
+                  ? null
+                  : AppColors.brandGradient,
+              color: states.contains(WidgetState.disabled)
+                  ? AppColors.softSurface
+                  : null,
+              borderRadius: BorderRadius.circular(AppDimensions.smallRadius),
+            ),
+            child: child,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -95,28 +112,45 @@ class AppTheme {
           foregroundColor: AppColors.primary,
           side: BorderSide(color: AppColors.border),
           textStyle: AppTypography.label,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.smallRadius)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.smallRadius)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
           textStyle: AppTypography.label,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.smallRadius)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.smallRadius)),
         ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.softSurface,
         side: BorderSide(color: AppColors.border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.pillRadius)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.pillRadius)),
         labelStyle: AppTypography.caption.copyWith(fontWeight: FontWeight.w600),
+      ),
+      tabBarTheme: TabBarThemeData(
+        dividerColor: Colors.transparent,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          gradient: AppColors.brandGradient,
+          borderRadius: BorderRadius.circular(AppDimensions.smallRadius),
+        ),
+        labelColor: AppColors.onPrimary,
+        unselectedLabelColor: AppColors.textSecondary,
+        labelStyle: AppTypography.label.copyWith(fontWeight: FontWeight.w700),
+        unselectedLabelStyle: AppTypography.label,
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.dialogRadius)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.dialogRadius)),
         titleTextStyle: AppTypography.title,
-        contentTextStyle: AppTypography.body.copyWith(color: AppColors.textSecondary),
+        contentTextStyle:
+            AppTypography.body.copyWith(color: AppColors.textSecondary),
       ),
       datePickerTheme: DatePickerThemeData(
         backgroundColor: AppColors.surface,
@@ -125,7 +159,8 @@ class AppTheme {
         headerForegroundColor: AppColors.onPrimary,
         todayForegroundColor: WidgetStatePropertyAll(AppColors.primary),
         todayBorder: BorderSide(color: AppColors.primary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.dialogRadius)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.dialogRadius)),
       ),
       timePickerTheme: TimePickerThemeData(
         backgroundColor: AppColors.surface,
@@ -136,36 +171,47 @@ class AppTheme {
         dialBackgroundColor: AppColors.softSurface,
         dialHandColor: AppColors.primary,
         entryModeIconColor: AppColors.primary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.dialogRadius)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.dialogRadius)),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.textPrimary,
         contentTextStyle: AppTypography.body.copyWith(color: Colors.white),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.smallRadius)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.smallRadius)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         indicatorColor: AppColors.primarySoft,
-        labelTextStyle: WidgetStateProperty.resolveWith((states) => AppTypography.tiny.copyWith(
-          color: states.contains(WidgetState.selected) ? AppColors.primaryDark : AppColors.navInactive,
-          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
-        )),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) => AppTypography.tiny.copyWith(
+                  color: states.contains(WidgetState.selected)
+                      ? AppColors.primaryDark
+                      : AppColors.navInactive,
+                  fontWeight: states.contains(WidgetState.selected)
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                )),
         iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
-          color: states.contains(WidgetState.selected) ? AppColors.primary : AppColors.navInactive,
-        )),
+              color: states.contains(WidgetState.selected)
+                  ? AppColors.primary
+                  : AppColors.navInactive,
+            )),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.transparent,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.navInactive,
         type: BottomNavigationBarType.fixed,
         elevation: 14,
-        selectedLabelStyle: AppTypography.tiny.copyWith(fontWeight: FontWeight.w700),
+        selectedLabelStyle:
+            AppTypography.tiny.copyWith(fontWeight: FontWeight.w700),
         unselectedLabelStyle: AppTypography.tiny,
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(color: AppColors.primary),
+      progressIndicatorTheme:
+          ProgressIndicatorThemeData(color: AppColors.primary),
     );
   }
 }

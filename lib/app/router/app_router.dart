@@ -1,3 +1,4 @@
+import '../../core/widgets/temple_surface.dart';
 import '../di/injection.dart';
 import '../../core/services/notification_service.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
@@ -424,7 +425,7 @@ class AppRouter {
   ) {
     return MaterialPageRoute<void>(
       settings: settings,
-      builder: (_) => Scaffold(
+      builder: (_) => TempleScaffold(
         body: SafeArea(
           child: Center(
             child: Padding(

@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
@@ -32,7 +33,7 @@ class _ExploreDetailPageState extends State<ExploreDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TempleScaffold(
       body: SafeArea(
         child: FutureBuilder<TourismPlace>(
           future: _future,
@@ -109,7 +110,7 @@ class _TopBar extends StatelessWidget {
                 child: Container(
                   width: 38,
                   height: 38,
-                  decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                  decoration: BoxDecoration(gradient: LinearGradient(colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd]), shape: BoxShape.circle),
                   child: Icon(Icons.arrow_back, color: AppColors.onPrimary, size: 20),
                 ),
               ),

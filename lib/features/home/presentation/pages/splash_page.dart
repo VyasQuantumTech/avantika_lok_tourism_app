@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/temple_surface.dart';
 
 import '../../../../app/config/app_config.dart';
 import '../../../../app/config/app_flavor.dart';
@@ -173,8 +174,7 @@ class _SplashPageState extends State<SplashPage>
     final config = getIt<AppConfig>();
     final isAdmin = config.flavor == AppFlavor.admin;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
+    return TempleScaffold(
       body: Center(
         child: AnimatedBuilder(
           animation: _controller,

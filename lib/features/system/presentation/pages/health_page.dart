@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -32,8 +33,8 @@ class _HealthPageState extends State<HealthPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('API Health')),
+    return TempleScaffold(
+      appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),title: const Text('API Health')),
       body: SafeArea(
         child: FutureBuilder<HealthStatus>(
           future: _healthFuture,

@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../core/errors/exceptions.dart';
@@ -133,8 +134,8 @@ class _NotificationPreferencesPageState
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('Notification settings')),
+  Widget build(BuildContext context) => TempleScaffold(
+      appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),title: const Text('Notification settings')),
       body: _value == null
           ? Center(
               child: _error == null

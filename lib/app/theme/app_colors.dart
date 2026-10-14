@@ -15,6 +15,11 @@ class AppColors {
   static Color get accent => _c('accent', const Color(0xFFFFAA57));
   static Color get brandGradientStart => _c('gradientStart', primary);
   static Color get brandGradientEnd => _c('gradientEnd', primaryDark);
+  static LinearGradient get brandGradient => LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [brandGradientStart, brandGradientEnd],
+  );
   static Color get background => _c('background', const Color(0xFFF8F9FB));
   static Color get surface => _c('surface', Colors.white);
   static Color get softSurface => _c('surfaceSoft', const Color(0xFFF3F5F8));

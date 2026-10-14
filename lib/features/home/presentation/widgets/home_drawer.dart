@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
 import 'package:flutter/material.dart';
 
@@ -58,7 +59,8 @@ class HomeDrawer extends StatelessWidget {
       width: AppDimensions.drawerWidth,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(),
-      child: SafeArea(
+      child: TempleBackdrop(
+          child: SafeArea(
         top: false,
         child: Column(
           children: [
@@ -139,7 +141,7 @@ class HomeDrawer extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }
@@ -155,11 +157,8 @@ class _ProfileHeader extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 50, 16, 22),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [AppColors.brandGradientEnd, AppColors.brandGradientStart],
-        ),
+        image: TempleArt.headerImage(strong: true),
+        gradient: TempleArt.brandGradient,
       ),
       child: Stack(
         children: [

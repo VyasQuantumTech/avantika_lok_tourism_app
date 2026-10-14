@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/config/app_config.dart';
@@ -54,7 +55,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
   @override
   Widget build(BuildContext context) {
     if (getIt<AppConfig>().flavor != AppFlavor.provider) {
-      return const Scaffold(
+      return const TempleScaffold(
         body: AppEmptyState(
           title: 'Provider account unavailable',
           message: 'This screen is only available in the provider flavor.',

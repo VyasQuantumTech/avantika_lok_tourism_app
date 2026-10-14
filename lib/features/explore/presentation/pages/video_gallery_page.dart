@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -22,7 +23,7 @@ class _VideoGalleryPageState extends State<VideoGalleryPage> {
     final current = videos[_index];
     final thumb = current.thumbnailUrl.isNotEmpty ? current.thumbnailUrl : _youtubeThumbnail(current.url);
 
-    return Scaffold(
+    return TempleScaffold(
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(AppDimensions.pagePadding, 8, AppDimensions.pagePadding, 16),
@@ -150,7 +151,7 @@ class _Header extends StatelessWidget {
               child: Container(
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                decoration: BoxDecoration(gradient: LinearGradient(colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd]), shape: BoxShape.circle),
                 child: Icon(Icons.arrow_back, color: AppColors.onPrimary, size: 19),
               ),
             ),

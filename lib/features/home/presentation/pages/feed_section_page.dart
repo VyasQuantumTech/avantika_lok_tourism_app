@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../core/widgets/app_ui.dart';
@@ -50,8 +51,8 @@ class _FeedSectionPageState extends State<FeedSectionPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+  Widget build(BuildContext context) => TempleScaffold(
+      appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),title: Text(widget.title)),
       body: RefreshIndicator(
         onRefresh: () => load(reset: true),
         child: ListView(

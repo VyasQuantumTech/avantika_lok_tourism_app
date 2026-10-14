@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/config/app_config.dart';
@@ -411,7 +412,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     if (widget.providerMode &&
         flavor != AppFlavor.provider) {
-      return const Scaffold(
+      return const TempleScaffold(
         body: Center(
           child: Text(
             'Provider profile editing is only available in provider flavor.',
@@ -422,7 +423,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     if (!widget.providerMode &&
         flavor == AppFlavor.provider) {
-      return const Scaffold(
+      return const TempleScaffold(
         body: Center(
           child: Text(
             'Customer profile editing is unavailable in provider flavor.',
@@ -431,10 +432,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       );
     }
 
-    return Scaffold(
+    return TempleScaffold(
       backgroundColor:
       AppColors.background,
-      appBar: AppBar(
+      appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),
         backgroundColor: AppColors.onPrimary,
         elevation: 0,
         leading: IconButton(

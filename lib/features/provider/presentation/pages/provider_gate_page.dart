@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
@@ -104,7 +105,7 @@ class _ProviderGatePageState extends State<ProviderGatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TempleScaffold(
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),

@@ -1,3 +1,4 @@
+import '../../../../core/widgets/temple_surface.dart';
 import 'feed_section_page.dart';
 import '../widgets/feed_item_card.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
@@ -43,12 +44,12 @@ class _HomePageState extends State<HomePage> {
       future: _dashboardFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
+          return const TempleScaffold(
               body: AppLoadingView(message: 'Preparing Avantika Lok…'));
         }
 
         if (snapshot.hasError || snapshot.data == null) {
-          return Scaffold(
+          return TempleScaffold(
             body: SafeArea(
               child: AppErrorState(
                 message: 'Unable to load the home dashboard.',
@@ -59,7 +60,7 @@ class _HomePageState extends State<HomePage> {
         }
 
         final dashboard = snapshot.data!;
-        return Scaffold(
+        return TempleScaffold(
           drawer: HomeDrawer(dashboard: dashboard),
           body: SafeArea(
             child: RefreshIndicator(
@@ -207,7 +208,7 @@ class _TopHeader extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
+                    gradient: LinearGradient(colors: [AppColors.brandGradientStart, AppColors.brandGradientEnd]),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

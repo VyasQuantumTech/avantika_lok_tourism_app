@@ -1,3 +1,4 @@
+import 'temple_surface.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_colors.dart';
@@ -28,9 +29,10 @@ class AppPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return TempleScaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        flexibleSpace: const TempleAppBarBackground(),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -46,26 +48,11 @@ class AppPage extends StatelessWidget {
         ),
         actions: actions,
       ),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primarySoft.withValues(alpha: .34),
-              AppColors.background,
-              AppColors.background,
-            ],
-            stops: const [0, .18, 1],
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: padding ?? EdgeInsets.all(AppDimensions.pagePadding),
-            child: child,
-          ),
+      body: SafeArea(
+        top: false,
+        child: Padding(
+          padding: padding ?? EdgeInsets.all(AppDimensions.pagePadding),
+          child: child,
         ),
       ),
       bottomNavigationBar: bottomNavigationBar,
@@ -96,7 +83,13 @@ class AppPanel extends StatelessWidget {
       width: double.infinity,
       padding: padding ?? EdgeInsets.all(AppDimensions.cardPadding),
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surface.withValues(alpha: .97),
+        color: backgroundColor,
+        gradient: backgroundColor == null
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.surface, AppColors.background])
+            : null,
         borderRadius: BorderRadius.circular(AppDimensions.cardRadius),
         border: Border.all(color: borderColor ?? AppColors.border),
         boxShadow: [
@@ -199,16 +192,27 @@ enum AppStatusTone {
 
   static AppStatusTone fromValue(String raw) {
     final value = raw.toLowerCase();
-    if (value.contains('complete') || value.contains('approve') || value.contains('active') || value.contains('accept')) {
+    if (value.contains('complete') ||
+        value.contains('approve') ||
+        value.contains('active') ||
+        value.contains('accept')) {
       return success;
     }
-    if (value.contains('pending') || value.contains('upcoming') || value.contains('review') || value.contains('progress')) {
+    if (value.contains('pending') ||
+        value.contains('upcoming') ||
+        value.contains('review') ||
+        value.contains('progress')) {
       return warning;
     }
-    if (value.contains('cancel') || value.contains('reject') || value.contains('fail') || value.contains('inactive')) {
+    if (value.contains('cancel') ||
+        value.contains('reject') ||
+        value.contains('fail') ||
+        value.contains('inactive')) {
       return error;
     }
-    if (value.contains('confirm') || value.contains('publish') || value.contains('listed')) {
+    if (value.contains('confirm') ||
+        value.contains('publish') ||
+        value.contains('listed')) {
       return info;
     }
     return neutral;
@@ -344,7 +348,8 @@ class AppMetricCard extends StatelessWidget {
 }
 
 class AppDetailRow extends StatelessWidget {
-  const AppDetailRow({required this.label, required this.value, super.key, this.icon});
+  const AppDetailRow(
+      {required this.label, required this.value, super.key, this.icon});
 
   final String label;
   final String value;
@@ -361,7 +366,8 @@ class AppDetailRow extends StatelessWidget {
             Icon(icon, size: 18, color: AppColors.textMuted),
             const SizedBox(width: 9),
           ],
-          SizedBox(width: 110, child: Text(label, style: AppTypography.caption)),
+          SizedBox(
+              width: 110, child: Text(label, style: AppTypography.caption)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -389,7 +395,8 @@ class AppLoadingView extends StatelessWidget {
           SizedBox(
             width: 34,
             height: 34,
-            child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.primary),
+            child: CircularProgressIndicator(
+                strokeWidth: 3, color: AppColors.primary),
           ),
           const SizedBox(height: 14),
           Text(message, style: AppTypography.caption),
@@ -427,16 +434,20 @@ class AppEmptyState extends StatelessWidget {
               width: 58,
               height: 58,
               alignment: Alignment.center,
-              decoration: BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: AppColors.primarySoft, shape: BoxShape.circle),
               child: Icon(icon, color: AppColors.primary, size: 28),
             ),
             const SizedBox(height: 14),
-            Text(title, style: AppTypography.sectionTitle, textAlign: TextAlign.center),
+            Text(title,
+                style: AppTypography.sectionTitle, textAlign: TextAlign.center),
             const SizedBox(height: 6),
-            Text(message, style: AppTypography.caption, textAlign: TextAlign.center),
+            Text(message,
+                style: AppTypography.caption, textAlign: TextAlign.center),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 16),
-              AppGradientButton(label: actionLabel!, onPressed: onAction, expand: false),
+              AppGradientButton(
+                  label: actionLabel!, onPressed: onAction, expand: false),
             ],
           ],
         ),
@@ -446,7 +457,8 @@ class AppEmptyState extends StatelessWidget {
 }
 
 class AppErrorState extends StatelessWidget {
-  const AppErrorState({required this.message, required this.onRetry, super.key});
+  const AppErrorState(
+      {required this.message, required this.onRetry, super.key});
 
   final String message;
   final VoidCallback onRetry;
@@ -466,8 +478,8 @@ class AppErrorState extends StatelessWidget {
 class AppFeedback {
   const AppFeedback._();
 
-  static void success(BuildContext context, String message) =>
-      _show(context, message, AppColors.success, Icons.check_circle_outline_rounded);
+  static void success(BuildContext context, String message) => _show(
+      context, message, AppColors.success, Icons.check_circle_outline_rounded);
 
   static void error(BuildContext context, String message) =>
       _show(context, message, AppColors.error, Icons.error_outline_rounded);
@@ -475,7 +487,8 @@ class AppFeedback {
   static void info(BuildContext context, String message) =>
       _show(context, message, AppColors.info, Icons.info_outline_rounded);
 
-  static void _show(BuildContext context, String message, Color color, IconData icon) {
+  static void _show(
+      BuildContext context, String message, Color color, IconData icon) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -510,7 +523,9 @@ class AppDialogs {
             title: Text(title),
             content: Text(message),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(cancelLabel)),
+              TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(cancelLabel)),
               FilledButton(
                 style: destructive
                     ? FilledButton.styleFrom(backgroundColor: AppColors.error)
@@ -525,12 +540,27 @@ class AppDialogs {
   }
 
   static Future<String?> textInput(
-    BuildContext context, {required String title, required String label, String? helperText,
-    String confirmLabel = 'Continue', TextInputType? keyboardType, int? maxLength,
-    String? Function(String)? validator, Future<void> Function(String)? onSubmit,
-  }) => showDialog<String>(context: context, barrierDismissible: onSubmit == null, builder: (_) => AppTextInputDialog(
-    title: title, label: label, helperText: helperText, confirmLabel: confirmLabel,
-    keyboardType: keyboardType, maxLength: maxLength, validator: validator, onSubmit: onSubmit,
-  ));
-
+    BuildContext context, {
+    required String title,
+    required String label,
+    String? helperText,
+    String confirmLabel = 'Continue',
+    TextInputType? keyboardType,
+    int? maxLength,
+    String? Function(String)? validator,
+    Future<void> Function(String)? onSubmit,
+  }) =>
+      showDialog<String>(
+          context: context,
+          barrierDismissible: onSubmit == null,
+          builder: (_) => AppTextInputDialog(
+                title: title,
+                label: label,
+                helperText: helperText,
+                confirmLabel: confirmLabel,
+                keyboardType: keyboardType,
+                maxLength: maxLength,
+                validator: validator,
+                onSubmit: onSubmit,
+              ));
 }
