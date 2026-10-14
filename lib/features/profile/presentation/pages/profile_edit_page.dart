@@ -436,7 +436,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       backgroundColor:
       AppColors.background,
       appBar: AppBar(flexibleSpace: const TempleAppBarBackground(),
-        backgroundColor: AppColors.onPrimary,
         elevation: 0,
         leading: IconButton(
           onPressed: () {

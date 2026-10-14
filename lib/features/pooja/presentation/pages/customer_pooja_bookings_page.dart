@@ -153,7 +153,7 @@ class _CustomerPoojaBookingsPageState extends State<CustomerPoojaBookingsPage>
           return Column(
             children: [
               Material(
-                color: AppColors.surface,
+                color: Colors.transparent,
                 child: TabBar(
                   controller: _tabs,
                   isScrollable: true,

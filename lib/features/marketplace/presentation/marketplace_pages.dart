@@ -968,7 +968,7 @@ class _CustomerMarketplaceBookingsPageState extends State<CustomerMarketplaceBoo
             return Column(
               children: [
                 Material(
-                  color: AppColors.surface,
+                  color: Colors.transparent,
                   child: TabBar(
                     controller: _tabs,
                     isScrollable: true,

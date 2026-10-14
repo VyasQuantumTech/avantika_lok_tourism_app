@@ -125,6 +125,68 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('background covers system insets and nested tab headers',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 32);
+    tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 32);
+    addTearDown(tester.view.reset);
+    var pressed = 0;
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: TempleScaffold(
+        body: TempleScaffold(
+          appBar: AppBar(
+            title: const Text('My Bookings'),
+            flexibleSpace: const TempleAppBarBackground(),
+            bottom: const PreferredSize(
+              preferredSize: Size.fromHeight(48),
+              child: SizedBox(height: 48, child: Text('Booking filters')),
+            ),
+          ),
+          body: SafeArea(
+            top: false,
+            child: Center(
+              child: TextButton(
+                onPressed: () => pressed++,
+                child: const Text('Open booking'),
+              ),
+            ),
+          ),
+        ),
+        bottomNavigationBar: TempleNavigationBar(
+          selectedIndex: 0,
+          onDestinationSelected: (_) {},
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+            NavigationDestination(
+                icon: Icon(Icons.favorite), label: 'Favourite'),
+          ],
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byType(TempleBackdrop), findsOneWidget);
+    expect(tester.getRect(find.byType(TempleBackdrop)),
+        const Rect.fromLTWH(0, 0, 390, 844));
+    expect(AppTheme.light.appBarTheme.backgroundColor, Colors.transparent);
+    expect(AppTheme.light.appBarTheme.systemOverlayStyle,
+        TempleArt.systemOverlayStyle);
+    expect(tester.getRect(find.byType(AppBar)).top, 0);
+    expect(
+        tester.getRect(find.text('My Bookings')).top, greaterThanOrEqualTo(24));
+    expect(tester.getRect(find.text('Home')).bottom, lessThanOrEqualTo(812));
+    await tester.tap(find.text('Open booking'));
+    expect(pressed, 1);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byType(TempleBackdrop)),
+        const Rect.fromLTWH(0, 0, 390, 844));
+    expect(find.text('Open booking').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('render reference-aligned mobile previews', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);

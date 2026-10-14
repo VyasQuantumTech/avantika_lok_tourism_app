@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../app/theme/app_colors.dart';
 import '../constants/asset_constants.dart';
@@ -6,6 +7,17 @@ import '../constants/asset_constants.dart';
 /// Shared decoration only: navigation, forms and page state stay in their pages.
 class TempleArt {
   const TempleArt._();
+
+  static const systemOverlayStyle = SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark,
+    systemNavigationBarContrastEnforced: false,
+    systemStatusBarContrastEnforced: false,
+  );
 
   static LinearGradient get brandGradient => AppColors.brandGradient;
 
@@ -25,14 +37,9 @@ class TempleArt {
 class TempleAppBarBackground extends StatelessWidget {
   const TempleAppBarBackground({super.key});
 
+  // The scaffold now paints one continuous background behind the header.
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          image: TempleArt.headerImage(),
-          border: Border(bottom: BorderSide(color: AppColors.brandBorder)),
-        ),
-      );
+  Widget build(BuildContext context) => const SizedBox.expand();
 }
 
 /// Locally bundled artwork; the gentle fade keeps content legible on long pages.
@@ -140,29 +147,43 @@ class TempleScaffold extends StatelessWidget {
   final Color? backgroundColor;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: appBar,
-        backgroundColor: backgroundColor ?? AppColors.background,
-        drawer: drawer,
-        body: TempleBackdrop(child: body ?? const SizedBox.expand()),
-        bottomNavigationBar: bottomNavigationBar == null
-            ? null
-            : DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                      colors: [AppColors.surface, AppColors.brandSoft]),
-                  border: Border(top: BorderSide(color: AppColors.brandBorder)),
-                  boxShadow: [
-                    BoxShadow(
-                        color: AppColors.shadow,
-                        blurRadius: 20,
-                        offset: const Offset(0, -4))
-                  ],
-                ),
-                child: bottomNavigationBar,
+  Widget build(BuildContext context) {
+    final scaffold = Scaffold(
+      appBar: appBar,
+      backgroundColor: Colors.transparent,
+      drawer: drawer,
+      body: body ?? const SizedBox.expand(),
+      bottomNavigationBar: bottomNavigationBar == null
+          ? null
+          : DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.brandBorder)),
               ),
-        floatingActionButton: floatingActionButton,
-      );
+              child: bottomNavigationBar,
+            ),
+      floatingActionButton: floatingActionButton,
+    );
+
+    // Primary tabs contain their own scaffolds. Share the shell's artwork so
+    // nested pages do not restart the fade below their headers or above the nav.
+    if (context.dependOnInheritedWidgetOfExactType<_TempleSurfaceScope>() !=
+        null) {
+      return scaffold;
+    }
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: TempleArt.systemOverlayStyle,
+      child: _TempleSurfaceScope(
+        child: TempleBackdrop(child: scaffold),
+      ),
+    );
+  }
+}
+
+class _TempleSurfaceScope extends InheritedWidget {
+  const _TempleSurfaceScope({required super.child});
+
+  @override
+  bool updateShouldNotify(_TempleSurfaceScope oldWidget) => false;
 }
 
 /// Flutter destinations and callbacks are preserved; only the selected art changes.

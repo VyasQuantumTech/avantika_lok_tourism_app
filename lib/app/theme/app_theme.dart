@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/widgets/temple_surface.dart';
 import 'app_colors.dart';
 import 'app_dimensions.dart';
 import 'app_typography.dart';
@@ -44,7 +45,8 @@ class AppTheme {
       splashColor: AppColors.primary.withValues(alpha: .08),
       highlightColor: Colors.transparent,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.transparent,
+        systemOverlayStyle: TempleArt.systemOverlayStyle,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
