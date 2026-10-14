@@ -1,3 +1,6 @@
+import '../../../bookings/domain/entities/booking_payment_session.dart';
+import '../../../bookings/domain/entities/booking_lifecycle.dart';
+
 class PoojaMedia {
   const PoojaMedia({required this.id, required this.url, this.sortOrder = 0});
 
@@ -136,6 +139,7 @@ class PanditPoojaDashboard {
     required this.completedBookings,
     required this.estimatedGross,
     required this.currency,
+    this.serviceValues = const [],
   });
 
   final String panditId;
@@ -145,8 +149,15 @@ class PanditPoojaDashboard {
   final int upcomingBookings;
   final int pendingActionBookings;
   final int completedBookings;
-  final double estimatedGross;
+  final double? estimatedGross;
+  final String? currency;
+  final List<PoojaServiceValue> serviceValues;
+}
+
+class PoojaServiceValue {
+  const PoojaServiceValue({required this.currency, required this.amount});
   final String currency;
+  final double amount;
 }
 
 class PoojaBooking {
@@ -162,14 +173,17 @@ class PoojaBooking {
     this.endTime,
     this.panditPoojaId,
     this.notes,
+    this.lifecycle,
     this.poojaStartOtp,
     this.poojaEndOtp,
     this.serviceStartedAt,
     this.serviceEndedAt,
+    this.serviceImageUrl,
     this.pricingSnapshot = const <String, dynamic>{},
     this.customerSnapshot = const <String, dynamic>{},
   });
 
+  final String? serviceImageUrl;
   final String id;
   final String bookingNumber;
   final String status;
@@ -181,6 +195,14 @@ class PoojaBooking {
   final double totalAmount;
   final String currency;
   final String? notes;
+  final BookingLifecycle? lifecycle;
+  BookingLifecycle get state =>
+      lifecycle ??
+      BookingLifecycle(
+          status: status,
+          providerDecision: providerDecision,
+          startedAt: serviceStartedAt,
+          endedAt: serviceEndedAt);
   final String? poojaStartOtp;
   final String? poojaEndOtp;
   final DateTime? serviceStartedAt;
@@ -188,67 +210,22 @@ class PoojaBooking {
   final Map<String, dynamic> pricingSnapshot;
   final Map<String, dynamic> customerSnapshot;
 
-  bool get isAwaitingPandit =>
-      status == 'pending' && providerDecision == 'pending';
-
+  bool get isAwaitingPandit => state.awaitingProvider;
   bool get hasCustomerOtpAccess =>
-      (status == 'pending' || status == 'confirmed') &&
-      providerDecision != 'rejected' &&
-      serviceEndedAt == null;
-
+      state.canFetchStartOtp || state.canFetchEndOtp;
   bool get canShowStartOtp =>
-      hasCustomerOtpAccess && poojaStartOtp?.trim().isNotEmpty == true;
-
-  // Backward-compatible alias used by existing UI.
+      state.canFetchStartOtp && poojaStartOtp?.isNotEmpty == true;
   bool get canShowOtp => canShowStartOtp;
-
-  bool get isInProgress =>
-      serviceStartedAt != null && serviceEndedAt == null;
-
-  bool get isCompleted =>
-      serviceEndedAt != null || status == 'completed';
-
+  bool get isInProgress => state.active && serviceStartedAt != null;
+  bool get isCompleted => state.completed;
   bool get canShowEndOtp =>
-      hasCustomerOtpAccess && poojaEndOtp?.trim().isNotEmpty == true;
-
-  bool get canCustomerCancel => status == 'pending' || status == 'confirmed';
-
-  bool get canPanditAccept =>
-      status == 'pending' && providerDecision == 'pending';
-
-  bool get canPanditStart =>
-      (status == 'pending' || status == 'confirmed') &&
-      providerDecision == 'accepted' &&
-      serviceStartedAt == null &&
-      serviceEndedAt == null;
-
-  bool get canPanditEnd =>
-      providerDecision == 'accepted' &&
-      serviceStartedAt != null &&
-      serviceEndedAt == null &&
-      status != 'cancelled' &&
-      status != 'completed';
-
-  bool get showPanditPoojaControls =>
-      providerDecision == 'accepted' &&
-      status != 'cancelled' &&
-      status != 'completed' &&
-      serviceEndedAt == null;
+      state.canFetchEndOtp && poojaEndOtp?.isNotEmpty == true;
+  bool get canCustomerCancel => state.canCancel;
+  bool get canPanditAccept => state.awaitingProvider;
+  bool get canPanditStart => state.canStart;
+  bool get canPanditEnd => state.canComplete;
+  bool get showPanditPoojaControls => state.canStart || state.canComplete;
 }
 
-
-class PoojaPaymentSession {
-  const PoojaPaymentSession({
-    required this.id, required this.bookingId, required this.keyId,
-    required this.orderId, required this.amountMinor, required this.amount,
-    required this.currency, required this.status,
-  });
-  final String id;
-  final String bookingId;
-  final String keyId;
-  final String orderId;
-  final int amountMinor;
-  final double amount;
-  final String currency;
-  final String status;
-}
+// Compatibility name for the existing pooja repository and route contracts.
+typedef PoojaPaymentSession = BookingPaymentSession;

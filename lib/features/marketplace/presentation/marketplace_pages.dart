@@ -1,3 +1,7 @@
+import 'accommodation_calendar_page.dart';
+import '../../bookings/presentation/widgets/booking_lifecycle_panel.dart';
+import '../../bookings/presentation/widgets/ride_tracking_panel.dart';
+import 'transport_operations_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -54,6 +58,7 @@ class CustomerMarketplaceListPage extends StatefulWidget {
 
 class _CustomerMarketplaceListPageState extends State<CustomerMarketplaceListPage> {
   final search = TextEditingController();
+  String? bookingItemId;
   late Future<List<MarketplaceItem>> future;
 
   @override
@@ -62,7 +67,23 @@ class _CustomerMarketplaceListPageState extends State<CustomerMarketplaceListPag
     reload();
   }
 
-  void reload() => future = getIt<MarketplaceActions>().browse(widget.type, query: search.text);
+  void reload() { future = getIt<MarketplaceActions>().browse(widget.type, query: search.text); }
+
+  Future<void> bookItem(MarketplaceItem item) async {
+    if (bookingItemId != null) return;
+    setState(() => bookingItemId = item.id);
+    try {
+      // List payloads may omit room/route details. Load the authoritative service
+      // before choosing an option; the existing form still checks live availability.
+      final detail = await getIt<MarketplaceActions>().detail(item.type, item.slug);
+      if (!mounted) return;
+      await _openMarketplaceBooking(context, detail);
+    } catch (error) {
+      if (mounted) AppFeedback.error(context, _err(error));
+    } finally {
+      if (mounted) setState(() => bookingItemId = null);
+    }
+  }
 
   @override
   void dispose() {
@@ -131,6 +152,8 @@ class _CustomerMarketplaceListPageState extends State<CustomerMarketplaceListPag
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (_, index) => _MarketplaceCustomerCard(
                         item: items[index],
+                        booking: bookingItemId == items[index].id,
+                        onBook: bookingItemId == null ? () => bookItem(items[index]) : null,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -152,9 +175,11 @@ class _CustomerMarketplaceListPageState extends State<CustomerMarketplaceListPag
 }
 
 class _MarketplaceCustomerCard extends StatelessWidget {
-  const _MarketplaceCustomerCard({required this.item, required this.onTap});
+  const _MarketplaceCustomerCard({required this.item, required this.onTap, required this.onBook, required this.booking});
   final MarketplaceItem item;
   final VoidCallback onTap;
+  final VoidCallback? onBook;
+  final bool booking;
 
   @override
   Widget build(BuildContext context) {
@@ -207,6 +232,14 @@ class _MarketplaceCustomerCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text('From ${_money(item.currency, item.price)}', style: AppTypography.label),
                 ],
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: onBook,
+                  icon: booking
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.calendar_month_outlined, size: 18),
+                  label: Text(booking ? 'Loading…' : 'Book now'),
+                ),
               ],
             ),
           ),
@@ -235,27 +268,46 @@ class _CustomerMarketplaceDetailPageState extends State<CustomerMarketplaceDetai
     reload();
   }
 
-  void reload() => future = getIt<MarketplaceActions>().detail(widget.type, widget.identifier);
+  @override
+  void didUpdateWidget(CustomerMarketplaceDetailPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.type != widget.type || oldWidget.identifier != widget.identifier) reload();
+  }
+
+  void reload() { future = getIt<MarketplaceActions>().detail(widget.type, widget.identifier); }
 
   @override
-  Widget build(BuildContext context) => AppPage(
-        title: widget.type.title,
-        child: FutureBuilder<MarketplaceItem>(
-          future: future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const AppLoadingView(message: 'Loading details…');
-            }
-            if (snapshot.hasError || snapshot.data == null) {
-              return AppErrorState(message: _err(snapshot.error), onRetry: () => setState(reload));
-            }
-            final item = snapshot.data!;
-            if (widget.type == MarketplaceType.accommodation) {
-              return _AccommodationCustomerDetail(item: item);
-            }
-            return _TransportCustomerDetail(item: item);
-          },
-        ),
+  Widget build(BuildContext context) => FutureBuilder<MarketplaceItem>(
+        future: future,
+        builder: (context, snapshot) {
+          final item = snapshot.data;
+          final ready = snapshot.connectionState == ConnectionState.done &&
+              !snapshot.hasError && item != null;
+          final child = snapshot.connectionState == ConnectionState.waiting
+              ? const AppLoadingView(message: 'Loading details…')
+              : !ready
+                  ? AppErrorState(message: _err(snapshot.error), onRetry: () => setState(reload))
+                  : widget.type == MarketplaceType.accommodation
+                      ? _AccommodationCustomerDetail(item: item)
+                      : _TransportCustomerDetail(item: item);
+          return AppPage(
+            title: widget.type.title,
+            child: child,
+            bottomNavigationBar: !ready ? null : SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: FilledButton.icon(
+                  onPressed: item.type == MarketplaceType.accommodation && item.units.isEmpty
+                      ? null : () => _openMarketplaceBooking(context, item),
+                  icon: const Icon(Icons.calendar_month_outlined),
+                  label: Text(item.type == MarketplaceType.accommodation && item.units.isEmpty
+                      ? 'No rooms available' : 'Book now'),
+                ),
+              ),
+            ),
+          );
+        },
       );
 }
 
@@ -441,29 +493,72 @@ class _TransportCustomerDetail extends StatelessWidget {
               ] else ...[
                 Text('Choose an available route.', style: AppTypography.caption),
               ],
-              ...options.map(
-                (option) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(_str(option, ['name', 'route_name', 'routeName'], fallback: 'Route')),
-                  subtitle: Text('${_str(option, ['origin'])} → ${_str(option, ['destination'])}'),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CustomerMarketplaceBookingPage(
-                        type: MarketplaceType.transport,
-                        item: item,
-                        option: option,
-                      ),
+              ...options.map((option) {
+                void book() => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => CustomerMarketplaceBookingPage(
+                    type: MarketplaceType.transport, item: item, option: option)),
+                );
+                return Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(_str(option, ['name', 'route_name', 'routeName'], fallback: 'Route')),
+                      subtitle: Text('${_str(option, ['origin'])} → ${_str(option, ['destination'])}'),
+                      onTap: book,
                     ),
-                  ),
-                ),
-              ),
+                    SizedBox(width: double.infinity, child: FilledButton.icon(
+                      onPressed: book,
+                      icon: const Icon(Icons.directions_car_outlined),
+                      label: const Text('Book this route'),
+                    )),
+                  ]),
+                );
+              }),
             ],
           ),
         ),
       ],
     );
   }
+}
+
+Future<void> _openMarketplaceBooking(BuildContext context, MarketplaceItem item) async {
+  final options = item.type == MarketplaceType.accommodation ? item.units : item.routes;
+  if (item.type == MarketplaceType.accommodation && options.isEmpty) {
+    AppFeedback.error(context, 'This property has not published bookable rooms yet.');
+    return;
+  }
+  Map<String, dynamic>? option;
+  if (options.length == 1) {
+    option = options.single;
+  } else if (options.length > 1) {
+    option = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(item.type == MarketplaceType.accommodation ? 'Choose a room' : 'Choose a route', style: AppTypography.sectionTitle),
+          const SizedBox(height: 12),
+          Flexible(child: ListView(shrinkWrap: true, children: options.map((row) => ListTile(
+            title: Text(_str(row, ['name', 'route_name', 'routeName'], fallback: 'Option')),
+            subtitle: item.type == MarketplaceType.transport
+                ? Text('${_str(row, ['origin'])} → ${_str(row, ['destination'])}') : null,
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.pop(sheetContext, row),
+          )).toList())),
+        ]),
+      )),
+    );
+    if (!context.mounted || option == null) return;
+  }
+  if (!context.mounted) return;
+  // Selecting an entry opens the existing form; no booking or payment occurs here.
+  Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerMarketplaceBookingPage(
+    type: item.type, item: item, option: option,
+  )));
 }
 
 class CustomerMarketplaceBookingPage extends StatefulWidget {
@@ -493,6 +588,7 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
   bool checking = false;
   bool saving = false;
   AccommodationAvailabilityQuote? quote;
+  TransportAvailabilityQuote? transportQuote;
 
   @override
   void initState() {
@@ -500,6 +596,9 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
     final start = DateTime.now().add(const Duration(days: 1));
     checkIn.text = _iso(start);
     checkOut.text = _iso(start.add(const Duration(days: 1)));
+    for (final controller in [checkIn, checkOut, units, adults, children, startTime, endTime, passengers]) {
+      controller.addListener(() { if (mounted) setState(() { quote = null; transportQuote = null; }); });
+    }
   }
 
   @override
@@ -520,6 +619,10 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
         key: key,
         child: ListView(
           children: [
+            if (widget.option != null) ...[
+              Text(_str(widget.option!, ['name', 'route_name', 'routeName'], fallback: accommodation ? 'Selected room' : 'Selected route'), style: AppTypography.sectionTitle),
+              const SizedBox(height: 12),
+            ],
             if (accommodation) ...[
               _dateField(checkIn, 'Check-in date'),
               _dateField(checkOut, 'Check-out date'),
@@ -551,7 +654,7 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(_selectedUnitAvailable ? 'Selected room is available' : 'Selected room is not available', style: AppTypography.label),
-                            if (_selectedUnitQuoteAmount > 0) Text('Quote: ${_money(quote!.currency, _selectedUnitQuoteAmount)}', style: AppTypography.caption),
+                            if (_selectedUnitQuoteAmount > 0) Text('Quote: ${_money(quote!.unitCurrency(_selectedUnitId), _selectedUnitQuoteAmount)}', style: AppTypography.caption),
                             if (quote!.message.isNotEmpty) Text(quote!.message, style: AppTypography.caption),
                           ],
                         ),
@@ -563,8 +666,15 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
             ] else ...[
               _dateField(checkIn, 'Service date'),
               _field(startTime, 'Start time', required: true),
-              _field(endTime, 'End time'),
+              _field(endTime, 'End time', required: true),
               _numberField(passengers, 'Passengers', minimum: 1),
+              OutlinedButton.icon(onPressed: checking || saving ? null : _checkTransportAvailability,
+                icon: const Icon(Icons.event_available_outlined), label: Text(checking ? 'Checking…' : 'Check availability & fare')),
+              if (transportQuote != null) AppPanel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Fare: ${_money(transportQuote!.currency, transportQuote!.totalAmount)}', style: AppTypography.label),
+                Text('Free intervals: ${transportQuote!.intervals.map((row) => "${row['startTime']}–${row['endTime']}").join(', ')}'),
+                const Text('This preview does not reserve the vehicle. Availability and fare are checked again when booking.'),
+              ])),
             ],
             _field(customerName, accommodation ? 'Guest / customer name' : 'Passenger / customer name', required: true),
             _field(customerPhone, 'Contact phone', required: true),
@@ -572,11 +682,11 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
             _field(notes, 'Notes', lines: 3),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: saving ? null : _submit,
+              onPressed: saving || checking ? null : _submit,
               icon: saving
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.check_circle_outline),
-              label: Text(saving ? 'Creating booking…' : 'Confirm booking'),
+              label: Text(saving ? 'Creating booking…' : 'Request booking'),
             ),
           ],
         ),
@@ -635,7 +745,9 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
       AppFeedback.error(context, 'Check-out must be after check-in.');
       return;
     }
+    if (checking || saving) return;
     setState(() => checking = true);
+    final request = [checkIn.text, checkOut.text, adults.text, children.text, units.text].join('|');
     try {
       final result = await getIt<MarketplaceActions>().checkAccommodationAvailability(
         identifier: widget.item.slug,
@@ -645,7 +757,7 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
         children: childCount,
         units: unitCount,
       );
-      if (mounted) setState(() => quote = result);
+      if (mounted && request == [checkIn.text, checkOut.text, adults.text, children.text, units.text].join('|')) setState(() => quote = result);
     } catch (error) {
       if (mounted) AppFeedback.error(context, _err(error));
     } finally {
@@ -653,8 +765,30 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
     }
   }
 
+  Future<void> _checkTransportAvailability() async {
+    if (checking || saving) return;
+    if (!RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(startTime.text.trim()) ||
+        !RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(endTime.text.trim()) || endTime.text.trim().compareTo(startTime.text.trim()) <= 0) {
+      AppFeedback.error(context, 'Enter times as HH:MM, with end time after start time.'); return;
+    }
+    final count = int.tryParse(passengers.text);
+    if (count == null || count < 1) { AppFeedback.error(context, 'Enter a valid passenger count.'); return; }
+    setState(() => checking = true);
+    final request = [checkIn.text, startTime.text.trim(), endTime.text.trim(), passengers.text].join('|');
+    try {
+      final route = _str(widget.option ?? {}, ['id', 'routeId', 'route_id']);
+      final result = await getIt<MarketplaceActions>().transportAvailability(vehicleId: widget.item.id,
+        date: checkIn.text, startTime: startTime.text.trim(), endTime: endTime.text.trim(), passengers: count,
+        routeId: route.isEmpty ? null : route);
+      if (mounted && request == [checkIn.text, startTime.text.trim(), endTime.text.trim(), passengers.text].join('|')) {
+        setState(() => transportQuote = result);
+      }
+    } catch (error) { if (mounted) AppFeedback.error(context, _err(error)); }
+    finally { if (mounted) setState(() => checking = false); }
+  }
+
   Future<void> _submit() async {
-    if (!key.currentState!.validate()) return;
+    if (saving || checking || !key.currentState!.validate()) return;
     if (widget.type == MarketplaceType.accommodation) {
       if (quote == null) {
         await _checkAvailability();
@@ -666,6 +800,10 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
       }
     }
 
+    if (widget.type == MarketplaceType.transport) {
+      await _checkTransportAvailability();
+      if (!mounted || transportQuote == null || transportQuote!.quote.isEmpty) return;
+    }
     setState(() => saving = true);
     try {
       final body = widget.type == MarketplaceType.accommodation ? _accommodationBookingBody() : _transportBookingBody();
@@ -758,12 +896,12 @@ class _CustomerMarketplaceBookingsPageState extends State<CustomerMarketplaceBoo
     super.dispose();
   }
 
-  void reload() => future = getIt<MarketplaceActions>().myBookings(widget.type);
+  void reload() { future = getIt<MarketplaceActions>().myBookings(widget.type); }
 
   bool _matchesTab(MarketplaceBooking booking) {
     switch (_tabs.index) {
       case 0:
-        return !booking.isCompleted && !booking.isCancelled;
+        return booking.state.active;
       case 1:
         return booking.isCompleted;
       case 2:
@@ -891,21 +1029,8 @@ class _CustomerMarketplaceBookingsPageState extends State<CustomerMarketplaceBoo
                                   ),
                                   child: Row(
                                     children: [
-                                      Container(
-                                        width: 42,
-                                        height: 42,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primarySoft,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Icon(
-                                          widget.type == MarketplaceType.accommodation
-                                              ? Icons.hotel_outlined
-                                              : Icons.directions_car_outlined,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
+                                      ProviderMediaThumb(imageUrl: booking.imageUrl, width: 42, height: 42,
+                                        placeholderIcon: widget.type == MarketplaceType.accommodation ? Icons.hotel_outlined : Icons.directions_car_outlined),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Column(
@@ -923,7 +1048,7 @@ class _CustomerMarketplaceBookingsPageState extends State<CustomerMarketplaceBoo
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      AppStatusChip(label: booking.status.isEmpty ? 'booked' : booking.status),
+                                      AppStatusChip(label: booking.state.statusLabel),
                                     ],
                                   ),
                                 ),
@@ -957,7 +1082,7 @@ class _CustomerMarketplaceBookingDetailPageState extends State<CustomerMarketpla
     load();
   }
 
-  void load() => future = getIt<MarketplaceActions>().booking(widget.bookingId);
+  void load() { future = getIt<MarketplaceActions>().booking(widget.bookingId); }
 
   @override
   Widget build(BuildContext context) => AppPage(
@@ -980,18 +1105,25 @@ class _CustomerMarketplaceBookingDetailPageState extends State<CustomerMarketpla
                     children: [
                       Text(booking.displayName, style: AppTypography.sectionTitle),
                       _row('Booking', booking.bookingNumber),
-                      _row('Status', booking.status),
+                      _row('Status', booking.state.statusLabel),
                       if (booking.providerDecision.isNotEmpty) _row('Provider', booking.providerDecision),
                       _row('Date', _dateOnly(booking.serviceDate)),
                       if (booking.endDate.isNotEmpty) _row('End', _dateOnly(booking.endDate)),
                       if (booking.totalAmount > 0) _row('Amount', _money(booking.currency, booking.totalAmount)),
-                      if (booking.startOtp.isNotEmpty) _row('Start OTP', booking.startOtp),
-                      if (booking.endOtp.isNotEmpty) _row('End OTP', booking.endOtp),
+                      if (booking.state.providerName != null) _row('Service provider', booking.state.providerName!),
+                      if (booking.state.unitName != null) _row('Room', booking.state.unitName!),
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (!booking.isCompleted && !booking.isCancelled)
+                BookingLifecyclePanel(bookingId: booking.id, lifecycle: booking.state,
+                  onRefresh: () async { setState(load); await future; }),
+                if (widget.type == MarketplaceType.transport) ...[
+                  const SizedBox(height: 12), RideTrackingPanel(bookingId: booking.id),
+                ],
+                if (booking.state.awaitingProvider)
+                  OutlinedButton.icon(onPressed: _withdraw, icon: const Icon(Icons.undo), label: const Text('Withdraw request')),
+                if (booking.state.canCancel)
                   OutlinedButton.icon(onPressed: _cancel, icon: const Icon(Icons.cancel_outlined), label: const Text('Cancel booking')),
                 if (booking.isCompleted)
                   FilledButton.icon(onPressed: _review, icon: const Icon(Icons.star_outline), label: const Text('Write review')),
@@ -1001,9 +1133,17 @@ class _CustomerMarketplaceBookingDetailPageState extends State<CustomerMarketpla
         ),
       );
 
+  Future<void> _withdraw() async {
+    if (!await _confirm(context, 'Withdraw this pending booking request?') || !mounted) return;
+    try {
+      await getIt<MarketplaceActions>().bookingAction(widget.bookingId, 'withdraw');
+      if (mounted) { AppFeedback.success(context, 'Request withdrawn.'); setState(load); }
+    } catch (e) { if (mounted) AppFeedback.error(context, _err(e)); }
+  }
+
   Future<void> _cancel() async {
     final reason = await _text(context, 'Cancel booking', 'Reason');
-    if (reason == null || reason.isEmpty) return;
+    if (reason == null || reason.trim().length < 2) return;
     try {
       await getIt<MarketplaceActions>().bookingAction(widget.bookingId, 'cancel', body: {'reason': reason});
       if (mounted) {
@@ -1075,7 +1215,7 @@ class _ProviderMarketplaceManagementPageState extends State<ProviderMarketplaceM
     reload();
   }
 
-  void reload() => future = getIt<MarketplaceActions>().providerItems(widget.type);
+  void reload() { future = getIt<MarketplaceActions>().providerItems(widget.type); }
 
   @override
   Widget build(BuildContext context) => AppPage(
@@ -1090,7 +1230,9 @@ class _ProviderMarketplaceManagementPageState extends State<ProviderMarketplaceM
             icon: const Icon(Icons.receipt_long_outlined),
           ),
           if (widget.type == MarketplaceType.transport)
-            IconButton(onPressed: _transportProfile, icon: const Icon(Icons.business_outlined)),
+            IconButton(tooltip: 'Business profile', onPressed: _transportProfile, icon: const Icon(Icons.business_outlined)),
+          if (widget.type == MarketplaceType.transport)
+            IconButton(tooltip: 'Tracking devices', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProviderTransportOperationsPage())), icon: const Icon(Icons.devices_other_outlined)),
         ],
         floatingActionButton: ProviderFloatingActionButton(
           onPressed: () => _edit(null),
@@ -1135,6 +1277,10 @@ class _ProviderMarketplaceManagementPageState extends State<ProviderMarketplaceM
                         : Icons.directions_car_outlined,
                     status: item.status,
                     meta: [
+                      ProviderMetaItem(Icons.settings_outlined, 'Status: ${item.operationalStatus}'),
+                      if (item.raw['submittedAt'] != null && item.status == 'pending')
+                        const ProviderMetaItem(Icons.hourglass_top, 'Submitted: awaiting admin review'),
+                      if (item.reviewNote.isNotEmpty) ProviderMetaItem(Icons.info_outline, item.reviewNote),
                       if (item.price > 0) ProviderMetaItem(Icons.currency_rupee_rounded, _money(item.currency, item.price)),
                       ProviderMetaItem(
                         widget.type == MarketplaceType.accommodation ? Icons.bed_outlined : Icons.settings_outlined,
@@ -1143,14 +1289,21 @@ class _ProviderMarketplaceManagementPageState extends State<ProviderMarketplaceM
                     ],
                     actions: [
                       ProviderSecondaryButton(label: 'Edit', onPressed: () => _edit(item), icon: Icons.edit_outlined),
+                      if (widget.type == MarketplaceType.accommodation && const {'active', 'inactive'}.contains(item.operationalStatus))
+                        ProviderSecondaryButton(label: item.operationalStatus == 'active' ? 'Pause property' : 'Resume property',
+                          onPressed: () => _propertyStatus(item), icon: Icons.pause_circle_outline),
                       ProviderSecondaryButton(
                         label: widget.type == MarketplaceType.accommodation ? 'Rooms & availability' : 'Operations',
                         onPressed: () => _manage(item),
                         icon: Icons.settings_outlined,
                       ),
+                      if (widget.type == MarketplaceType.transport && const {'active', 'maintenance'}.contains(item.operationalStatus))
+                        ProviderSecondaryButton(label: item.operationalStatus == 'active' ? 'Pause vehicle' : 'Resume vehicle',
+                          onPressed: () => _vehicleStatus(item), icon: Icons.pause_circle_outline),
+                      if (item.status != 'approved' && (item.raw['submittedAt'] == null || item.status == 'rejected'))
                       ProviderActionButton(
-                        label: 'Submit for approval',
-                        onPressed: () => _submitForApproval(item),
+                        label: widget.type == MarketplaceType.transport && !item.readyToSubmitVehicle ? 'Complete setup' : 'Submit for approval',
+                        onPressed: () => widget.type == MarketplaceType.transport && !item.readyToSubmitVehicle ? _manage(item) : _submitForApproval(item),
                         icon: Icons.send_rounded,
                       ),
                       ProviderSecondaryButton(
@@ -1168,6 +1321,21 @@ class _ProviderMarketplaceManagementPageState extends State<ProviderMarketplaceM
           },
         ),
       );
+
+  Future<void> _propertyStatus(MarketplaceItem item) async {
+    try {
+      await getIt<MarketplaceActions>().providerCall('pauseAccommodation', id: item.id, body: {'paused': item.operationalStatus == 'active'});
+      if (mounted) { AppFeedback.success(context, 'Property status updated.'); setState(reload); }
+    } catch (e) { if (mounted) AppFeedback.error(context, _err(e)); }
+  }
+
+  Future<void> _vehicleStatus(MarketplaceItem item) async {
+    try {
+      await getIt<MarketplaceActions>().providerCall('vehicleStatus', id: item.id,
+        body: {'status': item.operationalStatus == 'active' ? 'maintenance' : 'active'});
+      if (mounted) { AppFeedback.success(context, 'Vehicle status updated.'); setState(reload); }
+    } catch (e) { if (mounted) AppFeedback.error(context, _err(e)); }
+  }
 
   Future<void> _edit(MarketplaceItem? item) async {
     if (widget.type == MarketplaceType.accommodation) {
@@ -1727,7 +1895,7 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
     }
   }
 
-  void reload() => future = getIt<MarketplaceActions>().providerItem(widget.type, widget.item.id);
+  void reload() { future = getIt<MarketplaceActions>().providerItem(widget.type, widget.item.id); }
 
   @override
   Widget build(BuildContext context) {
@@ -1800,7 +1968,7 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
               children: [
                 Text('Rates', style: AppTypography.label),
                 const SizedBox(height: 6),
-                ...rates.take(3).map(
+                ...rates.map(
                   (rate) => Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Row(
@@ -1816,6 +1984,8 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
                           onPressed: () => _editRate(unitId, rate),
                           icon: const Icon(Icons.edit_outlined, size: 18),
                         ),
+                        IconButton(tooltip: 'Delete rate', onPressed: () => _deleteRate(_str(rate, ['id'])),
+                          icon: const Icon(Icons.delete_outline, size: 18)),
                       ],
                     ),
                   ),
@@ -1824,7 +1994,7 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
             ),
       actions: [
         ProviderSecondaryButton(label: 'Edit room', onPressed: () => _editUnit(unit), icon: Icons.edit_outlined),
-        ProviderSecondaryButton(label: 'Inventory', onPressed: () => _inventory(unitId), icon: Icons.inventory_2_outlined),
+        ProviderSecondaryButton(label: 'Inventory calendar', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProviderAccommodationCalendarPage(unitId: unitId, unitName: _str(unit, ['name'], fallback: 'Room'), onEdit: (row) => _inventory(unitId, initial: row)))), icon: Icons.calendar_month_outlined),
         ProviderActionButton(label: 'Add rate', onPressed: () => _editRate(unitId, null), icon: Icons.currency_rupee_rounded),
         ProviderSecondaryButton(label: 'Delete', onPressed: () => _deleteUnit(unitId), icon: Icons.delete_outline, destructive: true),
       ],
@@ -1849,14 +2019,14 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
     await _providerCall('deleteUnit', id: unitId, success: 'Room deleted.');
   }
 
-  Future<void> _inventory(String unitId) async {
-    final date = TextEditingController(text: _iso(DateTime.now().add(const Duration(days: 1))));
-    final total = TextEditingController(text: '1');
-    final available = TextEditingController(text: '1');
-    final minimumStay = TextEditingController(text: '1');
-    final maximumStay = TextEditingController();
-    final notes = TextEditingController();
-    var isClosed = false;
+  Future<void> _inventory(String unitId, {Map<String, dynamic>? initial}) async {
+    final date = TextEditingController(text: '${initial?['date'] ?? _iso(DateTime.now().add(const Duration(days: 1)))}');
+    final total = TextEditingController(text: '${initial?['totalInventory'] ?? 1}');
+    final available = TextEditingController(text: '${initial?['availableInventory'] ?? 1}');
+    final minimumStay = TextEditingController(text: '${initial?['minimumStayNights'] ?? 1}');
+    final maximumStay = TextEditingController(text: '${initial?['maximumStayNights'] ?? ''}');
+    final notes = TextEditingController(text: '${initial?['notes'] ?? ''}');
+    var isClosed = initial?['isClosed'] == true;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -1868,7 +2038,8 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(controller: date, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)')),
+                  Text('Reserved rooms: ${initial?['reservedInventory'] ?? 0}. Total capacity must cover existing reservations.'),
+                  TextField(controller: date, readOnly: initial != null, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)')),
                   const SizedBox(height: 10),
                   Row(children: [
                     Expanded(child: TextField(controller: total, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Total inventory'))),
@@ -1915,7 +2086,7 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
             'availableInventory': availableValue,
             'isClosed': isClosed,
             'minimumStayNights': int.tryParse(minimumStay.text.trim()) ?? 1,
-            if (maximumStay.text.trim().isNotEmpty) 'maximumStayNights': int.tryParse(maximumStay.text.trim()),
+            'maximumStayNights': maximumStay.text.trim().isEmpty ? null : int.tryParse(maximumStay.text.trim()),
             if (notes.text.trim().isNotEmpty) 'notes': notes.text.trim(),
           },
           success: 'Inventory updated.',
@@ -1932,7 +2103,7 @@ class _ProviderMarketplaceResourcesPageState extends State<ProviderMarketplaceRe
       context,
       rate == null ? 'Create accommodation rate' : 'Update accommodation rate',
       _rateFields,
-      rate ?? const {},
+      rate ?? const {'isActive': true, 'currency': 'INR'},
     );
     if (body == null) return;
     await _providerCall(
@@ -2244,10 +2415,12 @@ class _TransportResourcePageState extends State<_TransportResourcePage> {
             }
             final profile = snapshot.data ?? const <String, dynamic>{};
             final vehicle = _vehicle(profile);
-            final documents = _maps(vehicle['documents']);
+            final documents = _maps(vehicle['documents']).where((doc) => doc['metadata'] is! Map || (doc['metadata'] as Map)['archivedAt'] == null).toList();
             final availability = _maps(vehicle['availability']);
             final pricing = _maps(vehicle['pricing']);
             final routes = _maps(profile['routes']);
+            final listing = MarketplaceItem(type: MarketplaceType.transport, raw: vehicle);
+            final missingDocuments = listing.missingVehicleDocuments;
 
             return RefreshIndicator(
               onRefresh: () async {
@@ -2257,19 +2430,41 @@ class _TransportResourcePageState extends State<_TransportResourcePage> {
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
+                  ProviderFormSection(
+                    title: 'Listing approval',
+                    subtitle: vehicle['approvalStatus'] == 'approved' ? 'Approved. Keep documents and pricing current for customer visibility.' : vehicle['submittedAt'] != null ? 'Submitted. Admin reviews your evidence and then approves this vehicle.' : 'Upload RC, insurance, permit and PUC images, add current pricing, then submit for approval. Documents may be pending review when you submit.',
+                    children: [
+                      if (missingDocuments.isNotEmpty) ...[
+                        Text('Documents still needed: ${missingDocuments.map((type) => MarketplaceItem.vehicleDocumentLabels[type]).join(', ')}.', style: AppTypography.body),
+                        const SizedBox(height: 8),
+                        const Text('Add each document below. Pending documents are accepted for submission; admin verifies them afterwards.'),
+                        const SizedBox(height: 8),
+                      ],
+                      if (!listing.hasCurrentVehiclePricing) ...[
+                        const Text('Pricing still needed: add an active price below. Route-specific prices need an active route.'),
+                        const SizedBox(height: 8),
+                      ],
+                      if (profile['status'] != 'active')
+                        const ProviderInfoBanner(title: 'Business profile is inactive', message: 'Activate your business from the Fleet business profile, or contact admin if it is suspended. Customers can only book vehicles from an active business.'),
+                      vehicle['approvalStatus'] != 'approved' && (vehicle['submittedAt'] == null || vehicle['approvalStatus'] == 'rejected')
+                        ? ProviderActionButton(label: 'Submit for approval', icon: Icons.send_rounded, onPressed: listing.readyToSubmitVehicle ? () => _call('submitVehicle', id: widget.item.id, success: 'Vehicle submitted for admin review.') : null)
+                        : const SizedBox.shrink()],
+                  ),
+                  const SizedBox(height: 12),
                   _resourceSection(
                     title: 'Documents',
-                    subtitle: 'Registration, insurance, permit, PUC and fitness documents',
+                    subtitle: 'Upload private evidence for admin review. Updates return the document to pending review.',
                     addLabel: 'Add document',
                     onAdd: () => _document(),
                     children: documents
                         .map(
                           (document) => _resourceTile(
-                            title: _str(document, ['documentType', 'document_type'], fallback: 'Document'),
+                            title: MarketplaceItem.vehicleDocumentLabels[_str(document, ['documentType', 'document_type'])] ?? _str(document, ['documentType', 'document_type'], fallback: 'Document').replaceAll('_', ' '),
                             subtitle: [
                               _str(document, ['documentNumber', 'document_number']),
                               _str(document, ['status']),
                               _str(document, ['expiresAt', 'expires_at']),
+                              _str(document, ['rejectionReason']),
                             ].where((value) => value.isNotEmpty).join(' • '),
                             onEdit: () => _document(document),
                             onDelete: () => _delete(
@@ -2405,19 +2600,36 @@ class _TransportResourcePageState extends State<_TransportResourcePage> {
       );
 
   Future<void> _document([Map<String, dynamic>? document]) async {
+    if (!mounted) return;
     final body = await _simpleForm(
       context,
       document == null ? 'Add vehicle document' : 'Update vehicle document',
       _documentFields,
       document ?? const <String, dynamic>{},
     );
-    if (body == null) return;
+    if (body == null || !mounted) return;
+    final replace = document == null || await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('Replace document image?'), content: const Text('Keep the current private evidence, or upload a replacement image.'),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep current image')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Upload replacement'))],
+    )) == true;
+    if (!mounted) return;
+    if (replace) {
+      try {
+        final image = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90);
+        if (image == null) return;
+        final mediaAssetId = await getIt<MarketplaceActions>().uploadDocument(await image.readAsBytes(), image.name, image.mimeType ?? 'image/jpeg');
+        body['mediaAssetId'] = mediaAssetId;
+      } catch (e) { if (mounted) AppFeedback.error(context, _err(e)); return; }
+    }
+    body['status'] = 'pending';
+    if (!mounted) return;
     await _call(
       'saveDocument',
       id: document == null ? null : _str(document, ['id']),
       parentId: widget.item.id,
       body: body,
-      success: 'Vehicle document saved.',
+      success: 'Private document submitted for review.',
     );
   }
 
@@ -2438,11 +2650,18 @@ class _TransportResourcePageState extends State<_TransportResourcePage> {
   }
 
   Future<void> _pricing([Map<String, dynamic>? price]) async {
+    final profile = await future;
+    if (!mounted) return;
+    final routes = _maps(profile['routes']);
+    final routeLabels = <String, String>{'': 'All routes / no fixed route', for (final route in routes) _str(route, ['id']): '${_str(route, ['name'])} (${_str(route, ['status'])})'};
+    final fields = _pricingFields.map((field) => field.key == 'routeId'
+        ? _FieldDef('routeId', 'Route (required for fixed-route pricing)', choices: routeLabels.keys.toList(), choiceLabels: routeLabels, nullable: true)
+        : field).toList();
     final body = await _simpleForm(
       context,
       price == null ? 'Create pricing' : 'Update pricing',
-      _pricingFields,
-      price ?? const <String, dynamic>{'pricingModel': 'per_trip', 'currency': 'INR'},
+      fields,
+      price ?? const <String, dynamic>{'pricingModel': 'per_trip', 'currency': 'INR', 'isActive': true},
     );
     if (body == null) return;
     await _call(
@@ -2515,13 +2734,15 @@ class ProviderMarketplaceBookingsPage extends StatefulWidget {
 class _ProviderMarketplaceBookingsPageState extends State<ProviderMarketplaceBookingsPage> {
   late Future<List<MarketplaceBooking>> future;
 
+  bool _busy = false;
+
   @override
   void initState() {
     super.initState();
     load();
   }
 
-  void load() => future = getIt<MarketplaceActions>().providerBookings(widget.type);
+  void load() { future = getIt<MarketplaceActions>().providerBookings(widget.type); }
 
   @override
   Widget build(BuildContext context) => AppPage(
@@ -2556,16 +2777,16 @@ class _ProviderMarketplaceBookingsPageState extends State<ProviderMarketplaceBoo
       );
 
   Widget _bookingCard(MarketplaceBooking booking) {
-    final status = booking.status.toLowerCase();
-    final canAccept = status.isEmpty || const {'pending', 'requested', 'created'}.contains(status);
-    final canStart = const {'confirmed', 'accepted'}.contains(status) && !booking.hasStarted;
-    final canComplete = const {'confirmed', 'accepted'}.contains(status) && booking.hasStarted && !booking.hasEnded;
-    final canCancel = !booking.isCompleted && !booking.isCancelled;
+    final canAccept = booking.state.awaitingProvider && !_busy;
+    final canStart = booking.state.canStart && !_busy;
+    final canComplete = booking.state.canComplete && !_busy;
+    final canCancel = booking.state.canCancel && !_busy;
     return ProviderListCard(
       title: booking.displayName,
       subtitle: '#${booking.bookingNumber}',
+      imageUrl: booking.imageUrl,
       placeholderIcon: widget.type == MarketplaceType.accommodation ? Icons.hotel_outlined : Icons.directions_car_outlined,
-      status: booking.status.isEmpty ? 'pending' : booking.status,
+      status: booking.state.statusLabel,
       meta: [
         ProviderMetaItem(Icons.calendar_today_outlined, _dateOnly(booking.serviceDate)),
         if (booking.totalAmount > 0) ProviderMetaItem(Icons.currency_rupee_rounded, _money(booking.currency, booking.totalAmount)),
@@ -2573,6 +2794,8 @@ class _ProviderMarketplaceBookingsPageState extends State<ProviderMarketplaceBoo
       actions: [
         if (canAccept) ProviderActionButton(label: 'Accept', onPressed: () => _action(booking, 'accept'), icon: Icons.check_rounded),
         if (canAccept) ProviderSecondaryButton(label: 'Reject', onPressed: () => _reason(booking, 'reject'), icon: Icons.close_rounded),
+        if (widget.type == MarketplaceType.transport && booking.state.active && !booking.hasStarted && booking.providerDecision == 'accepted' && !_busy)
+          ProviderSecondaryButton(label: "I've arrived", onPressed: () => _arrived(booking), icon: Icons.pin_drop_outlined),
         if (canStart) ProviderActionButton(label: widget.type == MarketplaceType.accommodation ? 'Start stay' : 'Start trip', onPressed: () => _otp(booking, 'start'), icon: Icons.play_arrow_rounded),
         if (canComplete) ProviderActionButton(label: widget.type == MarketplaceType.accommodation ? 'Complete stay' : 'Complete trip', onPressed: () => _otp(booking, 'complete'), icon: Icons.stop_circle_outlined),
         if (canCancel) ProviderSecondaryButton(label: 'Cancel', onPressed: () => _reason(booking, 'cancel'), icon: Icons.cancel_outlined, destructive: true),
@@ -2580,7 +2803,16 @@ class _ProviderMarketplaceBookingsPageState extends State<ProviderMarketplaceBoo
     );
   }
 
+  Future<void> _arrived(MarketplaceBooking booking) async {
+    try {
+      await getIt<MarketplaceActions>().providerCall('arrived', id: booking.id);
+      if (mounted) AppFeedback.success(context, 'Your arrival was recorded.');
+    } catch (e) { if (mounted) AppFeedback.error(context, _err(e)); }
+  }
+
   Future<void> _action(MarketplaceBooking booking, String action, {Map<String, dynamic>? body}) async {
+    if (_busy) return;
+    setState(() => _busy = true);
     try {
       await getIt<MarketplaceActions>().providerBookingAction(widget.type, booking.id, action, body: body);
       if (mounted) {
@@ -2589,21 +2821,19 @@ class _ProviderMarketplaceBookingsPageState extends State<ProviderMarketplaceBoo
       }
     } catch (error) {
       if (mounted) AppFeedback.error(context, _err(error));
-    }
+    } finally { if (mounted) setState(() => _busy = false); }
   }
 
   Future<void> _otp(MarketplaceBooking booking, String action) async {
-    final otp = await _text(
-      context,
-      action == 'start' ? 'Enter start OTP' : 'Enter completion OTP',
-      '6-digit OTP',
+    await AppDialogs.textInput(context,
+      title: action == 'start' ? 'Enter start OTP' : 'Enter completion OTP',
+      label: '6-digit OTP', keyboardType: TextInputType.number, maxLength: 6,
+      validator: (value) => RegExp(r'^\d{6}$').hasMatch(value) ? null : 'Enter exactly 6 digits.',
+      onSubmit: (otp) async {
+        await getIt<MarketplaceActions>().providerBookingAction(widget.type, booking.id, action, body: {'otp': otp});
+        if (mounted) { setState(load); AppFeedback.success(context, action == 'start' ? 'Service started.' : 'Service completed.'); }
+      },
     );
-    if (otp == null || otp.isEmpty) return;
-    if (!RegExp(r'^\d{6}$').hasMatch(otp)) {
-      if (mounted) AppFeedback.error(context, 'OTP must contain exactly 6 digits.');
-      return;
-    }
-    await _action(booking, action, body: <String, dynamic>{'otp': otp});
   }
 
   Future<void> _reason(MarketplaceBooking booking, String action) async {
@@ -2623,7 +2853,15 @@ Widget _imageGallery(List<String> images) => SizedBox(
           borderRadius: BorderRadius.circular(14),
           child: SizedBox(
             width: 300,
-            child: Image.network(images[index], fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.softSurface)),
+            child: Image.network(images[index], fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(
+              color: AppColors.softSurface,
+              alignment: Alignment.center,
+              child: const Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.image_not_supported_outlined),
+                SizedBox(height: 6),
+                Text('Photo unavailable'),
+              ]),
+            )),
           ),
         ),
       ),
@@ -2701,24 +2939,9 @@ List<String> _mediaIds(Map<String, dynamic> raw) {
   }
   return ids.toSet().toList();
 }
-List<String> _mediaUrls(Map<String, dynamic> raw) {
-  final urls = <String>[];
-  void add(dynamic value) {
-    if (value is String && value.trim().isNotEmpty) urls.add(value.trim());
-    if (value is Map) {
-      add(value['url']);
-      add(value['public_url']);
-      add(value['publicUrl']);
-      add(value['content_url']);
-      add(value['contentUrl']);
-    }
-  }
-  for (final key in const ['mediaAssets', 'media', 'images', 'gallery']) {
-    final value = raw[key];
-    if (value is List) for (final item in value) add(item);
-  }
-  return urls.toSet().toList();
-}
+List<String> _mediaUrls(Map<String, dynamic> raw) =>
+    MarketplaceItem(type: MarketplaceType.accommodation, raw: raw).imageUrls;
+
 String _mimeFromName(String name) {
   final lower = name.toLowerCase();
   if (lower.endsWith('.png')) return 'image/png';
@@ -2727,22 +2950,8 @@ String _mimeFromName(String name) {
   return 'image/jpeg';
 }
 
-Future<String?> _text(BuildContext context, String title, String label) async {
-  final controller = TextEditingController();
-  final result = await showDialog<String>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(title),
-      content: TextField(controller: controller, decoration: InputDecoration(labelText: label)),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-        FilledButton(onPressed: () => Navigator.pop(dialogContext, controller.text.trim()), child: const Text('Continue')),
-      ],
-    ),
-  );
-  controller.dispose();
-  return result;
-}
+Future<String?> _text(BuildContext context, String title, String label) =>
+    AppDialogs.textInput(context, title: title, label: label);
 
 Future<bool> _confirm(BuildContext context, String question) async =>
     await showDialog<bool>(
@@ -2759,7 +2968,16 @@ Future<bool> _confirm(BuildContext context, String question) async =>
     false;
 
 class _FieldDef {
-  const _FieldDef(this.key, this.label, {this.number = false, this.boolean = false, this.lines = 1});
+  const _FieldDef(this.key, this.label,
+      {this.number = false,
+      this.boolean = false,
+      this.lines = 1,
+      this.choices,
+      this.choiceLabels,
+      this.nullable = false});
+  final List<String>? choices;
+  final Map<String, String>? choiceLabels;
+  final bool nullable;
   final String key;
   final String label;
   final bool number;
@@ -2772,41 +2990,94 @@ Future<Map<String, dynamic>?> _simpleForm(
   String title,
   List<_FieldDef> fields,
   Map<String, dynamic> initial,
-) async {
+) =>
+    showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) =>
+          _ResourceFormDialog(title: title, fields: fields, initial: initial),
+    );
+
+class _ResourceFormDialog extends StatefulWidget {
+  const _ResourceFormDialog(
+      {required this.title, required this.fields, required this.initial});
+  final String title;
+  final List<_FieldDef> fields;
+  final Map<String, dynamic> initial;
+  @override
+  State<_ResourceFormDialog> createState() => _ResourceFormDialogState();
+}
+
+class _ResourceFormDialogState extends State<_ResourceFormDialog> {
   final controllers = <String, TextEditingController>{};
   final bools = <String, bool>{};
-  for (final field in fields) {
-    if (field.boolean) {
-      bools[field.key] = initial[field.key] == true;
-    } else {
-      controllers[field.key] = TextEditingController(text: '${initial[field.key] ?? ''}');
+  @override
+  void initState() {
+    super.initState();
+    for (final field in widget.fields) {
+      if (field.boolean) {
+        bools[field.key] = widget.initial[field.key] == true;
+      } else {
+        controllers[field.key] =
+            TextEditingController(text: '${widget.initial[field.key] ?? ''}');
+      }
     }
   }
-  final result = await showDialog<Map<String, dynamic>>(
-    context: context,
-    builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setDialog) => AlertDialog(
-        title: Text(title),
+
+  @override
+  void dispose() {
+    for (final controller in controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext ctx) => AlertDialog(
+        title: Text(widget.title),
         content: SizedBox(
           width: 520,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: fields.map((field) {
+              children: widget.fields.map((field) {
                 if (field.boolean) {
                   return SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(field.label),
                     value: bools[field.key] ?? false,
-                    onChanged: (value) => setDialog(() => bools[field.key] = value),
+                    onChanged: (value) =>
+                        setState(() => bools[field.key] = value),
                   );
+                }
+                if (field.choices != null) {
+                  final current = controllers[field.key]!.text;
+                  final value = field.choices!.contains(current)
+                      ? current
+                      : field.choices!.first;
+                  controllers[field.key]!.text = value;
+                  return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: DropdownButtonFormField<String>(
+                          value: value,
+                          isExpanded: true,
+                          decoration: InputDecoration(labelText: field.label),
+                          items: field.choices!
+                              .map((choice) => DropdownMenuItem(
+                                  value: choice,
+                                  child: Text(field.choiceLabels?[choice] ??
+                                      choice.replaceAll('_', ' '))))
+                              .toList(),
+                          onChanged: (choice) =>
+                              controllers[field.key]!.text = choice ?? value));
                 }
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: TextField(
                     controller: controllers[field.key],
                     maxLines: field.lines,
-                    keyboardType: field.number ? const TextInputType.numberWithOptions(decimal: true) : null,
+                    keyboardType: field.number
+                        ? const TextInputType.numberWithOptions(decimal: true)
+                        : null,
                     decoration: InputDecoration(labelText: field.label),
                   ),
                 );
@@ -2815,17 +3086,21 @@ Future<Map<String, dynamic>?> _simpleForm(
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(
             onPressed: () {
               final body = <String, dynamic>{};
-              for (final field in fields) {
+              for (final field in widget.fields) {
                 if (field.boolean) {
                   body[field.key] = bools[field.key] ?? false;
                   continue;
                 }
                 final value = controllers[field.key]!.text.trim();
-                if (value.isEmpty) continue;
+                if (value.isEmpty) {
+                  if (field.nullable) body[field.key] = null;
+                  continue;
+                }
                 if (field.number) {
                   body[field.key] = num.tryParse(value) ?? value;
                 } else {
@@ -2837,17 +3112,13 @@ Future<Map<String, dynamic>?> _simpleForm(
             child: const Text('Save'),
           ),
         ],
-      ),
-    ),
-  );
-  for (final controller in controllers.values) controller.dispose();
-  return result;
+      );
 }
 
 const _rateFields = [
   _FieldDef('startDate', 'Start date (YYYY-MM-DD)'),
   _FieldDef('endDate', 'End date (YYYY-MM-DD)'),
-  _FieldDef('rateType', 'Rate type (standard/weekend/seasonal/festival/special)'),
+  _FieldDef('rateType', 'Rate type', choices: ['standard', 'weekend', 'seasonal', 'festival', 'special']),
   _FieldDef('priceAmount', 'Price amount', number: true),
   _FieldDef('currency', 'Currency'),
   _FieldDef('extraAdultAmount', 'Extra adult amount', number: true),
@@ -2861,13 +3132,12 @@ const _transportProfileFields = [
   _FieldDef('supportPhone', 'Support phone'),
   _FieldDef('supportEmail', 'Support email'),
   _FieldDef('serviceAreas', 'Service areas (comma separated)'),
-  _FieldDef('status', 'Status (draft/active/suspended)'),
+  _FieldDef('status', 'Business status', choices: ['draft', 'active', 'suspended']),
 ];
 
 const _documentFields = [
-  _FieldDef('documentType', 'Document type (registration_certificate/insurance/permit/puc/fitness_certificate/other)'),
+  _FieldDef('documentType', 'Document type', choices: ['registration_certificate', 'insurance', 'permit', 'puc', 'fitness_certificate', 'other']),
   _FieldDef('documentNumber', 'Document number'),
-  _FieldDef('storageKey', 'Document storage key'),
   _FieldDef('issuedAt', 'Issued date (YYYY-MM-DD)'),
   _FieldDef('expiresAt', 'Expiry date (YYYY-MM-DD)'),
 ];
@@ -2876,13 +3146,13 @@ const _availabilityFields = [
   _FieldDef('date', 'Date (YYYY-MM-DD)'),
   _FieldDef('startTime', 'Start time (HH:MM)'),
   _FieldDef('endTime', 'End time (HH:MM)'),
-  _FieldDef('status', 'Status (available/unavailable/booked/maintenance)'),
+  _FieldDef('status', 'Availability status', choices: ['available', 'unavailable', 'booked', 'maintenance']),
   _FieldDef('notes', 'Notes'),
 ];
 
 const _pricingFields = [
   _FieldDef('routeId', 'Route ID (required for fixed_route)'),
-  _FieldDef('pricingModel', 'Pricing model (per_trip/per_km/per_hour/fixed_route)'),
+  _FieldDef('pricingModel', 'Pricing model', choices: ['per_trip', 'per_km', 'per_hour', 'fixed_route']),
   _FieldDef('baseAmount', 'Base amount', number: true),
   _FieldDef('perKmAmount', 'Per km amount', number: true),
   _FieldDef('perHourAmount', 'Per hour amount', number: true),
@@ -2899,5 +3169,5 @@ const _routeFields = [
   _FieldDef('destination', 'Destination'),
   _FieldDef('distanceKm', 'Distance km', number: true),
   _FieldDef('estimatedDurationMinutes', 'Duration minutes', number: true),
-  _FieldDef('status', 'Status (draft/active/inactive)'),
+  _FieldDef('status', 'Route status', choices: ['draft', 'active', 'inactive']),
 ];

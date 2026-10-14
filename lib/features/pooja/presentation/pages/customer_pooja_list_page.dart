@@ -37,7 +37,7 @@ class _CustomerPoojaListPageState extends State<CustomerPoojaListPage> {
   }
 
   void _reload() {
-    setState(() => _future = getIt<CustomerPoojaActions>().list());
+    setState(() { _future = getIt<CustomerPoojaActions>().list(); });
   }
 
   double? _lowestPrice(Pooja pooja) {

@@ -39,21 +39,29 @@ class _PanditPoojaBookingsPageState extends State<PanditPoojaBookingsPage>
     super.dispose();
   }
 
-  void _reload() => _future = getIt<PanditPoojaActions>().bookings();
+  void _reload() { _future = getIt<PanditPoojaActions>().bookings(); }
 
   Future<void> _refresh() async {
     setState(_reload);
     await _future;
   }
 
-  Future<void> _action(Future<PoojaBooking> future, String success) async {
+  bool _busy = false;
+
+  Future<void> _action(Future<PoojaBooking> Function() action, String success) async {
+    if (_busy) return;
+    setState(() => _busy = true);
     try {
-      await future;
+      await action();
       if (!mounted) return;
       AppFeedback.success(context, success);
       await _refresh();
     } on ApiException catch (error) {
       if (mounted) AppFeedback.error(context, error.message);
+    } catch (_) {
+      if (mounted) AppFeedback.error(context, 'Unable to update the booking. Refresh and try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -67,49 +75,34 @@ class _PanditPoojaBookingsPageState extends State<PanditPoojaBookingsPage>
     );
     if (reason == null || reason.length < 2) return;
     await _action(
-      getIt<PanditPoojaActions>().cancel(booking.id, reason),
+      () => getIt<PanditPoojaActions>().cancel(booking.id, reason),
       'Booking cancelled.',
     );
   }
 
   Future<void> _start(PoojaBooking booking) async {
-    final otp = await AppDialogs.textInput(
-      context,
-      title: 'Start Pooja',
-      label: 'Customer start OTP',
-      helperText: 'Ask the customer for the 6-digit start OTP.',
-      confirmLabel: 'Start Pooja',
-      keyboardType: TextInputType.number,
-      maxLength: 6,
-    );
-    if (otp?.length != 6) return;
-    await _action(
-      getIt<PanditPoojaActions>().start(booking.id, otp!),
-      'Pooja started successfully.',
+    await AppDialogs.textInput(context, title: 'Start Pooja', label: 'Customer OTP',
+      keyboardType: TextInputType.number, maxLength: 6,
+      validator: (value) => RegExp(r'^\d{6}$').hasMatch(value) ? null : 'Enter exactly 6 digits.',
+      onSubmit: (otp) async {
+        await getIt<PanditPoojaActions>().start(booking.id, otp);
+        if (mounted) { setState(_reload); AppFeedback.success(context, 'Pooja updated.'); }
+      },
     );
   }
 
   Future<void> _end(PoojaBooking booking) async {
-    final otp = await AppDialogs.textInput(
-      context,
-      title: 'Complete Pooja',
-      label: 'Customer end OTP',
-      helperText: 'Ask for the end OTP only after the Pooja is finished.',
-      confirmLabel: 'Complete Pooja',
-      keyboardType: TextInputType.number,
-      maxLength: 6,
-    );
-    if (otp?.length != 6) return;
-    await _action(
-      getIt<PanditPoojaActions>().end(booking.id, otp!),
-      'Pooja completed successfully.',
+    await AppDialogs.textInput(context, title: 'Complete Pooja', label: 'Customer OTP',
+      keyboardType: TextInputType.number, maxLength: 6,
+      validator: (value) => RegExp(r'^\d{6}$').hasMatch(value) ? null : 'Enter exactly 6 digits.',
+      onSubmit: (otp) async {
+        await getIt<PanditPoojaActions>().end(booking.id, otp);
+        if (mounted) { setState(_reload); AppFeedback.success(context, 'Pooja updated.'); }
+      },
     );
   }
 
-  String _name(PoojaBooking booking) =>
-      booking.pricingSnapshot['poojaName']?.toString().trim().isNotEmpty == true
-          ? booking.pricingSnapshot['poojaName'].toString()
-          : 'Pooja booking';
+  String _name(PoojaBooking booking) => booking.state.serviceName ?? booking.pricingSnapshot['poojaName']?.toString() ?? 'Pooja booking';
 
   String _customer(PoojaBooking booking) {
     final snapshot = booking.customerSnapshot;
@@ -126,15 +119,13 @@ class _PanditPoojaBookingsPageState extends State<PanditPoojaBookingsPage>
     final decision = booking.providerDecision.toLowerCase();
     switch (tab) {
       case 0:
-        return booking.isAwaitingPandit || decision == 'pending';
+        return booking.isAwaitingPandit;
       case 1:
-        return !booking.isCompleted &&
-            status != 'cancelled' &&
-            decision == 'accepted';
+        return booking.state.active && decision == 'accepted';
       case 2:
         return booking.isCompleted;
       case 3:
-        return status == 'cancelled' || decision == 'rejected';
+        return const {'cancelled', 'withdrawn', 'expired', 'rejected'}.contains(status) || decision == 'rejected';
       default:
         return true;
     }
@@ -264,22 +255,21 @@ class _PanditPoojaBookingsPageState extends State<PanditPoojaBookingsPage>
                                   poojaName: _name(booking),
                                   customerName: _customer(booking),
                                   onDetails: () => _showDetails(booking),
-                                  onAccept: booking.canPanditAccept
+                                  onAccept: booking.canPanditAccept && !_busy
                                       ? () => _action(
-                                            getIt<PanditPoojaActions>().accept(booking.id),
+                                            () => getIt<PanditPoojaActions>().accept(booking.id),
                                             'Booking accepted.',
                                           )
                                       : null,
-                                  onReject: booking.canPanditAccept
+                                  onReject: booking.canPanditAccept && !_busy
                                       ? () => _action(
-                                            getIt<PanditPoojaActions>().reject(booking.id),
+                                            () => getIt<PanditPoojaActions>().reject(booking.id),
                                             'Booking rejected.',
                                           )
                                       : null,
-                                  onStart: booking.canPanditStart ? () => _start(booking) : null,
-                                  onEnd: booking.canPanditEnd ? () => _end(booking) : null,
-                                  onCancel: ((booking.status == 'pending' || booking.status == 'confirmed') &&
-                                          booking.serviceStartedAt == null)
+                                  onStart: booking.canPanditStart && !_busy ? () => _start(booking) : null,
+                                  onEnd: booking.canPanditEnd && !_busy ? () => _end(booking) : null,
+                                  onCancel: booking.state.canCancel
                                       ? () => _cancel(booking)
                                       : null,
                                 );
@@ -341,6 +331,8 @@ class _PanditPoojaBookingsPageState extends State<PanditPoojaBookingsPage>
                   AppDetailRow(label: 'Start time', value: booking.startTime?.substring(0, 5) ?? '—', icon: Icons.schedule_outlined),
                   AppDetailRow(label: 'Amount', value: '${booking.currency} ${booking.totalAmount.toStringAsFixed(2)}', icon: Icons.payments_outlined),
                   AppDetailRow(label: 'Decision', value: booking.providerDecision, icon: Icons.fact_check_outlined),
+                  AppDetailRow(label: 'Status', value: booking.state.statusLabel, icon: Icons.receipt_long_outlined),
+                  Text(booking.state.paymentMessage),
                   if (booking.notes?.trim().isNotEmpty == true)
                     AppDetailRow(label: 'Notes', value: booking.notes!, icon: Icons.notes_outlined),
                 ],
@@ -349,31 +341,31 @@ class _PanditPoojaBookingsPageState extends State<PanditPoojaBookingsPage>
             const SizedBox(height: 16),
             _BookingActions(
               booking: booking,
-              onAccept: booking.canPanditAccept
+              onAccept: booking.canPanditAccept && !_busy
                   ? () {
                       Navigator.pop(context);
-                      _action(getIt<PanditPoojaActions>().accept(booking.id), 'Booking accepted.');
+                      _action(() => getIt<PanditPoojaActions>().accept(booking.id), 'Booking accepted.');
                     }
                   : null,
-              onReject: booking.canPanditAccept
+              onReject: booking.canPanditAccept && !_busy
                   ? () {
                       Navigator.pop(context);
-                      _action(getIt<PanditPoojaActions>().reject(booking.id), 'Booking rejected.');
+                      _action(() => getIt<PanditPoojaActions>().reject(booking.id), 'Booking rejected.');
                     }
                   : null,
-              onStart: booking.canPanditStart
+              onStart: booking.canPanditStart && !_busy
                   ? () {
                       Navigator.pop(context);
                       _start(booking);
                     }
                   : null,
-              onEnd: booking.canPanditEnd
+              onEnd: booking.canPanditEnd && !_busy
                   ? () {
                       Navigator.pop(context);
                       _end(booking);
                     }
                   : null,
-              onCancel: ((booking.status == 'pending' || booking.status == 'confirmed') && booking.serviceStartedAt == null)
+              onCancel: booking.state.canCancel
                   ? () {
                       Navigator.pop(context);
                       _cancel(booking);
@@ -414,7 +406,7 @@ class _BookingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProviderListCard(
       title: poojaName,
-      subtitle: '$customerName • #${booking.bookingNumber}',
+      imageUrl: booking.serviceImageUrl,      subtitle: '$customerName • #${booking.bookingNumber}',
       placeholderIcon: Icons.temple_hindu_outlined,
       status: booking.status,
       meta: [

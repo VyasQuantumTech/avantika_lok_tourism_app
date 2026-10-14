@@ -30,7 +30,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
     _reload();
   }
 
-  void _reload() => _future = getIt<GetMyProfileDashboard>()();
+  void _reload() { _future = getIt<GetMyProfileDashboard>()(); }
 
   Future<void> _logout() async {
     final confirmed = await AppDialogs.confirm(
@@ -177,7 +177,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                       _MenuRow(
                         icon: Icons.account_balance_wallet_outlined,
                         label: 'My earnings',
-                        value: '${provider.financial.currency} ${provider.financial.netCollected.toStringAsFixed(0)}',
+                        value: provider.financial.format('net'),
                         onTap: () => Navigator.of(context).pushNamed(RouteNames.providerEarnings),
                       ),
                       _divider(),

@@ -1,3 +1,5 @@
+import '../../../bookings/domain/entities/booking_lifecycle.dart';
+
 enum MarketplaceType { accommodation, transport }
 
 extension MarketplaceTypeX on MarketplaceType {
@@ -29,6 +31,31 @@ class MarketplaceItem {
         ['approval_status', 'approvalStatus', 'status'],
         fallback: raw['is_active'] == false || raw['isActive'] == false ? 'inactive' : 'active',
       );
+  static const vehicleDocumentLabels = <String, String>{
+    'registration_certificate': 'Registration certificate (RC)',
+    'insurance': 'Insurance',
+    'permit': 'Permit',
+    'puc': 'Pollution certificate (PUC)',
+  };
+  String get _todayIndia => DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30)).toIso8601String().substring(0, 10);
+  List<String> get missingVehicleDocuments {
+    final documents = raw['documents'] is List ? (raw['documents'] as List).whereType<Map>() : const <Map>[];
+    return vehicleDocumentLabels.keys.where((type) => !documents.any((doc) =>
+      doc['documentType'] == type && const {'pending', 'verified'}.contains(doc['status']) &&
+      (doc['metadata'] is! Map || (doc['metadata'] as Map)['archivedAt'] == null) &&
+      (doc['expiresAt'] == null || '${doc['expiresAt']}'.compareTo(_todayIndia) >= 0)
+    )).toList();
+  }
+  bool get hasCurrentVehiclePricing {
+    final prices = raw['pricing'] is List ? (raw['pricing'] as List).whereType<Map>() : const <Map>[];
+    return prices.any((price) => price['isActive'] == true &&
+      (price['validFrom'] == null || '${price['validFrom']}'.compareTo(_todayIndia) <= 0) &&
+      (price['validTo'] == null || '${price['validTo']}'.compareTo(_todayIndia) >= 0) &&
+      (price['routeId'] == null || (price['route'] is Map && (price['route'] as Map)['status'] == 'active')));
+  }
+  bool get readyToSubmitVehicle => missingVehicleDocuments.isEmpty && hasCurrentVehiclePricing;
+  String get operationalStatus => _first(['status'], fallback: 'draft');
+  String get reviewNote => _first(['rejectionReason', 'moderationNote', 'rejection_reason']);
   bool get isActive => raw['is_active'] != false && raw['isActive'] != false;
   double get price {
     if (type == MarketplaceType.accommodation && units.isNotEmpty) {
@@ -54,22 +81,26 @@ class MarketplaceItem {
     void add(dynamic value) {
       if (value is String && value.trim().isNotEmpty) out.add(value.trim());
       if (value is Map) {
-        add(value['url']);
-        add(value['public_url']);
-        add(value['publicUrl']);
-        add(value['media_url']);
-        add(value['mediaUrl']);
-        add(value['content_url']);
-        add(value['contentUrl']);
-        add(value['thumbnail_url']);
-        add(value['thumbnailUrl']);
+        if (value['type'] != null && value['type'] != 'image') return;
+        if (value['visibility'] == 'private' || value['status'] == 'deleted') return;
+        // One gallery entry per asset; thumbnails are a fallback, not another photo.
+        for (final key in const ['url', 'public_url', 'publicUrl', 'media_url',
+          'mediaUrl', 'content_url', 'contentUrl', 'thumbnail_url', 'thumbnailUrl']) {
+          final url = value[key];
+          if (url is String && url.trim().isNotEmpty) {
+            add(url);
+            break;
+          }
+        }
       }
     }
 
     for (final key in const ['mediaAssets', 'media', 'images', 'gallery']) {
       final value = raw[key];
       if (value is List) {
-        for (final item in value) add(item);
+        for (final item in value) {
+          add(item);
+        }
       }
     }
     add(raw['image_url']);
@@ -148,13 +179,18 @@ class AccommodationAvailabilityQuote {
     return value == true || value == 1 || '$value'.toLowerCase() == 'true';
   }
 
+  String unitCurrency(String unitId) => '${unitAvailability(unitId)?['currency'] ?? currency}';
+
   double unitTotalAmount(String unitId) => _double(unitAvailability(unitId)?['totalAmount'] ?? unitAvailability(unitId)?['total_amount']);
 
   static double _double(dynamic value) => value is num ? value.toDouble() : double.tryParse('${value ?? ''}') ?? 0;
 }
 
 class MarketplaceBooking {
-  const MarketplaceBooking(this.raw);
+  const MarketplaceBooking(this.raw, {this.lifecycle});
+
+  final BookingLifecycle? lifecycle;
+  BookingLifecycle get state => lifecycle ?? BookingLifecycle(status: status, providerDecision: providerDecision, startedAt: DateTime.tryParse(serviceStartedAt), endedAt: DateTime.tryParse(serviceEndedAt));
 
   final Map<String, dynamic> raw;
 
@@ -169,7 +205,12 @@ class MarketplaceBooking {
   String get currency => '${raw['currency'] ?? 'INR'}';
   Map<String, dynamic> get pricingSnapshot => _map(raw['pricing_snapshot'] ?? raw['pricingSnapshot']);
   Map<String, dynamic> get serviceSnapshot => _map(raw['service_snapshot'] ?? raw['serviceSnapshot']);
-  String get displayName => '${pricingSnapshot['name'] ?? pricingSnapshot['property_name'] ?? pricingSnapshot['propertyName'] ?? serviceSnapshot['name'] ?? serviceSnapshot['property_name'] ?? serviceSnapshot['propertyName'] ?? raw['service_name'] ?? raw['serviceName'] ?? bookingType}';
+  String get displayName => state.serviceName ?? '${pricingSnapshot['name'] ?? pricingSnapshot['property_name'] ?? pricingSnapshot['propertyName'] ?? serviceSnapshot['name'] ?? serviceSnapshot['property_name'] ?? serviceSnapshot['propertyName'] ?? raw['service_name'] ?? raw['serviceName'] ?? bookingType}';
+  String? get imageUrl {
+    final summary = _map(raw['serviceSummary'] ?? pricingSnapshot['serviceSummary']);
+    final value = summary['coverImageUrl'] ?? summary['thumbnailUrl'];
+    return value is String && value.trim().isNotEmpty ? value : null;
+  }
   String get notes => '${raw['notes'] ?? ''}';
   String get startOtp => '${raw['startOtp'] ?? raw['start_otp'] ?? ''}';
   String get endOtp => '${raw['endOtp'] ?? raw['end_otp'] ?? ''}';
@@ -177,9 +218,19 @@ class MarketplaceBooking {
   String get serviceEndedAt => '${raw['service_ended_at'] ?? raw['serviceEndedAt'] ?? ''}';
   bool get hasStarted => serviceStartedAt.trim().isNotEmpty;
   bool get hasEnded => serviceEndedAt.trim().isNotEmpty;
-  bool get isCompleted => status.toLowerCase() == 'completed';
-  bool get isCancelled => const {'cancelled', 'canceled', 'rejected'}.contains(status.toLowerCase());
+  bool get isCompleted => state.completed;
+  bool get isCancelled => const {'cancelled', 'canceled', 'rejected', 'withdrawn', 'expired'}.contains(status.toLowerCase());
 
   static double _double(dynamic value) => value is num ? value.toDouble() : double.tryParse('${value ?? ''}') ?? 0;
   static Map<String, dynamic> _map(dynamic value) => value is Map ? value.map((k, v) => MapEntry('$k', v)) : <String, dynamic>{};
+}
+
+class TransportAvailabilityQuote {
+  const TransportAvailabilityQuote(this.raw);
+  final Map<String, dynamic> raw;
+  Map<String, dynamic> get quote => raw['quote'] is Map ? Map<String, dynamic>.from(raw['quote'] as Map) : {};
+  List<Map<String, dynamic>> get intervals => raw['intervals'] is List
+      ? (raw['intervals'] as List).whereType<Map>().map((row) => Map<String, dynamic>.from(row)).toList() : [];
+  double get totalAmount => double.tryParse('${quote['totalAmount'] ?? ''}') ?? 0;
+  String get currency => '${quote['currency'] ?? 'INR'}';
 }

@@ -36,7 +36,7 @@ class _PanditPoojaServicesPageState extends State<PanditPoojaServicesPage> {
     super.dispose();
   }
 
-  void _reload() => _future = getIt<PanditPoojaActions>().dashboard();
+  void _reload() { _future = getIt<PanditPoojaActions>().dashboard(); }
 
   List<PanditOffering> _visible(List<PanditOffering> source) {
     final q = _query.trim().toLowerCase();

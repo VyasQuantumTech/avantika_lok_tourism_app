@@ -6,7 +6,7 @@ Map<String, dynamic> _map(dynamic value) {
 
   if (value is Map) {
     return value.map(
-          (key, value) => MapEntry(key.toString(), value),
+      (key, value) => MapEntry(key.toString(), value),
     );
   }
 
@@ -35,9 +35,9 @@ String? _string(dynamic value) {
 }
 
 bool _bool(
-    dynamic value, {
-      bool fallback = false,
-    }) {
+  dynamic value, {
+  bool fallback = false,
+}) {
   if (value is bool) return value;
 
   if (value is num) return value != 0;
@@ -76,101 +76,99 @@ ProfileSnapshot parseProfileSnapshot(dynamic raw) {
     personalProfile: personalRaw == null
         ? null
         : PersonalProfile(
-      phone: _string(
-        _map(personalRaw)['phone'],
-      ),
-      gender: _string(
-        _map(personalRaw)['gender'],
-      ),
-      dateOfBirth: _string(
-        _map(personalRaw)['dateOfBirth'],
-      ),
-      birthTime: _string(
-        _map(personalRaw)['birthTime'],
-      ),
-      placeOfBirth: _string(
-        _map(personalRaw)['placeOfBirth'],
-      ),
-      addressLine1: _string(
-        _map(personalRaw)['addressLine1'],
-      ),
-      addressLine2: _string(
-        _map(personalRaw)['addressLine2'],
-      ),
-      city: _string(
-        _map(personalRaw)['city'],
-      ),
-      state: _string(
-        _map(personalRaw)['state'],
-      ),
-      postalCode: _string(
-        _map(personalRaw)['postalCode'],
-      ),
-      countryCode:
-      _string(
-        _map(personalRaw)['countryCode'],
-      ) ??
-          'IN',
-      avatarMediaAssetId: _string(
-        _map(personalRaw)['avatarMediaAssetId'],
-      ),
-      avatarUrl: _string(
-        _map(personalRaw)['avatarUrl'],
-      ),
-    ),
+            phone: _string(
+              _map(personalRaw)['phone'],
+            ),
+            gender: _string(
+              _map(personalRaw)['gender'],
+            ),
+            dateOfBirth: _string(
+              _map(personalRaw)['dateOfBirth'],
+            ),
+            birthTime: _string(
+              _map(personalRaw)['birthTime'],
+            ),
+            placeOfBirth: _string(
+              _map(personalRaw)['placeOfBirth'],
+            ),
+            addressLine1: _string(
+              _map(personalRaw)['addressLine1'],
+            ),
+            addressLine2: _string(
+              _map(personalRaw)['addressLine2'],
+            ),
+            city: _string(
+              _map(personalRaw)['city'],
+            ),
+            state: _string(
+              _map(personalRaw)['state'],
+            ),
+            postalCode: _string(
+              _map(personalRaw)['postalCode'],
+            ),
+            countryCode: _string(
+                  _map(personalRaw)['countryCode'],
+                ) ??
+                'IN',
+            avatarMediaAssetId: _string(
+              _map(personalRaw)['avatarMediaAssetId'],
+            ),
+            avatarUrl: _string(
+              _map(personalRaw)['avatarUrl'],
+            ),
+          ),
     accountType: _string(map['accountType']) ?? 'customer',
     providerProfile: providerRaw == null
         ? null
         : ProviderProfileInfo(
-      id: _string(
-        _map(providerRaw)['id'],
-      ) ??
-          '',
-      providerType: _string(
-        _map(providerRaw)['providerType'],
-      ) ??
-          '',
-      legalName: _string(
-        _map(providerRaw)['legalName'],
-      ) ??
-          '',
-      displayName: _string(
-        _map(providerRaw)['displayName'],
-      ),
-      phone: _string(
-        _map(providerRaw)['phone'],
-      ),
-      addressLine1: _string(
-        _map(providerRaw)['addressLine1'],
-      ),
-      addressLine2: _string(
-        _map(providerRaw)['addressLine2'],
-      ),
-      city: _string(
-        _map(providerRaw)['city'],
-      ),
-      state: _string(
-        _map(providerRaw)['state'],
-      ),
-      postalCode: _string(
-        _map(providerRaw)['postalCode'],
-      ),
-      countryCode: _string(
-        _map(providerRaw)['countryCode'],
-      ),
-      kycApplicationId: _string(
-        _map(
-          _map(providerRaw)['kyc'],
-        )['applicationId'],
-      ),
-      kycStatus:
-      _string(
-        _map(
-          _map(providerRaw)['kyc'],
-        )['status'],
-      ) ??
-          'not_submitted',
-    ),
+            id: _string(
+                  _map(providerRaw)['id'],
+                ) ??
+                '',
+            providerType: _string(
+                  _map(providerRaw)['providerType'],
+                ) ??
+                '',
+            legalName: _string(
+                  _map(providerRaw)['legalName'],
+                ) ??
+                '',
+            displayName: _string(
+              _map(providerRaw)['displayName'],
+            ),
+            phone: _string(
+              _map(providerRaw)['phone'],
+            ),
+            addressLine1: _string(
+              _map(providerRaw)['addressLine1'],
+            ),
+            addressLine2: _string(
+              _map(providerRaw)['addressLine2'],
+            ),
+            city: _string(
+              _map(providerRaw)['city'],
+            ),
+            state: _string(
+              _map(providerRaw)['state'],
+            ),
+            postalCode: _string(
+              _map(providerRaw)['postalCode'],
+            ),
+            countryCode: _string(
+              _map(providerRaw)['countryCode'],
+            ),
+            kycApplicationId: _string(
+              _map(
+                _map(providerRaw)['kyc'],
+              )['applicationId'],
+            ),
+            kycStatus: _string(
+                  _map(
+                    _map(providerRaw)['kyc'],
+                  )['status'],
+                ) ??
+                'not_submitted',
+          ),
   );
 }
 
@@ -218,24 +216,22 @@ ProfileDashboard parseProfileDashboard(dynamic raw) {
     final rawCapabilities = p['capabilities'];
 
     provider = ProviderDashboardSummary(
-      providerType:
-      _string(
-        p['providerType'],
-      ) ??
+      providerType: _string(
+            p['providerType'],
+          ) ??
           '',
       capabilities: rawCapabilities is List
           ? rawCapabilities
-          .map(
-            (item) => item.toString(),
-      )
-          .toList(
-        growable: false,
-      )
+              .map(
+                (item) => item.toString(),
+              )
+              .toList(
+                growable: false,
+              )
           : const <String>[],
-      kycStatus:
-      _string(
-        _map(p['kyc'])['status'],
-      ) ??
+      kycStatus: _string(
+            _map(p['kyc'])['status'],
+          ) ??
           'not_submitted',
       kycApplicationId: _string(
         _map(p['kyc'])['applicationId'],
@@ -256,34 +252,38 @@ ProfileDashboard parseProfileDashboard(dynamic raw) {
         count: _int(
           ratings['count'],
         ),
-        averageRating:
-        ratings['averageRating'] == null
+        averageRating: ratings['averageRating'] == null
             ? null
             : _double(
-          ratings['averageRating'],
-        ),
+                ratings['averageRating'],
+              ),
       ),
       financial: ProviderFinancialSummary(
-        currency:
-        _string(
-          financial['currency'],
-        ) ??
-            'INR',
-        grossCaptured: _double(
-          financial['grossCaptured'],
-        ),
-        processedRefunds: _double(
-          financial['processedRefunds'],
-        ),
-        netCollected: _double(
-          financial['netCollected'],
-        ),
-        payoutBalance:
-        financial['payoutBalance'] == null
+        currency: _string(financial['currency']),
+        grossCaptured: financial['grossCaptured'] == null
+            ? null
+            : _double(financial['grossCaptured']),
+        processedRefunds: financial['processedRefunds'] == null
+            ? null
+            : _double(financial['processedRefunds']),
+        netCollected: financial['netCollected'] == null
+            ? null
+            : _double(financial['netCollected']),
+        byCurrency: (financial['byCurrency'] is List
+                ? financial['byCurrency'] as List
+                : [])
+            .whereType<Map>()
+            .map((row) => CurrencyFinancialSummary(
+                currency: '${row['currency']}',
+                grossCaptured: _double(row['grossCaptured']),
+                processedRefunds: _double(row['processedRefunds']),
+                netCollected: _double(row['netCollected'])))
+            .toList(),
+        payoutBalance: financial['payoutBalance'] == null
             ? null
             : _double(
-          financial['payoutBalance'],
-        ),
+                financial['payoutBalance'],
+              ),
         note: _string(
           financial['note'],
         ),
@@ -292,15 +292,15 @@ ProfileDashboard parseProfileDashboard(dynamic raw) {
         configured: _bool(
           domain['configured'],
           fallback: _int(
-            packages['total'],
-          ) >
+                packages['total'],
+              ) >
               0,
         ),
         active: domain['active'] == null
             ? null
             : _bool(
-          domain['active'],
-        ),
+                domain['active'],
+              ),
         status: _string(
           domain['status'],
         ),

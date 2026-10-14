@@ -10,12 +10,14 @@ import '../../domain/entities/pooja_entities.dart';
 import '../../domain/usecases/pooja_actions.dart';
 
 class CustomerPoojaBookingPage extends StatefulWidget {
-  const CustomerPoojaBookingPage({required this.pooja, required this.offering, super.key});
+  const CustomerPoojaBookingPage(
+      {required this.pooja, required this.offering, super.key});
   final Pooja pooja;
   final PoojaOffering offering;
 
   @override
-  State<CustomerPoojaBookingPage> createState() => _CustomerPoojaBookingPageState();
+  State<CustomerPoojaBookingPage> createState() =>
+      _CustomerPoojaBookingPageState();
 }
 
 class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
@@ -75,11 +77,13 @@ class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
         notes: _notes.text,
       );
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(RouteNames.poojaPayment, arguments: booking);
+      Navigator.of(context).pushReplacementNamed(RouteNames.customerPoojaBookingDetail, arguments: booking.id);
     } on ApiException catch (error) {
       if (mounted) AppFeedback.error(context, error.message);
     } catch (_) {
-      if (mounted) AppFeedback.error(context, 'Unable to create this booking right now.');
+      if (mounted) {
+        AppFeedback.error(context, 'Unable to create this booking right now.');
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -102,20 +106,27 @@ class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
                       width: 46,
                       height: 46,
                       alignment: Alignment.center,
-                      decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(13)),
-                      child: Icon(Icons.temple_hindu_outlined, color: AppColors.primary),
+                      decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(13)),
+                      child: Icon(Icons.temple_hindu_outlined,
+                          color: AppColors.primary),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(widget.pooja.name, style: AppTypography.sectionTitle),
-                          Text('Pandit ${widget.offering.panditName}', style: AppTypography.caption),
+                          Text(widget.pooja.name,
+                              style: AppTypography.sectionTitle),
+                          Text('Pandit ${widget.offering.panditName}',
+                              style: AppTypography.caption),
                         ],
                       ),
                     ),
-                    Text(_money, style: AppTypography.title.copyWith(color: AppColors.primary)),
+                    Text(_money,
+                        style: AppTypography.title
+                            .copyWith(color: AppColors.primary)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -125,7 +136,8 @@ class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
                   children: [
                     AppStatusChip(label: widget.offering.serviceMode),
                     if (widget.offering.durationMinutes != null)
-                      AppStatusChip(label: '${widget.offering.durationMinutes} min'),
+                      AppStatusChip(
+                          label: '${widget.offering.durationMinutes} min'),
                     if (widget.offering.city?.trim().isNotEmpty == true)
                       AppStatusChip(label: widget.offering.city!),
                   ],
@@ -134,23 +146,33 @@ class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
             ),
           ),
           const SizedBox(height: 18),
-          const AppSectionTitle(title: 'Schedule', subtitle: 'Choose when you want the Pooja to begin'),
+          const AppSectionTitle(
+              title: 'Schedule',
+              subtitle: 'Choose when you want the Pooja to begin'),
           const SizedBox(height: 10),
           AppPanel(
             padding: EdgeInsets.zero,
             child: Column(
               children: [
                 ListTile(
-                  leading: Icon(Icons.calendar_today_outlined, color: AppColors.primary),
-                  title: Text(_date == null ? 'Select service date' : _dateValue(_date!), style: AppTypography.label),
+                  leading: Icon(Icons.calendar_today_outlined,
+                      color: AppColors.primary),
+                  title: Text(
+                      _date == null
+                          ? 'Select service date'
+                          : _dateValue(_date!),
+                      style: AppTypography.label),
                   subtitle: Text('Required', style: AppTypography.caption),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: _pickDate,
                 ),
                 Divider(height: 1, color: AppColors.divider),
                 ListTile(
-                  leading: Icon(Icons.schedule_outlined, color: AppColors.primary),
-                  title: Text(_time == null ? 'Select start time' : _timeValue(_time!), style: AppTypography.label),
+                  leading:
+                      Icon(Icons.schedule_outlined, color: AppColors.primary),
+                  title: Text(
+                      _time == null ? 'Select start time' : _timeValue(_time!),
+                      style: AppTypography.label),
                   subtitle: Text('Required', style: AppTypography.caption),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: _pickTime,
@@ -164,9 +186,13 @@ class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
           AppPanel(
             child: Row(
               children: [
-                Expanded(child: Text('Number of participants', style: AppTypography.label)),
+                Expanded(
+                    child: Text('Number of participants',
+                        style: AppTypography.label)),
                 IconButton(
-                  onPressed: _participants > 1 ? () => setState(() => _participants--) : null,
+                  onPressed: _participants > 1
+                      ? () => setState(() => _participants--)
+                      : null,
                   icon: const Icon(Icons.remove_circle_outline_rounded),
                 ),
                 Container(
@@ -175,30 +201,38 @@ class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
                   child: Text('$_participants', style: AppTypography.title),
                 ),
                 IconButton(
-                  onPressed: _participants < 100 ? () => setState(() => _participants++) : null,
+                  onPressed: _participants < 100
+                      ? () => setState(() => _participants++)
+                      : null,
                   icon: const Icon(Icons.add_circle_outline_rounded),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 18),
-          const AppSectionTitle(title: 'Notes', subtitle: 'Optional instructions for the Pandit'),
+          const AppSectionTitle(
+              title: 'Notes', subtitle: 'Optional instructions for the Pandit'),
           const SizedBox(height: 10),
           TextField(
             controller: _notes,
             minLines: 3,
             maxLines: 5,
             maxLength: 500,
-            decoration: const InputDecoration(hintText: 'Any special requirement, Sankalp details or instructions…'),
+            decoration: const InputDecoration(
+                hintText:
+                    'Any special requirement, Sankalp details or instructions…'),
           ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppColors.infoSoft, borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(
+                color: AppColors.infoSoft,
+                borderRadius: BorderRadius.circular(14)),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline_rounded, color: AppColors.info, size: 20),
+                Icon(Icons.info_outline_rounded,
+                    color: AppColors.info, size: 20),
                 const SizedBox(width: 9),
                 Expanded(
                   child: Text(
@@ -215,7 +249,10 @@ class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
             child: FilledButton.icon(
               onPressed: _saving ? null : _submit,
               icon: _saving
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.check_circle_outline_rounded),
               label: Text(_saving ? 'Creating booking…' : 'Confirm Booking'),
             ),

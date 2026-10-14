@@ -34,16 +34,53 @@ class ProviderFinancialSummary {
     required this.grossCaptured,
     required this.processedRefunds,
     required this.netCollected,
+    this.byCurrency = const [],
     this.payoutBalance,
     this.note,
   });
 
+  final String? currency;
+  final double? grossCaptured;
+  final double? processedRefunds;
+  final double? netCollected;
+  final List<CurrencyFinancialSummary> byCurrency;
+
+  List<CurrencyFinancialSummary> get currencies => byCurrency.isNotEmpty
+      ? byCurrency
+      : currency != null &&
+              grossCaptured != null &&
+              processedRefunds != null &&
+              netCollected != null
+          ? [
+              CurrencyFinancialSummary(
+                  currency: currency!,
+                  grossCaptured: grossCaptured!,
+                  processedRefunds: processedRefunds!,
+                  netCollected: netCollected!)
+            ]
+          : [];
+  String format(String field) {
+    if (currencies.isEmpty) return 'Unavailable';
+    return currencies
+        .map((row) =>
+            '${row.currency} ${(field == 'gross' ? row.grossCaptured : field == 'refunds' ? row.processedRefunds : row.netCollected).toStringAsFixed(2)}')
+        .join(' • ');
+  }
+
+  final double? payoutBalance;
+  final String? note;
+}
+
+class CurrencyFinancialSummary {
+  const CurrencyFinancialSummary(
+      {required this.currency,
+      required this.grossCaptured,
+      required this.processedRefunds,
+      required this.netCollected});
   final String currency;
   final double grossCaptured;
   final double processedRefunds;
   final double netCollected;
-  final double? payoutBalance;
-  final String? note;
 }
 
 class ProviderRatingSummary {

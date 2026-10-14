@@ -1,3 +1,4 @@
+import '../../../bookings/presentation/widgets/booking_lifecycle_panel.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
@@ -14,10 +15,12 @@ class CustomerPoojaBookingDetailPage extends StatefulWidget {
   final String bookingId;
 
   @override
-  State<CustomerPoojaBookingDetailPage> createState() => _CustomerPoojaBookingDetailPageState();
+  State<CustomerPoojaBookingDetailPage> createState() =>
+      _CustomerPoojaBookingDetailPageState();
 }
 
-class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDetailPage> {
+class _CustomerPoojaBookingDetailPageState
+    extends State<CustomerPoojaBookingDetailPage> {
   late Future<PoojaBooking> _future;
   bool _busy = false;
 
@@ -27,14 +30,16 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
     _load();
   }
 
-  void _load() => _future = getIt<CustomerPoojaActions>().booking(widget.bookingId);
+  void _load() { _future = getIt<CustomerPoojaActions>().booking(widget.bookingId); }
 
   String _poojaName(PoojaBooking booking) =>
+      booking.state.serviceName ??
       booking.pricingSnapshot['poojaName']?.toString() ??
       booking.pricingSnapshot['name']?.toString() ??
       'Pooja';
 
   String _panditName(PoojaBooking booking) =>
+      booking.state.providerName ??
       booking.pricingSnapshot['panditName']?.toString() ??
       booking.pricingSnapshot['providerName']?.toString() ??
       'Pandit';
@@ -45,25 +50,21 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
   }
 
   String _status(PoojaBooking booking) {
-    if (booking.isCompleted) return 'Completed';
-    if (booking.isInProgress) return 'Pooja in progress';
-    if (booking.providerDecision == 'rejected') return 'Rejected by Pandit';
-    if (booking.status == 'cancelled') return 'Cancelled';
-    if (booking.isAwaitingPandit) return 'Waiting for Pandit';
-    if (booking.providerDecision == 'accepted') return 'Confirmed';
-    return booking.status;
+    return booking.state.statusLabel;
   }
 
   Future<void> _withdraw(PoojaBooking booking) async {
     final yes = await AppDialogs.confirm(
       context,
       title: 'Withdraw request?',
-      message: 'This booking is still waiting for the Pandit. Do you want to withdraw it?',
+      message:
+          'This booking is still waiting for the Pandit. Do you want to withdraw it?',
       confirmLabel: 'Withdraw',
       destructive: true,
     );
     if (!yes) return;
-    await _run(() => getIt<CustomerPoojaActions>().withdraw(booking.id), 'Booking withdrawn.');
+    await _run(() => getIt<CustomerPoojaActions>().withdraw(booking.id),
+        'Booking withdrawn.');
   }
 
   Future<void> _cancel(PoojaBooking booking) async {
@@ -76,10 +77,13 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
       maxLength: 250,
     );
     if (reason == null || reason.trim().length < 2) return;
-    await _run(() => getIt<CustomerPoojaActions>().cancel(booking.id, reason.trim()), 'Booking cancelled.');
+    await _run(
+        () => getIt<CustomerPoojaActions>().cancel(booking.id, reason.trim()),
+        'Booking cancelled.');
   }
 
-  Future<void> _run(Future<PoojaBooking> Function() action, String success) async {
+  Future<void> _run(
+      Future<PoojaBooking> Function() action, String success) async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
@@ -90,7 +94,9 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
     } on ApiException catch (error) {
       if (mounted) AppFeedback.error(context, error.message);
     } catch (_) {
-      if (mounted) AppFeedback.error(context, 'Unable to complete this action.');
+      if (mounted) {
+        AppFeedback.error(context, 'Unable to complete this action.');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -115,28 +121,40 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
                     final value = index + 1;
                     return IconButton(
                       onPressed: () => setDialogState(() => rating = value),
-                      icon: Icon(value <= rating ? Icons.star_rounded : Icons.star_border_rounded, color: AppColors.star),
+                      icon: Icon(
+                          value <= rating
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: AppColors.star),
                     );
                   }),
                 ),
-                TextField(controller: title, decoration: const InputDecoration(labelText: 'Title (optional)')),
+                TextField(
+                    controller: title,
+                    decoration:
+                        const InputDecoration(labelText: 'Title (optional)')),
                 const SizedBox(height: 10),
                 TextField(
                   controller: comment,
                   minLines: 3,
                   maxLines: 5,
                   maxLength: 500,
-                  decoration: const InputDecoration(labelText: 'Your review', hintText: 'Tell us about your Pooja experience'),
+                  decoration: const InputDecoration(
+                      labelText: 'Your review',
+                      hintText: 'Tell us about your Pooja experience'),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancel')),
             FilledButton(
               onPressed: () {
                 if (comment.text.trim().length < 5) {
-                  AppFeedback.error(context, 'Please write at least 5 characters.');
+                  AppFeedback.error(
+                      context, 'Please write at least 5 characters.');
                   return;
                 }
                 Navigator.pop(dialogContext, true);
@@ -155,11 +173,15 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
           title: title.text,
           comment: comment.text,
         );
-        if (mounted) AppFeedback.success(context, 'Review submitted for approval.');
+        if (mounted) {
+          AppFeedback.success(context, 'Review submitted for approval.');
+        }
       } on ApiException catch (error) {
         if (mounted) AppFeedback.error(context, error.message);
       } catch (_) {
-        if (mounted) AppFeedback.error(context, 'Unable to submit your review.');
+        if (mounted) {
+          AppFeedback.error(context, 'Unable to submit your review.');
+        }
       }
     }
     title.dispose();
@@ -180,7 +202,9 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
           if (snapshot.hasError || snapshot.data == null) {
             final error = snapshot.error;
             return AppErrorState(
-              message: error is ApiException ? error.message : 'Unable to load booking details.',
+              message: error is ApiException
+                  ? error.message
+                  : 'Unable to load booking details.',
               onRetry: () => setState(_load),
             );
           }
@@ -204,29 +228,38 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
                             width: 48,
                             height: 48,
                             alignment: Alignment.center,
-                            decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(14)),
-                            child: Icon(Icons.temple_hindu_outlined, color: AppColors.primary),
+                            decoration: BoxDecoration(
+                                color: AppColors.primarySoft,
+                                borderRadius: BorderRadius.circular(14)),
+                            child: Icon(Icons.temple_hindu_outlined,
+                                color: AppColors.primary),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(_poojaName(booking), style: AppTypography.title),
+                                Text(_poojaName(booking),
+                                    style: AppTypography.title),
                                 const SizedBox(height: 3),
-                                Text(_panditName(booking), style: AppTypography.caption),
+                                Text(_panditName(booking),
+                                    style: AppTypography.caption),
                               ],
                             ),
                           ),
-                          Text(_money(booking), style: AppTypography.title.copyWith(color: AppColors.primary)),
+                          Text(_money(booking),
+                              style: AppTypography.title
+                                  .copyWith(color: AppColors.primary)),
                         ],
                       ),
                       const SizedBox(height: 14),
-                      Row(
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 8,
                         children: [
                           AppStatusChip(label: _status(booking)),
-                          const Spacer(),
-                          Text(booking.bookingNumber, style: AppTypography.caption),
+                          Text(booking.bookingNumber,
+                              style: AppTypography.caption),
                         ],
                       ),
                     ],
@@ -236,43 +269,43 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
                 AppPanel(
                   child: Column(
                     children: [
-                      AppDetailRow(label: 'Service date', value: booking.serviceDate, icon: Icons.calendar_today_outlined),
-                      AppDetailRow(label: 'Start time', value: booking.startTime?.substring(0, booking.startTime!.length >= 5 ? 5 : booking.startTime!.length) ?? '—', icon: Icons.schedule_outlined),
-                      AppDetailRow(label: 'Pandit', value: _panditName(booking), icon: Icons.person_outline_rounded),
-                      AppDetailRow(label: 'Amount', value: _money(booking), icon: Icons.payments_outlined),
+                      AppDetailRow(
+                          label: 'Service date',
+                          value: booking.serviceDate,
+                          icon: Icons.calendar_today_outlined),
+                      AppDetailRow(
+                          label: 'Start time',
+                          value: booking.startTime?.substring(
+                                  0,
+                                  booking.startTime!.length >= 5
+                                      ? 5
+                                      : booking.startTime!.length) ??
+                              '—',
+                          icon: Icons.schedule_outlined),
+                      AppDetailRow(
+                          label: 'Pandit',
+                          value: _panditName(booking),
+                          icon: Icons.person_outline_rounded),
+                      AppDetailRow(
+                          label: 'Amount',
+                          value: _money(booking),
+                          icon: Icons.payments_outlined),
                       if (booking.notes?.trim().isNotEmpty == true)
-                        AppDetailRow(label: 'Notes', value: booking.notes!, icon: Icons.notes_rounded),
+                        AppDetailRow(
+                            label: 'Notes',
+                            value: booking.notes!,
+                            icon: Icons.notes_rounded),
                     ],
                   ),
                 ),
-                if (booking.hasCustomerOtpAccess) ...[
-                  const SizedBox(height: 14),
-                  AppPanel(
-                    backgroundColor: AppColors.primarySoft,
-                    borderColor: AppColors.brandBorder,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Pooja verification OTPs', style: AppTypography.sectionTitle),
-                        const SizedBox(height: 5),
-                        Text(
-                          booking.isInProgress
-                              ? 'Pooja has started. Share the End OTP only after the Pooja is fully completed.'
-                              : 'Share the Start OTP only when the Pooja is ready to begin. Keep the End OTP private until completion.',
-                          style: AppTypography.caption,
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(child: _OtpTile(label: 'START OTP', otp: booking.poojaStartOtp, icon: Icons.play_circle_outline_rounded)),
-                            const SizedBox(width: 10),
-                            Expanded(child: _OtpTile(label: 'END OTP', otp: booking.poojaEndOtp, icon: Icons.stop_circle_outlined)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                const SizedBox(height: 14),
+                BookingLifecyclePanel(
+                    bookingId: booking.id,
+                    lifecycle: booking.state,
+                    onRefresh: () async {
+                      setState(_load);
+                      await _future;
+                    }),
                 const SizedBox(height: 16),
                 if (_busy) const LinearProgressIndicator(),
                 if (booking.isAwaitingPandit)
@@ -284,7 +317,8 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
                       label: const Text('Withdraw Booking'),
                     ),
                   ),
-                if (booking.canCustomerCancel && booking.serviceStartedAt == null) ...[
+                if (booking.canCustomerCancel &&
+                    booking.serviceStartedAt == null) ...[
                   const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,
@@ -310,40 +344,6 @@ class _CustomerPoojaBookingDetailPageState extends State<CustomerPoojaBookingDet
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _OtpTile extends StatelessWidget {
-  const _OtpTile({required this.label, required this.otp, required this.icon});
-
-  final String label;
-  final String? otp;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final value = otp?.trim();
-    final available = value != null && value.isNotEmpty;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(13)),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.primary, size: 21),
-          const SizedBox(height: 6),
-          Text(label, style: AppTypography.tiny.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          SelectableText(
-            available ? value : '------',
-            textAlign: TextAlign.center,
-            style: AppTypography.titleLarge.copyWith(
-              letterSpacing: 2.2,
-              color: available ? AppColors.textPrimary : AppColors.textMuted,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -66,7 +66,7 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
     _load();
   }
 
-  void _load() => _future = getIt<GetMyProfileDashboard>()();
+  void _load() { _future = getIt<GetMyProfileDashboard>()(); }
 
   void _reload() => setState(_load);
 
@@ -175,8 +175,7 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
                   _WelcomeCard(name: displayName, kycStatus: provider.kycStatus),
                   const SizedBox(height: 12),
                   _EarningsHero(
-                    amount: provider.financial.netCollected,
-                    currency: provider.financial.currency,
+                    value: provider.financial.format('net'),
                     onTap: () => setState(() => _selectedIndex = 3),
                   ),
                   SizedBox(height: AppDimensions.sectionGap),
@@ -203,8 +202,8 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
                             width: width,
                             child: AppMetricCard(
                               label: 'Net collected',
-                              value: '₹${provider.financial.netCollected.toStringAsFixed(0)}',
-                              footer: provider.financial.currency,
+                              value: provider.financial.format('net'),
+                              footer: 'Captured less refunds',
                               icon: Icons.account_balance_wallet_outlined,
                               onTap: () => setState(() => _selectedIndex = 3),
                             ),
@@ -253,9 +252,9 @@ class _ProviderDashboardShellState extends State<ProviderDashboardShell> {
                   const SizedBox(height: 10),
                   _SummaryPanel(
                     rows: [
-                      ('Gross captured', '₹${provider.financial.grossCaptured.toStringAsFixed(0)}', Icons.south_west_rounded),
-                      ('Processed refunds', '₹${provider.financial.processedRefunds.toStringAsFixed(0)}', Icons.replay_outlined),
-                      ('Net collected', '₹${provider.financial.netCollected.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined),
+                      ('Gross captured', provider.financial.format('gross'), Icons.south_west_rounded),
+                      ('Processed refunds', provider.financial.format('refunds'), Icons.replay_outlined),
+                      ('Net collected', provider.financial.format('net'), Icons.account_balance_wallet_outlined),
                     ],
                   ),
                 ],
@@ -408,16 +407,15 @@ class _WelcomeCard extends StatelessWidget {
 
 
 class _EarningsHero extends StatelessWidget {
-  const _EarningsHero({required this.amount, required this.currency, required this.onTap});
-  final double amount;
-  final String currency;
+  const _EarningsHero({required this.value, required this.onTap});
+  final String value;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => ProviderHeroCard(
-        eyebrow: 'Total earnings',
-        value: '₹ ${amount.toStringAsFixed(0)}',
-        subtitle: currency,
+        eyebrow: 'Net collected',
+        value: value,
+        subtitle: 'Captured payments after processed refunds',
         icon: Icons.bar_chart_rounded,
         onTap: onTap,
       );
@@ -479,7 +477,7 @@ class _SummaryPanel extends StatelessWidget {
                     ),
                     const SizedBox(width: 11),
                     Expanded(child: Text(row.$1, style: AppTypography.body)),
-                    Text(row.$2, style: AppTypography.label.copyWith(color: AppColors.primaryDark)),
+                    Flexible(child: Text(row.$2, textAlign: TextAlign.end, style: AppTypography.label.copyWith(color: AppColors.primaryDark))),
                   ],
                 ),
               ),

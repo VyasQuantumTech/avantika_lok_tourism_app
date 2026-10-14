@@ -40,7 +40,7 @@ class _PanditAvailabilityPageState extends State<PanditAvailabilityPage> {
     _reload();
   }
 
-  void _reload() => _future = getIt<PanditPoojaActions>().dashboard();
+  void _reload() { _future = getIt<PanditPoojaActions>().dashboard(); }
 
   String _time(TimeOfDay value) =>
       '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';

@@ -14,6 +14,10 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   @override
   Future<AccommodationAvailabilityQuote> accommodationAvailability({required String identifier, required String checkIn, required String checkOut, required int adults, required int children, required int units}) => remote.accommodationAvailability(identifier: identifier, checkIn: checkIn, checkOut: checkOut, adults: adults, children: children, units: units);
   @override
+  Future<TransportAvailabilityQuote> transportAvailability({required String vehicleId, required String date, required String startTime, required String endTime, required int passengers, String? routeId}) => remote.transportAvailability(vehicleId: vehicleId, date: date, startTime: startTime, endTime: endTime, passengers: passengers, routeId: routeId);
+  @override
+  Future<String> uploadDocument({required Uint8List bytes, required String fileName, required String mimeType}) => remote.uploadDocument(bytes: bytes, fileName: fileName, mimeType: mimeType);
+  @override
   Future<List<MarketplaceBooking>> customerBookings(MarketplaceType type) => remote.customerBookings(type);
   @override
   Future<MarketplaceBooking> bookingDetail(String id, {bool provider = false}) => remote.bookingDetail(id, provider: provider);
@@ -38,6 +42,15 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   Future<dynamic> call(String operation, {String? id, String? parentId, Map<String, dynamic>? body}) {
     final payload = body ?? <String, dynamic>{};
     switch (operation) {
+      case 'drivers':
+      case 'devices':
+      case 'saveDriver':
+      case 'saveDevice':
+      case 'assignRide':
+      case 'arrived':
+      case 'vehicleStatus': return remote.transportOperation(operation, id: id, body: payload);
+      case 'inventoryCalendar':
+      case 'pauseAccommodation': return remote.accommodationOperation(operation, id!, payload);
       case 'saveAccommodation': return remote.saveAccommodation(payload, id: id);
       case 'deleteAccommodation': return remote.deleteAccommodation(id!);
       case 'saveUnit': return remote.saveAccommodationUnit(parentId!, payload, unitId: id);

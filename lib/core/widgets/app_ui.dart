@@ -4,6 +4,7 @@ import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_dimensions.dart';
 import '../../app/theme/app_typography.dart';
 import 'app_button.dart';
+import 'text_input_dialog.dart';
 
 class AppPage extends StatelessWidget {
   const AppPage({
@@ -524,36 +525,12 @@ class AppDialogs {
   }
 
   static Future<String?> textInput(
-    BuildContext context, {
-    required String title,
-    required String label,
-    String? helperText,
-    String confirmLabel = 'Continue',
-    TextInputType? keyboardType,
-    int? maxLength,
-  }) async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: keyboardType,
-          maxLength: maxLength,
-          decoration: InputDecoration(labelText: label, helperText: helperText),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: Text(confirmLabel),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    return result;
-  }
+    BuildContext context, {required String title, required String label, String? helperText,
+    String confirmLabel = 'Continue', TextInputType? keyboardType, int? maxLength,
+    String? Function(String)? validator, Future<void> Function(String)? onSubmit,
+  }) => showDialog<String>(context: context, barrierDismissible: onSubmit == null, builder: (_) => AppTextInputDialog(
+    title: title, label: label, helperText: helperText, confirmLabel: confirmLabel,
+    keyboardType: keyboardType, maxLength: maxLength, validator: validator, onSubmit: onSubmit,
+  ));
+
 }

@@ -6,6 +6,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/widgets/app_ui.dart';
+import '../../../../core/widgets/provider_ui.dart';
 import '../../domain/entities/pooja_entities.dart';
 import '../../domain/usecases/pooja_actions.dart';
 
@@ -15,7 +16,8 @@ class CustomerPoojaBookingsPage extends StatefulWidget {
   const CustomerPoojaBookingsPage({super.key});
 
   @override
-  State<CustomerPoojaBookingsPage> createState() => _CustomerPoojaBookingsPageState();
+  State<CustomerPoojaBookingsPage> createState() =>
+      _CustomerPoojaBookingsPageState();
 }
 
 class _CustomerPoojaBookingsPageState extends State<CustomerPoojaBookingsPage>
@@ -29,7 +31,8 @@ class _CustomerPoojaBookingsPageState extends State<CustomerPoojaBookingsPage>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 4, vsync: this)..addListener(() => setState(() {}));
+    _tabs = TabController(length: 4, vsync: this)
+      ..addListener(() => setState(() {}));
     _reload();
   }
 
@@ -40,31 +43,31 @@ class _CustomerPoojaBookingsPageState extends State<CustomerPoojaBookingsPage>
     super.dispose();
   }
 
-  void _reload() => _future = getIt<CustomerPoojaActions>().bookings();
+  void _reload() { _future = getIt<CustomerPoojaActions>().bookings(); }
 
   String _poojaName(PoojaBooking b) =>
-      b.pricingSnapshot['poojaName']?.toString() ?? b.pricingSnapshot['name']?.toString() ?? 'Pooja';
+      b.state.serviceName ??
+      b.pricingSnapshot['poojaName']?.toString() ??
+      b.pricingSnapshot['name']?.toString() ??
+      'Pooja';
   String _panditName(PoojaBooking b) =>
-      b.pricingSnapshot['panditName']?.toString() ?? b.pricingSnapshot['providerName']?.toString() ?? 'Pandit';
+      b.state.providerName ??
+      b.pricingSnapshot['panditName']?.toString() ??
+      b.pricingSnapshot['providerName']?.toString() ??
+      'Pandit';
 
   String _status(PoojaBooking b) {
-    if (b.isCompleted) return 'Completed';
-    if (b.isInProgress) return 'Pooja in progress';
-    if (b.providerDecision == 'rejected') return 'Rejected by Pandit';
-    if (b.status == 'cancelled') return 'Cancelled';
-    if (b.isAwaitingPandit) return 'Waiting for Pandit';
-    if (b.providerDecision == 'accepted') return 'Confirmed';
-    return b.status;
+    return b.state.statusLabel;
   }
 
   bool _matchesTab(PoojaBooking b) {
     switch (_tabs.index) {
       case 0:
-        return !b.isCompleted && b.status != 'cancelled' && b.providerDecision != 'rejected';
+        return b.state.active;
       case 1:
         return b.isCompleted;
       case 2:
-        return b.status == 'cancelled' || b.providerDecision == 'rejected';
+        return !b.state.active && !b.isCompleted;
       default:
         return true;
     }
@@ -80,7 +83,8 @@ class _CustomerPoojaBookingsPageState extends State<CustomerPoojaBookingsPage>
           .contains(q);
     }).toList();
 
-    DateTime date(PoojaBooking b) => DateTime.tryParse(b.serviceDate) ?? DateTime(1970);
+    DateTime date(PoojaBooking b) =>
+        DateTime.tryParse(b.serviceDate) ?? DateTime(1970);
     switch (_sort) {
       case _BookingSort.newest:
         items.sort((a, b) => date(b).compareTo(date(a)));
@@ -126,7 +130,9 @@ class _CustomerPoojaBookingsPageState extends State<CustomerPoojaBookingsPage>
           if (snapshot.hasError) {
             final error = snapshot.error;
             return AppErrorState(
-              message: error is ApiException ? error.message : 'Unable to load Pooja bookings.',
+              message: error is ApiException
+                  ? error.message
+                  : 'Unable to load Pooja bookings.',
               onRetry: () => setState(_reload),
             );
           }
@@ -134,10 +140,12 @@ class _CustomerPoojaBookingsPageState extends State<CustomerPoojaBookingsPage>
           if (all.isEmpty) {
             return AppEmptyState(
               title: 'No bookings yet',
-              message: 'Book a Pooja and it will appear here with status and OTP details.',
+              message:
+                  'Book a Pooja and it will appear here with status and OTP details.',
               icon: Icons.receipt_long_outlined,
               actionLabel: 'Browse Poojas',
-              onAction: () => Navigator.of(context).pushNamed(RouteNames.poojas),
+              onAction: () =>
+                  Navigator.of(context).pushNamed(RouteNames.poojas),
             );
           }
 
@@ -177,10 +185,18 @@ class _CustomerPoojaBookingsPageState extends State<CustomerPoojaBookingsPage>
                           if (value != null) setState(() => _sort = value);
                         },
                         sortItems: const [
-                          DropdownMenuItem(value: _BookingSort.newest, child: Text('Newest')),
-                          DropdownMenuItem(value: _BookingSort.oldest, child: Text('Oldest')),
-                          DropdownMenuItem(value: _BookingSort.amountHigh, child: Text('Amount ↓')),
-                          DropdownMenuItem(value: _BookingSort.amountLow, child: Text('Amount ↑')),
+                          DropdownMenuItem(
+                              value: _BookingSort.newest,
+                              child: Text('Newest')),
+                          DropdownMenuItem(
+                              value: _BookingSort.oldest,
+                              child: Text('Oldest')),
+                          DropdownMenuItem(
+                              value: _BookingSort.amountHigh,
+                              child: Text('Amount ↓')),
+                          DropdownMenuItem(
+                              value: _BookingSort.amountLow,
+                              child: Text('Amount ↑')),
                         ],
                       ),
                       const SizedBox(height: 14),
@@ -189,7 +205,8 @@ class _CustomerPoojaBookingsPageState extends State<CustomerPoojaBookingsPage>
                           padding: EdgeInsets.only(top: 54),
                           child: AppEmptyState(
                             title: 'Nothing here',
-                            message: 'No bookings match the selected tab and search.',
+                            message:
+                                'No bookings match the selected tab and search.',
                             icon: Icons.search_off_rounded,
                           ),
                         )
@@ -254,13 +271,7 @@ class _BookingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(13)),
-                child: Icon(Icons.temple_hindu_outlined, color: AppColors.primary),
-              ),
+              ProviderMediaThumb(imageUrl: booking.serviceImageUrl, width: 44, height: 44, placeholderIcon: Icons.temple_hindu_outlined),
               const SizedBox(width: 11),
               Expanded(
                 child: Column(
@@ -271,7 +282,9 @@ class _BookingCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(amount, style: AppTypography.title.copyWith(color: AppColors.primary)),
+              Text(amount,
+                  style:
+                      AppTypography.title.copyWith(color: AppColors.primary)),
             ],
           ),
           const SizedBox(height: 12),
@@ -285,12 +298,18 @@ class _BookingCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textMuted),
+              Icon(Icons.calendar_today_outlined,
+                  size: 16, color: AppColors.textMuted),
               const SizedBox(width: 5),
-              Text('${booking.serviceDate}${shortTime.isEmpty ? '' : ' • $shortTime'}', style: AppTypography.caption),
+              Text(
+                  '${booking.serviceDate}${shortTime.isEmpty ? '' : ' • $shortTime'}',
+                  style: AppTypography.caption),
               const Spacer(),
-              Text('View details', style: AppTypography.label.copyWith(color: AppColors.primary)),
-              Icon(Icons.chevron_right_rounded, size: 19, color: AppColors.primary),
+              Text('View details',
+                  style:
+                      AppTypography.label.copyWith(color: AppColors.primary)),
+              Icon(Icons.chevron_right_rounded,
+                  size: 19, color: AppColors.primary),
             ],
           ),
         ],

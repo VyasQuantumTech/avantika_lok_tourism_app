@@ -1,3 +1,5 @@
+import '../../../../core/utils/media_urls.dart';
+import '../../../../core/ network/api_collection.dart';
 import 'dart:typed_data';
 
 import '../../../../core/ network/api_client.dart';
@@ -125,8 +127,8 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
     final path = q == null || q.isEmpty
         ? '${Endpoints.poojas}?limit=100'
         : '${Endpoints.poojas}?limit=100&q=${Uri.encodeQueryComponent(q)}';
-    final response = await _apiClient.get(path);
-    return _items(response)
+    final rows = await fetchApiCollection(_apiClient, path, sizeParameter: 'limit', keys: ['items', 'poojas', 'results']);
+    return rows
         .map((item) => PoojaModel.fromJson(item, baseUrl: _apiClient.baseUrl))
         .toList(growable: false);
   }
@@ -146,13 +148,8 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
 
   @override
   Future<List<PoojaBooking>> getCustomerPoojaBookings() async {
-    final response = await _apiClient.get(
-      '${Endpoints.bookings}?bookingType=pooja&pageSize=100',
-      authenticated: true,
-    );
-    return _items(response)
-        .map(poojaBookingFromJson)
-        .toList(growable: false);
+    final rows = await fetchApiCollection(_apiClient, '${Endpoints.bookings}?bookingType=pooja', authenticated: true, keys: ['items', 'bookings', 'results']);
+    return rows.map((row) => poojaBookingFromJson(normalizeMediaUrls(row, _apiClient.baseUrl))).toList(growable: false);
   }
 
   @override
@@ -410,13 +407,8 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
 
   @override
   Future<List<PoojaBooking>> getPanditBookings() async {
-    final response = await _apiClient.get(
-      '${Endpoints.providerBookings}?bookingType=pooja&pageSize=100',
-      authenticated: true,
-    );
-    return _items(response)
-        .map(poojaBookingFromJson)
-        .toList(growable: false);
+    final rows = await fetchApiCollection(_apiClient, '${Endpoints.providerBookings}?bookingType=pooja', authenticated: true, keys: ['items', 'bookings', 'results']);
+    return rows.map((row) => poojaBookingFromJson(normalizeMediaUrls(row, _apiClient.baseUrl))).toList(growable: false);
   }
 
   @override
@@ -510,23 +502,7 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
 
   Map<String, dynamic> _data(Map<String, dynamic> response) {
     final value = response['data'];
-    return value is Map ? _map(value) : response;
-  }
-
-  List<Map<String, dynamic>> _items(Map<String, dynamic> response) {
-    final data = _data(response);
-
-    // Different list endpoints in the backend may expose their collection
-    // under a resource-specific key instead of the generic `items` key.
-    // Keep the mobile layer tolerant so public Poojas and customer/provider
-    // bookings do not render as an empty list simply because of the envelope.
-    dynamic value = data['items'];
-    value ??= data['poojas'];
-    value ??= data['bookings'];
-    value ??= data['results'];
-
-    if (value is! List) return const <Map<String, dynamic>>[];
-    return value.whereType<Map>().map(_map).toList(growable: false);
+    return normalizeMediaUrls(value is Map ? _map(value) : response, _apiClient.baseUrl);
   }
 
   Map<String, dynamic> _object(

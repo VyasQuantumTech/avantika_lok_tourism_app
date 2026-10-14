@@ -13,6 +13,9 @@ abstract class MarketplaceRepository {
     required int units,
   });
 
+  Future<TransportAvailabilityQuote> transportAvailability({required String vehicleId, required String date, required String startTime, required String endTime, required int passengers, String? routeId});
+  Future<String> uploadDocument({required Uint8List bytes, required String fileName, required String mimeType});
+
   Future<List<MarketplaceBooking>> customerBookings(MarketplaceType type);
   Future<MarketplaceBooking> bookingDetail(String id, {bool provider = false});
   Future<MarketplaceBooking> createBooking(MarketplaceType type, Map<String, dynamic> body);

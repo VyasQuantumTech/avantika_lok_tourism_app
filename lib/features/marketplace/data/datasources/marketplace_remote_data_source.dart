@@ -1,3 +1,6 @@
+import '../../../../core/utils/media_urls.dart';
+import '../../../../core/ network/api_collection.dart';
+import '../../../bookings/data/models/booking_lifecycle_model.dart';
 import 'dart:typed_data';
 
 import '../../../../core/ network/api_client.dart';
@@ -16,6 +19,9 @@ abstract class MarketplaceRemoteDataSource {
     required int units,
   });
 
+  Future<TransportAvailabilityQuote> transportAvailability({required String vehicleId, required String date, required String startTime, required String endTime, required int passengers, String? routeId});
+  Future<String> uploadDocument({required Uint8List bytes, required String fileName, required String mimeType});
+
   Future<List<MarketplaceBooking>> customerBookings(MarketplaceType type);
   Future<MarketplaceBooking> bookingDetail(String id, {bool provider = false});
   Future<MarketplaceBooking> createBooking(MarketplaceType type, Map<String, dynamic> body);
@@ -33,6 +39,7 @@ abstract class MarketplaceRemoteDataSource {
   Future<Map<String, dynamic>> saveRate(String unitId, Map<String, dynamic> body, {String? rateId});
   Future<void> deleteRate(String rateId);
   Future<void> submitAccommodation(String id, {Map<String, dynamic>? body});
+  Future<Map<String, dynamic>> accommodationOperation(String operation, String id, Map<String, dynamic> body);
 
   Future<Map<String, dynamic>> transportProfile();
   Future<Map<String, dynamic>> saveTransportProfile(Map<String, dynamic> body);
@@ -47,6 +54,7 @@ abstract class MarketplaceRemoteDataSource {
   Future<void> deleteRoute(String routeId);
   Future<void> submitVehicle(String id);
 
+  Future<Map<String, dynamic>> transportOperation(String operation, {String? id, Map<String, dynamic>? body});
   Future<List<MarketplaceBooking>> providerBookings(MarketplaceType type);
   Future<MarketplaceBooking> providerBookingAction(MarketplaceType type, String id, String action, {Map<String, dynamic>? body});
 }
@@ -54,6 +62,9 @@ abstract class MarketplaceRemoteDataSource {
 class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   const MarketplaceRemoteDataSourceImpl(this.api);
   final ApiClient api;
+
+  MarketplaceItem _item(MarketplaceType type, Map<String, dynamic> raw) =>
+      MarketplaceItem(type: type, raw: normalizeMediaUrls(raw, api.baseUrl));
 
   String _public(MarketplaceType type) => type == MarketplaceType.accommodation ? Endpoints.accommodations : Endpoints.transport;
   String _provider(MarketplaceType type) => type == MarketplaceType.accommodation ? Endpoints.providerAccommodations : Endpoints.providerTransport;
@@ -63,10 +74,9 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     final clean = query?.trim();
     final params = <String>['page=1', 'limit=100'];
     if (clean != null && clean.isNotEmpty) params.add('q=${Uri.encodeQueryComponent(clean)}');
-    final response = await api.get('${_public(type)}?${params.join('&')}');
-    final items = _items(response);
+    final items = await fetchApiCollection(api, '${_public(type)}?${params.join('&')}', sizeParameter: 'limit', keys: ['items', 'results', 'accommodations', 'vehicles']);
     if (type != MarketplaceType.transport) {
-      return items.map((e) => MarketplaceItem(type: type, raw: e)).toList();
+      return items.map((e) => _item(type, e)).toList();
     }
 
     // Public transport returns provider profiles containing approved vehicles.
@@ -85,7 +95,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
           raw['state'] ??= provider['state'];
           raw['providerDisplayName'] ??= provider['displayName'] ?? provider['display_name'];
         }
-        vehicles.add(MarketplaceItem(type: type, raw: raw));
+        vehicles.add(_item(type, raw));
       }
     }
     return vehicles;
@@ -100,7 +110,8 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     final raw = _object(response, type == MarketplaceType.transport ? 'vehicle' : 'accommodation');
     if (type == MarketplaceType.transport) {
       final pricing = _maps(raw['pricing']);
-      final routes = <Map<String, dynamic>>[];
+      final provider = raw['transportProviderProfile'] ?? raw['transport_provider_profile'];
+      final routes = provider is Map ? _maps(provider['routes']) : <Map<String, dynamic>>[];
       for (final price in pricing) {
         final route = price['route'];
         if (route is Map) {
@@ -110,7 +121,6 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
         }
       }
       raw['routes'] = routes;
-      final provider = raw['transportProviderProfile'] ?? raw['transport_provider_profile'];
       if (provider is Map) {
         final providerProfile = provider['providerProfile'] ?? provider['provider_profile'];
         if (providerProfile is Map) {
@@ -119,7 +129,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
         }
       }
     }
-    return MarketplaceItem(type: type, raw: raw);
+    return _item(type, raw);
   }
 
   @override
@@ -136,11 +146,31 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     return AccommodationAvailabilityQuote(quote);
   }
 
+  MarketplaceBooking _booking(Map<String, dynamic> json) => MarketplaceBooking(normalizeMediaUrls(json, api.baseUrl), lifecycle: bookingLifecycleFromJson(json));
+
+  @override
+  Future<TransportAvailabilityQuote> transportAvailability({required String vehicleId, required String date, required String startTime, required String endTime, required int passengers, String? routeId}) async {
+    final query = Uri(queryParameters: {'date': date, 'startTime': startTime, 'endTime': endTime,
+      'passengers': '$passengers', if (routeId?.isNotEmpty == true) 'routeId': routeId!}).query;
+    return TransportAvailabilityQuote(_data(await api.get('${Endpoints.transport}/vehicles/${Uri.encodeComponent(vehicleId)}/availability?$query')));
+  }
+
+  @override
+  Future<String> uploadDocument({required Uint8List bytes, required String fileName, required String mimeType}) async {
+    final response = await api.postBytes(Endpoints.media, bytes: bytes, contentType: _mime(mimeType, fileName),
+      authenticated: true, headers: {'x-file-name': fileName, 'x-media-visibility': 'private'});
+    final data = _data(response);
+    final asset = data['media'] ?? data['asset'] ?? data;
+    final mediaAssetId = asset is Map ? asset['id'] : null;
+    if (mediaAssetId == null || '$mediaAssetId'.isEmpty) throw const FormatException('Private upload returned no media id.');
+    return '$mediaAssetId';
+  }
+
   @override
   Future<List<MarketplaceBooking>> customerBookings(MarketplaceType type) async {
-    final response = await api.get('${Endpoints.bookings}?page=1&pageSize=100&bookingType=${type.apiValue}', authenticated: true);
-    return _items(response)
-        .map(MarketplaceBooking.new)
+    final items = await fetchApiCollection(api, '${Endpoints.bookings}?bookingType=${type.apiValue}', authenticated: true, keys: ['items', 'results', 'bookings']);
+    return items
+        .map(_booking)
         .where((booking) => _matchesType(booking, type))
         .toList();
   }
@@ -148,7 +178,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
   @override
   Future<MarketplaceBooking> bookingDetail(String id, {bool provider = false}) async {
     final response = await api.get('${provider ? Endpoints.providerBookings : Endpoints.bookings}/$id', authenticated: true);
-    return MarketplaceBooking(_object(response, 'booking'));
+    return _booking(_object(response, 'booking'));
   }
 
   @override
@@ -158,7 +188,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       authenticated: true,
       body: <String, dynamic>{'bookingType': type.apiValue, ...body},
     );
-    return MarketplaceBooking(_object(response, 'booking'));
+    return _booking(_object(response, 'booking'));
   }
 
   @override
@@ -203,7 +233,11 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
 
   @override
   Future<List<MarketplaceItem>> providerItems(MarketplaceType type) async {
-    final response = await api.get('${_provider(type)}?page=1&limit=100', authenticated: true);
+    if (type == MarketplaceType.accommodation) {
+      final rows = await fetchApiCollection(api, _provider(type), authenticated: true, sizeParameter: 'limit', keys: ['items', 'accommodations', 'results']);
+      return rows.map((row) => _item(type, row)).toList();
+    }
+    final response = await api.get(_provider(type), authenticated: true);
     if (type == MarketplaceType.transport) {
       final data = _data(response);
       final profile = data['transportProviderProfile'];
@@ -214,10 +248,10 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       return vehicles.map((vehicle) {
         final raw = <String, dynamic>{...vehicle};
         raw['routes'] = routes;
-        return MarketplaceItem(type: type, raw: raw);
+        return _item(type, raw);
       }).toList();
     }
-    return _items(response).map((e) => MarketplaceItem(type: type, raw: e)).toList();
+    return _items(response).map((e) => _item(type, e)).toList();
   }
 
   @override
@@ -226,7 +260,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       final profile = await transportProfile();
       for (final vehicle in _maps(profile['vehicles'])) {
         if ('${vehicle['id'] ?? ''}' == id) {
-          return MarketplaceItem(type: type, raw: vehicle);
+          return _item(type, vehicle);
         }
       }
       throw StateError('Vehicle was not found in the provider transport profile.');
@@ -235,7 +269,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       '${Endpoints.providerAccommodations}/${Uri.encodeComponent(id)}',
       authenticated: true,
     );
-    return MarketplaceItem(type: type, raw: _object(response, 'accommodation'));
+    return _item(type, _object(response, 'accommodation'));
   }
 
   @override
@@ -243,7 +277,7 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
     final response = id == null
         ? await api.post(Endpoints.providerAccommodations, authenticated: true, body: body)
         : await api.patch('${Endpoints.providerAccommodations}/$id', authenticated: true, body: body);
-    return MarketplaceItem(type: MarketplaceType.accommodation, raw: _object(response, 'accommodation'));
+    return _item(MarketplaceType.accommodation, _object(response, 'accommodation'));
   }
 
   @override
@@ -287,6 +321,19 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       '${Endpoints.providerAccommodations}/$id/submit',
       authenticated: true,
     );
+  }
+
+  @override
+  Future<Map<String, dynamic>> accommodationOperation(String operation, String id, Map<String, dynamic> body) async {
+    final encoded = Uri.encodeComponent(id);
+    if (operation == 'inventoryCalendar') {
+      final query = Uri(queryParameters: {'startDate': '${body['startDate']}', 'endDate': '${body['endDate']}'}).query;
+      return _data(await api.get('${Endpoints.providerAccommodations}/units/$encoded/inventory?$query', authenticated: true));
+    }
+    if (operation == 'pauseAccommodation') {
+      return _data(await api.patch('${Endpoints.providerAccommodations}/$encoded/pause', body: body, authenticated: true));
+    }
+    throw ArgumentError('Unknown accommodation operation: $operation');
   }
 
   @override
@@ -349,11 +396,8 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
 
   @override
   Future<List<MarketplaceBooking>> providerBookings(MarketplaceType type) async {
-    final response = await api.get(
-      '${Endpoints.providerBookings}?bookingType=${type.apiValue}&page=1&pageSize=100',
-      authenticated: true,
-    );
-    return _items(response).map(MarketplaceBooking.new).toList();
+    final items = await fetchApiCollection(api, '${Endpoints.providerBookings}?bookingType=${type.apiValue}', authenticated: true, keys: ['items', 'results', 'bookings']);
+    return items.map(_booking).where((booking) => _matchesType(booking, type)).toList();
   }
 
   @override
@@ -372,7 +416,27 @@ class MarketplaceRemoteDataSourceImpl implements MarketplaceRemoteDataSource {
       authenticated: true,
       body: body,
     );
-    return MarketplaceBooking(_object(response, 'booking'));
+    return _booking(_object(response, 'booking'));
+  }
+
+  @override
+  Future<Map<String, dynamic>> transportOperation(String operation, {String? id, Map<String, dynamic>? body}) async {
+    final base = Endpoints.providerTransport;
+    final encoded = Uri.encodeComponent(id ?? '');
+    switch (operation) {
+      case 'drivers': return _data(await api.get('$base/drivers', authenticated: true));
+      case 'devices': return _data(await api.get('$base/devices', authenticated: true));
+      case 'saveDriver': return _data(id == null
+          ? await api.post('$base/drivers', authenticated: true, body: body)
+          : await api.patch('$base/drivers/$encoded', authenticated: true, body: body));
+      case 'saveDevice': return _data(id == null
+          ? await api.post('$base/devices', authenticated: true, body: body)
+          : await api.patch('$base/devices/$encoded', authenticated: true, body: body));
+      case 'assignRide': return _data(await api.put('$base/rides/$encoded/assignment', authenticated: true, body: body));
+      case 'arrived': return _data(await api.post('$base/rides/$encoded/arrived', authenticated: true));
+      case 'vehicleStatus': return _data(await api.patch('$base/vehicles/$encoded/status', authenticated: true, body: body));
+      default: throw ArgumentError('Unknown transport operation: $operation');
+    }
   }
 
   bool _matchesType(MarketplaceBooking booking, MarketplaceType type) {

@@ -1,0 +1,57 @@
+--- a/src/transport/transport.validator.js
++++ b/src/transport/transport.validator.js
+@@ -31,10 +31,10 @@
+ export const vehicleUpdateSchema = vehicleCreateSchema.partial().superRefine((v, ctx) => { if (!Object.keys(v).length) ctx.addIssue({ code:'custom', message:'At least one field must be supplied.' }); });
+ 
+ const vehicleDocumentBaseSchema = z.object({
+-  documentType: z.enum(VEHICLE_DOCUMENT_TYPE_VALUES), documentNumber: optionalText(100), storageKey: z.string().trim().min(1).max(500), issuedAt: z.string().date().nullable().optional(),
++  documentType: z.enum(VEHICLE_DOCUMENT_TYPE_VALUES), documentNumber: optionalText(100), storageKey: z.string().trim().min(1).max(500).optional(), mediaAssetId: uuid.optional(), issuedAt: z.string().date().nullable().optional(),
+   expiresAt: z.string().date().nullable().optional(), status: z.literal('pending').optional().default('pending'), metadata: metadata.default({}),
+ }).strict();
+-export const vehicleDocumentCreateSchema = vehicleDocumentBaseSchema.superRefine((v, ctx) => { if (v.issuedAt && v.expiresAt && v.expiresAt < v.issuedAt) ctx.addIssue({ code:'custom', path:['expiresAt'], message:'expiresAt must be on or after issuedAt.' }); });
++export const vehicleDocumentCreateSchema = vehicleDocumentBaseSchema.superRefine((v, ctx) => { if (!v.storageKey && !v.mediaAssetId) ctx.addIssue({ code:'custom', path:['mediaAssetId'], message:'Private mediaAssetId or storageKey is required.' }); if (v.issuedAt && v.expiresAt && v.expiresAt < v.issuedAt) ctx.addIssue({ code:'custom', path:['expiresAt'], message:'expiresAt must be on or after issuedAt.' }); });
+ export const vehicleDocumentUpdateSchema = vehicleDocumentBaseSchema.partial().superRefine((v, ctx) => { if (!Object.keys(v).length) ctx.addIssue({ code:'custom', message:'At least one field must be supplied.' }); if (v.issuedAt && v.expiresAt && v.expiresAt < v.issuedAt) ctx.addIssue({ code:'custom', path:['expiresAt'], message:'expiresAt must be on or after issuedAt.' }); });
+ 
+ export const vehicleDocumentReviewSchema = z.object({ status: z.enum(['verified', 'rejected']), reason: z.string().trim().min(2).max(500).optional() }).strict().superRefine((value, ctx) => {
+--- a/src/transport/transport.service.js
++++ b/src/transport/transport.service.js
+@@ -124,9 +124,10 @@
+   });
+ }
+ export async function deleteMyVehicle(userId, vehicleId) { const { vehicle } = await ownedVehicle(userId, vehicleId); await sequelize.transaction(transaction=>retainOrDeleteBookedResource(vehicle,{vehicleId:vehicle.id},{status:VEHICLE_STATUSES.RETIRED,activatedAt:null},transaction)); }
+-async function validatePrivateDocument(userId, storageKey, transaction) {
+-  const asset = await MediaAsset.findOne({ where: { storageKey, ownerUserId: userId, visibility: 'private', status: 'active', type: 'image' }, transaction });
++async function validatePrivateDocument(userId, storageKey, transaction, mediaAssetId = null) {
++  const asset = await MediaAsset.findOne({ where: { ...(mediaAssetId ? { id: mediaAssetId } : { storageKey }), ownerUserId: userId, visibility: 'private', status: 'active', type: 'image' }, transaction });
+   if (!asset) throw new AppError({ statusCode: 400, code: 'INVALID_VEHICLE_DOCUMENT_MEDIA', message: 'Vehicle evidence must reference an active private image owned by this provider.' });
++  return asset;
+ }
+ 
+ export async function addMyVehicleDocument(userId, vehicleId, input) {
+@@ -134,8 +135,9 @@
+   if (input.status && input.status !== 'pending') throw new AppError({ statusCode: 403, code: 'DOCUMENT_REVIEW_ADMIN_ONLY', message: 'Only an administrator may verify vehicle documents.' });
+   return sequelize.transaction(async transaction => {
+     await vehicle.reload({ transaction, lock: transaction.LOCK.UPDATE });
+-    await validatePrivateDocument(userId, input.storageKey, transaction);
+-    const doc = await VehicleDocument.create({ ...input, status: 'pending', rejectionReason: null, metadata: { ...(input.metadata || {}), reviews: [] }, vehicleId: vehicle.id }, { transaction });
++    const { mediaAssetId, ...values } = input;
++    const asset = await validatePrivateDocument(userId, values.storageKey, transaction, mediaAssetId);
++    const doc = await VehicleDocument.create({ ...values, storageKey: asset.storageKey, status: 'pending', rejectionReason: null, metadata: { ...(input.metadata || {}), reviews: [] }, vehicleId: vehicle.id }, { transaction });
+     await markVehiclePending(vehicle, transaction);
+     return json(doc);
+   });
+@@ -148,11 +150,12 @@
+     await vehicle.reload({ transaction, lock: transaction.LOCK.UPDATE });
+     const doc = await VehicleDocument.findOne({ where: { id: documentId, vehicleId: vehicle.id }, transaction, lock: transaction.LOCK.UPDATE });
+     if (!doc || doc.metadata?.archivedAt) throw new AppError({ statusCode: 404, code: 'VEHICLE_DOCUMENT_NOT_FOUND', message: 'Active vehicle document was not found.' });
+-    await validatePrivateDocument(userId, input.storageKey ?? doc.storageKey, transaction);
++    const { mediaAssetId, ...values } = input;
++    const asset = await validatePrivateDocument(userId, values.storageKey ?? doc.storageKey, transaction, mediaAssetId);
+     const issuedAt = input.issuedAt === undefined ? doc.issuedAt : input.issuedAt;
+     const expiresAt = input.expiresAt === undefined ? doc.expiresAt : input.expiresAt;
+     if (issuedAt && expiresAt && issuedAt > expiresAt) throw new AppError({ statusCode: 400, code: 'INVALID_DOCUMENT_DATES', message: 'Expiry must be on or after issue date.' });
+-    await doc.update({ ...input, status: 'pending', rejectionReason: null, metadata: { ...doc.metadata, ...(input.metadata || {}), reviews: doc.metadata?.reviews || [], revisions: [...(doc.metadata?.revisions || []), { storageKey:doc.storageKey, documentNumber:doc.documentNumber, issuedAt:doc.issuedAt, expiresAt:doc.expiresAt, status:doc.status, changedBy:userId, at:new Date().toISOString() }] } }, { transaction });
++    await doc.update({ ...values, storageKey: asset.storageKey, status: 'pending', rejectionReason: null, metadata: { ...doc.metadata, ...(input.metadata || {}), reviews: doc.metadata?.reviews || [], revisions: [...(doc.metadata?.revisions || []), { storageKey:doc.storageKey, documentNumber:doc.documentNumber, issuedAt:doc.issuedAt, expiresAt:doc.expiresAt, status:doc.status, changedBy:userId, at:new Date().toISOString() }] } }, { transaction });
+     await markVehiclePending(vehicle, transaction);
+     return json(doc);
+   });

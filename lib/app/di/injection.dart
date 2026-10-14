@@ -1,3 +1,7 @@
+import '../../features/bookings/data/datasources/booking_remote_data_source.dart';
+import '../../features/bookings/data/repositories/booking_repository_impl.dart';
+import '../../features/bookings/domain/repositories/booking_repository.dart';
+import '../../features/bookings/domain/usecases/booking_actions.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/notification_push_client.dart';
 import '../../core/storage/notification_device_storage.dart';
@@ -75,6 +79,13 @@ Future<void> configureDependencies(AppConfig config) async {
       secureStorage: getIt<SecureStorageService>(),
     ),
   );
+
+  getIt.registerLazySingleton<BookingRemoteDataSource>(
+      () => BookingRemoteDataSource(getIt<ApiClient>()));
+  getIt.registerLazySingleton<BookingRepository>(
+      () => BookingRepositoryImpl(getIt<BookingRemoteDataSource>()));
+  getIt.registerLazySingleton<BookingActions>(
+      () => BookingActions(getIt<BookingRepository>()));
 
   getIt.registerLazySingleton<NotificationRemoteDataSource>(
       () => NotificationRemoteDataSource(getIt<ApiClient>()));

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/theme/app_dimensions.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/widgets/app_ui.dart';
@@ -26,7 +25,7 @@ class _ProviderEarningsPageState extends State<ProviderEarningsPage> {
     _reload();
   }
 
-  void _reload() => _future = getIt<GetMyProfileDashboard>()();
+  void _reload() { _future = getIt<GetMyProfileDashboard>()(); }
 
   @override
   Widget build(BuildContext context) {
@@ -57,62 +56,39 @@ class _ProviderEarningsPageState extends State<ProviderEarningsPage> {
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                ProviderHeroCard(
-                  eyebrow: 'Net collected',
-                  value: '${financial.currency} ${financial.netCollected.toStringAsFixed(2)}',
-                  subtitle: 'Captured payments after processed refunds',
-                  icon: Icons.account_balance_wallet_rounded,
-                ),
-                SizedBox(height: AppDimensions.sectionGap),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppMetricCard(
-                        label: 'Gross captured',
-                        value: '${financial.currency} ${financial.grossCaptured.toStringAsFixed(0)}',
-                        icon: Icons.south_west_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: AppMetricCard(
-                        label: 'Refunded',
-                        value: '${financial.currency} ${financial.processedRefunds.toStringAsFixed(0)}',
-                        icon: Icons.replay_rounded,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppDimensions.sectionGap),
                 const AppSectionTitle(
-                  title: 'Earnings breakdown',
-                  subtitle: 'Only values supported by the current API are shown',
-                ),
-                const SizedBox(height: 10),
-                AppPanel(
-                  child: Column(
-                    children: [
-                      _MoneyRow(
+                    title: 'Earnings by currency',
+                    subtitle: 'Captured payments after processed refunds'),
+                if (financial.currencies.isEmpty)
+                  const AppPanel(
+                      child: Text('Financial summary is unavailable.')),
+                for (final row in financial.currencies) ...[
+                  const SizedBox(height: 12),
+                  ProviderHeroCard(
+                      eyebrow: 'Net collected',
+                      value: _money(row.currency, row.netCollected),
+                      subtitle: row.currency,
+                      icon: Icons.account_balance_wallet_rounded),
+                  const SizedBox(height: 12),
+                  AppPanel(
+                      child: Column(children: [
+                    _MoneyRow(
                         label: 'Gross captured',
-                        value: _money(financial.currency, financial.grossCaptured),
-                        icon: Icons.payments_outlined,
-                      ),
-                      Divider(color: AppColors.divider),
-                      _MoneyRow(
+                        value: _money(row.currency, row.grossCaptured),
+                        icon: Icons.payments_outlined),
+                    Divider(color: AppColors.divider),
+                    _MoneyRow(
                         label: 'Processed refunds',
-                        value: '- ${_money(financial.currency, financial.processedRefunds)}',
-                        icon: Icons.replay_outlined,
-                      ),
-                      Divider(color: AppColors.divider),
-                      _MoneyRow(
+                        value: _money(row.currency, row.processedRefunds),
+                        icon: Icons.replay_outlined),
+                    Divider(color: AppColors.divider),
+                    _MoneyRow(
                         label: 'Net collected',
-                        value: _money(financial.currency, financial.netCollected),
+                        value: _money(row.currency, row.netCollected),
                         icon: Icons.account_balance_wallet_outlined,
-                        strong: true,
-                      ),
-                    ],
-                  ),
-                ),
+                        strong: true),
+                  ])),
+                ],
                 const SizedBox(height: 14),
                 if (financial.note?.trim().isNotEmpty == true)
                   ProviderInfoBanner(
@@ -127,11 +103,12 @@ class _ProviderEarningsPageState extends State<ProviderEarningsPage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.account_balance_outlined, color: AppColors.warning),
+                        Icon(Icons.account_balance_outlined,
+                            color: AppColors.warning),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Payout balance is not shown because the current backend does not expose a commission/payout ledger yet.',
+                            'Payout balance is not available yet.',
                             style: AppTypography.caption,
                           ),
                         ),
