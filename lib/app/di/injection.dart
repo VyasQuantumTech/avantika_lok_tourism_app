@@ -22,6 +22,8 @@ import '../../core/ network/api_client.dart';
 import '../../core/storage/secure_storage_service.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/auth/data/repositories/verification_repository_impl.dart';
+import '../../features/auth/domain/usecases/verification_actions.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/login_user.dart';
 import '../../features/auth/domain/usecases/logout_user.dart';
@@ -107,6 +109,7 @@ Future<void> configureDependencies(AppConfig config) async {
           getIt<NotificationPushClient>(), getIt<NotificationDeviceStorage>()),
       dispose: (service) => service.dispose());
 
+  getIt.registerLazySingleton<VerificationActions>(() => VerificationActions(VerificationRepositoryImpl(getIt<ApiClient>(), getIt<SecureStorageService>(), getIt<NotificationService>())));
   getIt.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(getIt<ApiClient>()),
   );

@@ -1,5 +1,6 @@
 import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
+import '../../../auth/presentation/pages/account_security_page.dart';
 
 import '../../../../app/config/app_config.dart';
 import '../../../../app/config/app_flavor.dart';
@@ -218,6 +219,7 @@ class _ProviderProfilePageState extends State<ProviderProfilePage> {
                     ],
                   ),
                 ),
+                TextButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountSecurityPage())), icon: const Icon(Icons.security), label: const Text('Account security & Delete Account')),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../constants/storage_keys.dart';
@@ -6,6 +7,26 @@ class SecureStorageService {
   SecureStorageService(this._storage);
 
   final FlutterSecureStorage _storage;
+
+  Future<void> savePendingVerification(Map<String, dynamic> value) => _storage
+      .write(key: 'pending_auth_verification', value: jsonEncode(value));
+  Future<Map<String, dynamic>?> readPendingVerification() async {
+    final value = await _storage.read(key: 'pending_auth_verification');
+    if (value == null) return null;
+    try {
+      return Map<String, dynamic>.from(jsonDecode(value) as Map);
+    } catch (_) {
+      await _storage.delete(key: 'pending_auth_verification');
+      return null;
+    }
+  }
+
+  Future<void> clearPendingVerification(String challengeId) async {
+    final value = await readPendingVerification();
+    if (value?['challengeId'] == challengeId) {
+      await _storage.delete(key: 'pending_auth_verification');
+    }
+  }
 
   Future<String?> readAccessToken() =>
       _storage.read(key: StorageKeys.accessToken);
@@ -24,8 +45,7 @@ class SecureStorageService {
     final accessToken = values[1];
     final refreshToken = values[2];
 
-    final hasAccessToken =
-        accessToken != null && accessToken.trim().isNotEmpty;
+    final hasAccessToken = accessToken != null && accessToken.trim().isNotEmpty;
     final hasRefreshToken =
         refreshToken != null && refreshToken.trim().isNotEmpty;
     final hasCompleteTokenPair = hasAccessToken && hasRefreshToken;

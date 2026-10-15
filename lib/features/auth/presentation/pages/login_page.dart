@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../../../app/config/app_config.dart';
 import '../../../../app/config/app_flavor.dart';
 import '../../../../app/di/injection.dart';
@@ -7,15 +6,13 @@ import '../../../../app/router/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/errors/exceptions.dart';
-import '../../../../core/widgets/temple_surface.dart';
-import '../../../../core/utils/validators.dart';
-import '../../domain/usecases/login_user.dart';
+import '../../domain/usecases/verification_actions.dart';
 import '../widgets/auth_scaffold.dart';
-import '../widgets/auth_text_field.dart';
+import '../widgets/auth_channel_selector.dart';
+import 'otp_verification_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -23,178 +20,127 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _mobileController = TextEditingController();
+  String _channel = 'email';
   bool _submitting = false;
   String? _serverError;
+  @override
+  void initState() {
+    super.initState();
+    if (getIt.isRegistered<VerificationActions>()) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _resumePending());
+    }
+  }
+
+  void _goToApp() => Navigator.of(context).pushNamedAndRemoveUntil(
+      getIt<AppConfig>().flavor == AppFlavor.provider
+          ? RouteNames.providerGate
+          : RouteNames.home,
+      (_) => false);
+  Future<void> _resumePending() async {
+    try {
+      final pending =
+          await getIt<VerificationActions>().repository.restorePending();
+      if (!mounted || pending == null || _submitting) return;
+      final verified = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+              builder: (_) => OtpVerificationPage(challenge: pending)));
+      if (mounted && verified == true) _goToApp();
+    } catch (_) {/* A new OTP can be requested from this form. */}
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
+    _mobileController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     FocusScope.of(context).unfocus();
     setState(() => _serverError = null);
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _submitting = true);
     try {
-      await getIt<LoginUser>()(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
+      final challenge = await getIt<VerificationActions>().repository.request(
+          channel: _channel,
+          identity: _channel == 'email'
+              ? _emailController.text
+              : _mobileController.text,
+          purpose: 'login');
       if (!mounted) return;
-
-      final config = getIt<AppConfig>();
-      final nextRoute = config.flavor == AppFlavor.provider
-          ? RouteNames.providerGate
-          : RouteNames.home;
-
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        nextRoute,
-        (_) => false,
-      );
+      final verified = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+              builder: (_) => OtpVerificationPage(challenge: challenge)));
+      if (mounted && verified == true) _goToApp();
     } on ApiException catch (error) {
-      if (!mounted) return;
-      setState(() => _serverError = _friendlyMessage(error));
+      if (mounted) {
+        setState(() => _serverError = error.statusCode == 429
+            ? 'Too many requests. Please wait before trying again.'
+            : error.message);
+      }
     } catch (_) {
-      if (!mounted) return;
-      setState(
-        () => _serverError = 'Unable to sign in right now. Please try again.',
-      );
+      if (mounted) {
+        setState(() => _serverError =
+            'Unable to send a verification code. Please try again.');
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
-  String _friendlyMessage(ApiException error) {
-    if (error.code == 'INVALID_CREDENTIALS' || error.statusCode == 401) {
-      return 'The email or password is incorrect.';
-    }
-    if (error.statusCode == 429) {
-      return 'Too many sign-in attempts. Please wait a moment and try again.';
-    }
-    return error.message;
-  }
-
   @override
-  Widget build(BuildContext context) {
-    return AuthScaffold(
-      title: 'Go ahead and set up\nyour account',
-      subtitle: 'Sign in to enjoy the best booking experience',
-      child: AutofillGroup(
-        child: Form(
-          key: _formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                height: 42,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.softSurface,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Container(
-                  margin: const EdgeInsets.all(3),
-                  width: double.infinity,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    gradient: TempleArt.brandGradient,
-                    borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.shadow,
-                        blurRadius: 4,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    'Email',
-                    style: AppTypography.body.copyWith(
-                        fontSize: 12,
-                        color: AppColors.onPrimary,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              AuthTextField(
-                controller: _emailController,
-                label: 'Email Address',
-                icon: Icons.mail_outline,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [
-                  AutofillHints.username,
-                  AutofillHints.email,
-                ],
-                validator: AppValidators.email,
-              ),
-              const SizedBox(height: 13),
-              AuthTextField(
-                controller: _passwordController,
-                label: 'Password',
-                icon: Icons.key_outlined,
-                obscureText: true,
-                textInputAction: TextInputAction.done,
-                autofillHints: const [AutofillHints.password],
-                validator: AppValidators.loginPassword,
-                onFieldSubmitted: (_) {
-                  if (!_submitting) _submit();
-                },
-              ),
-              if (_serverError != null) ...[
-                const SizedBox(height: 12),
-                _InlineError(message: _serverError!),
-              ],
-              const SizedBox(height: 16),
-              AuthPrimaryButton(
-                label: 'Login',
-                loading: _submitting,
-                onPressed: _submit,
-              ),
-              const SizedBox(height: 16),
-              AuthSwitchLink(
-                prefix: 'New to Avantika Lok?',
-                action: 'Create account',
-                onTap: () =>
-                    Navigator.of(context).pushNamed(RouteNames.register),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InlineError extends StatelessWidget {
-  const _InlineError({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.errorSoft,
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: AppColors.error.withValues(alpha: .22)),
-      ),
-      child: Text(
-        message,
-        style: AppTypography.caption.copyWith(
-          color: AppColors.error,
-          fontSize: 11,
-          height: 1.3,
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AuthScaffold(
+        title: 'Welcome to\nAvantika Lok',
+        subtitle: 'Sign in securely with a one-time verification code',
+        child: AutofillGroup(
+            child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AuthChannelSelector(
+                          channel: _channel,
+                          enabled: !_submitting,
+                          onChanged: (value) => setState(() {
+                                _channel = value;
+                                _serverError = null;
+                              })),
+                      const SizedBox(height: 16),
+                      AuthIdentityField(
+                          channel: _channel,
+                          emailController: _emailController,
+                          mobileController: _mobileController,
+                          onSubmitted: (_) => _submit()),
+                      const SizedBox(height: 12),
+                      Text(
+                          'We’ll send a one-time code to your ${_channel == 'email' ? 'email address' : 'mobile number'}.',
+                          style: AppTypography.caption),
+                      if (_serverError != null) ...[
+                        const SizedBox(height: 12),
+                        Text(_serverError!,
+                            style: AppTypography.caption
+                                .copyWith(color: AppColors.error))
+                      ],
+                      const SizedBox(height: 16),
+                      AuthPrimaryButton(
+                          label: 'Send verification code',
+                          loading: _submitting,
+                          onPressed: _submit),
+                      const SizedBox(height: 16),
+                      AuthSwitchLink(
+                          prefix: 'New to Avantika Lok?',
+                          action: 'Create account',
+                          onTap: () {
+                            if (!_submitting) {
+                              Navigator.of(context)
+                                  .pushNamed(RouteNames.register);
+                            }
+                          }),
+                    ]))),
+      );
 }

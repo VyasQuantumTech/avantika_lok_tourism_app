@@ -1,5 +1,6 @@
 import '../../../../core/widgets/temple_surface.dart';
 import 'package:flutter/material.dart';
+import '../../../auth/presentation/pages/account_security_page.dart';
 
 import '../../../../app/config/app_config.dart';
 import '../../../../app/config/app_flavor.dart';
@@ -85,6 +86,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
+                  ListTile(leading: const Icon(Icons.security), title: const Text('Account security & Delete Account'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountSecurityPage()))),
                   ProfileHeader(
                     name: identity.account.fullName,
                     location: personal?.locationText ?? '',

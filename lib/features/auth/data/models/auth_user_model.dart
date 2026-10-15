@@ -11,7 +11,7 @@ class AuthUserModel extends AuthUser {
   factory AuthUserModel.fromJson(Map<String, dynamic> json) {
     return AuthUserModel(
       id: json['id']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
+      email: json['email']?.toString() ?? json['mobile']?.toString() ?? '',
       firstName: json['firstName']?.toString() ?? '',
       lastName: _nullableString(json['lastName']),
     );

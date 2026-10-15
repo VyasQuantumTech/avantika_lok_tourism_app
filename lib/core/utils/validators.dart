@@ -1,3 +1,5 @@
+import 'mobile_identity.dart';
+
 class AppValidators {
   const AppValidators._();
 
@@ -8,6 +10,15 @@ class AppValidators {
     final valid = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
     if (!valid) return 'Enter a valid email address.';
     return null;
+  }
+
+  static String? mobile(String? value) {
+    try {
+      normalizeMobileIdentity(value ?? '');
+      return null;
+    } on FormatException catch (error) {
+      return error.message;
+    }
   }
 
   static String? loginPassword(String? value) {

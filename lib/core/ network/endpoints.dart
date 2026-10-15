@@ -14,7 +14,8 @@ class Endpoints {
   static const String reviews = '/api/v1/reviews';
 
   static const String providerPandit = '/api/v1/provider/pandit';
-  static const String providerAccommodations = '/api/v1/provider/accommodations';
+  static const String providerAccommodations =
+      '/api/v1/provider/accommodations';
   static const String providerTransport = '/api/v1/provider/transport';
   static const String providerPanditPoojas = '/api/v1/provider/pandit/poojas';
   static const String providerPanditAvailability =
@@ -28,11 +29,23 @@ class Endpoints {
   static const String logout = '/api/v1/auth/logout';
   static const String me = '/api/v1/auth/me';
 
+  static const String authCapabilities = '/api/v1/auth/capabilities';
+  static const String authOtpRequest = '/api/v1/auth/otp/request';
+  static const String authOtpVerify = '/api/v1/auth/otp/verify';
+  static const String authOtpResend = '/api/v1/auth/otp/resend';
+  static const String authOtpCancel = '/api/v1/auth/otp/cancel';
+  static const String authLogoutAll = '/api/v1/auth/logout-all';
+  static const String authSessions = '/api/v1/auth/sessions';
+  static const String authSocial = '/api/v1/auth/social';
+  static const String authSocialNonce = '/api/v1/auth/social/nonce';
+
   static const String providerStatus = '/api/v1/provider/me/status';
   static const String providerMe = '/api/v1/provider/me';
   static const String providerKyc = '/api/v1/provider/me/kyc';
-  static const String providerKycRequirements = '/api/v1/provider/me/kyc/requirements';
-  static const String providerKycDocuments = '/api/v1/provider/me/kyc/documents';
+  static const String providerKycRequirements =
+      '/api/v1/provider/me/kyc/requirements';
+  static const String providerKycDocuments =
+      '/api/v1/provider/me/kyc/documents';
   static const String providerKycSubmit = '/api/v1/provider/me/kyc/submit';
   static const String media = '/api/v1/media';
 
