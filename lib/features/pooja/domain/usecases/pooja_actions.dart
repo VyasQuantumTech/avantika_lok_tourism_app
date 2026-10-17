@@ -25,6 +25,10 @@ class CustomerPoojaActions {
     required String startTime,
     required int participants,
     String? notes,
+    String? couponCode,
+    String? expectedPriceHash,
+    String? paymentMethod,
+    List<Map<String, dynamic>>? addons,
   }) =>
       _repository.createPoojaBooking(
         offeringId: offeringId,
@@ -32,6 +36,10 @@ class CustomerPoojaActions {
         startTime: startTime,
         participants: participants,
         notes: notes,
+        couponCode: couponCode,
+        expectedPriceHash: expectedPriceHash,
+        paymentMethod: paymentMethod,
+        addons: addons,
       );
 
   Future<String> startOtp(String bookingId) =>
@@ -43,8 +51,16 @@ class CustomerPoojaActions {
   Future<PoojaPaymentSession> initiatePayment(String bookingId) =>
       _repository.initiatePoojaPayment(bookingId);
 
-  Future<void> verifyPayment({required String paymentId, required String razorpayOrderId, required String razorpayPaymentId, required String razorpaySignature}) =>
-      _repository.verifyPoojaPayment(paymentId: paymentId, razorpayOrderId: razorpayOrderId, razorpayPaymentId: razorpayPaymentId, razorpaySignature: razorpaySignature);
+  Future<void> verifyPayment(
+          {required String paymentId,
+          required String razorpayOrderId,
+          required String razorpayPaymentId,
+          required String razorpaySignature}) =>
+      _repository.verifyPoojaPayment(
+          paymentId: paymentId,
+          razorpayOrderId: razorpayOrderId,
+          razorpayPaymentId: razorpayPaymentId,
+          razorpaySignature: razorpaySignature);
 
   Future<PoojaBooking> cancel(String bookingId, String reason) =>
       _repository.cancelCustomerBooking(bookingId, reason);
@@ -52,23 +68,30 @@ class CustomerPoojaActions {
   Future<PoojaBooking> withdraw(String bookingId) =>
       _repository.withdrawCustomerBooking(bookingId);
 
-  Future<void> review({required String bookingId, required int rating, required String comment, String? title}) =>
-      _repository.submitPoojaReview(bookingId: bookingId, rating: rating, comment: comment, title: title);
+  Future<void> review(
+          {required String bookingId,
+          required int rating,
+          required String comment,
+          String? title}) =>
+      _repository.submitPoojaReview(
+          bookingId: bookingId, rating: rating, comment: comment, title: title);
 }
 
 class PanditPoojaActions {
-
   const PanditPoojaActions(this._repository);
   final PoojaRepository _repository;
 
-  Future<String> uploadImage({required Uint8List bytes, required String fileName, required String mimeType}) =>
-      _repository.uploadPoojaImage(bytes: bytes, fileName: fileName, mimeType: mimeType);
+  Future<String> uploadImage(
+          {required Uint8List bytes,
+          required String fileName,
+          required String mimeType}) =>
+      _repository.uploadPoojaImage(
+          bytes: bytes, fileName: fileName, mimeType: mimeType);
 
   Future<void> deleteUploadedImage(String mediaAssetId) =>
       _repository.deleteUploadedPoojaImage(mediaAssetId);
 
-  Future<PanditPoojaDashboard> dashboard() =>
-      _repository.getPanditDashboard();
+  Future<PanditPoojaDashboard> dashboard() => _repository.getPanditDashboard();
 
   Future<PanditOffering> createOffering({
     required String name,
@@ -137,14 +160,11 @@ class PanditPoojaActions {
   Future<void> deleteAvailability(String id) =>
       _repository.deleteAvailability(id);
 
-  Future<List<PoojaBooking>> bookings() =>
-      _repository.getPanditBookings();
+  Future<List<PoojaBooking>> bookings() => _repository.getPanditBookings();
 
-  Future<PoojaBooking> booking(String id) =>
-      _repository.getPanditBooking(id);
+  Future<PoojaBooking> booking(String id) => _repository.getPanditBooking(id);
 
-  Future<PoojaBooking> accept(String id) =>
-      _repository.acceptPanditBooking(id);
+  Future<PoojaBooking> accept(String id) => _repository.acceptPanditBooking(id);
 
   Future<PoojaBooking> reject(String id, {String? reason}) =>
       _repository.rejectPanditBooking(id, reason: reason);

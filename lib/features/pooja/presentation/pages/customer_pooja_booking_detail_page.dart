@@ -1,3 +1,4 @@
+import '../../../commercial/presentation/price_breakdown.dart';
 import '../../../bookings/presentation/widgets/booking_lifecycle_panel.dart';
 import 'package:flutter/material.dart';
 
@@ -30,7 +31,9 @@ class _CustomerPoojaBookingDetailPageState
     _load();
   }
 
-  void _load() { _future = getIt<CustomerPoojaActions>().booking(widget.bookingId); }
+  void _load() {
+    _future = getIt<CustomerPoojaActions>().booking(widget.bookingId);
+  }
 
   String _poojaName(PoojaBooking booking) =>
       booking.state.serviceName ??
@@ -299,6 +302,10 @@ class _CustomerPoojaBookingDetailPageState
                   ),
                 ),
                 const SizedBox(height: 14),
+                if (booking.pricingSnapshot['commercial'] is Map)
+                  PriceBreakdown(
+                      snapshot:
+                          commercialMap(booking.pricingSnapshot['commercial'])),
                 BookingLifecyclePanel(
                     bookingId: booking.id,
                     lifecycle: booking.state,

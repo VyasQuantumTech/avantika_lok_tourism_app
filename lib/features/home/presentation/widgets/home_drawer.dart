@@ -80,6 +80,7 @@ class HomeDrawer extends StatelessWidget {
                       navigator.pushNamed(RouteNames.notifications);
                     },
                   ),
+                  ListTile(leading:const Icon(Icons.receipt_long_outlined),title:const Text('My invoices'),onTap:(){final navigator=Navigator.of(context,rootNavigator:true);navigator.pop();navigator.pushNamed(RouteNames.customerInvoices);}),
                   ...dashboard.menu.map(
                     (item) => _DrawerItem(
                       item: item,

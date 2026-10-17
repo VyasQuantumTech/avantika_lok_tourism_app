@@ -25,6 +25,7 @@ dependencies:
   google_fonts: ^6.3.0
   audioplayers: ^6.1.0
   youtube_player_flutter: 9.1.2
+  share_plus: 10.1.4
 
 dev_dependencies:
   injectable_generator: ^2.6.0

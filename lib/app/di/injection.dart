@@ -1,3 +1,5 @@
+import '../../features/commercial/domain/commercial_repository.dart';
+import '../../features/commercial/data/commercial_repository_impl.dart';
 import '../../features/favorites/data/datasources/favorites_remote_data_source.dart';
 import '../../features/favorites/data/repositories/favorites_repository_impl.dart';
 import '../../features/favorites/domain/repositories/favorites_repository.dart';
@@ -232,6 +234,9 @@ Future<void> configureDependencies(AppConfig config) async {
   getIt.registerLazySingleton<GetTourismPlaces>(
     () => GetTourismPlaces(getIt<TourismRepository>()),
   );
+  getIt.registerLazySingleton<CommercialRemoteDataSource>(()=>CommercialRemoteDataSource(getIt<ApiClient>()));
+  getIt.registerLazySingleton<CommercialRepository>(()=>CommercialRepositoryImpl(getIt<CommercialRemoteDataSource>()));
+  getIt.registerLazySingleton<CommercialActions>(()=>CommercialActions(getIt<CommercialRepository>()));
   getIt.registerLazySingleton<GetTourismPlaceDetail>(
     () => GetTourismPlaceDetail(getIt<TourismRepository>()),
   );

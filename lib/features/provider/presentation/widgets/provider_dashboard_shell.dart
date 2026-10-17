@@ -590,6 +590,10 @@ class _ProviderDrawer extends StatelessWidget {
                 navigator.pushNamed(RouteNames.notifications);
               },
             ),
+            ListTile(leading:const Icon(Icons.workspace_premium_outlined),title:const Text('Plans & subscription'),onTap:()=>Navigator.of(context).pushNamed(RouteNames.providerSubscription)),
+            ListTile(leading:const Icon(Icons.receipt_long_outlined),title:const Text('Statements & invoices'),onTap:()=>Navigator.of(context).pushNamed(RouteNames.providerFinance)),
+            ListTile(leading:const Icon(Icons.business_outlined),title:const Text('Tax profile'),onTap:()=>Navigator.of(context).pushNamed(RouteNames.providerTaxProfile)),
+            ListTile(leading:const Icon(Icons.workspaces_outline),title:const Text('Provider workspace'),onTap:()=>Navigator.of(context).pushNamed(RouteNames.providerWorkspace)),
             const Spacer(),
             Padding(
               padding: const EdgeInsets.all(12),

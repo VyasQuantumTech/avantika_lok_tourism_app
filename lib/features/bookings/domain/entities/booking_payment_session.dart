@@ -8,6 +8,7 @@ class BookingPaymentSession {
     required this.amount,
     required this.currency,
     required this.status,
+    this.checkoutConfig = const {},
   });
   final String id;
   final String bookingId;
@@ -17,4 +18,5 @@ class BookingPaymentSession {
   final double amount;
   final String currency;
   final String status;
+  final Map<String, dynamic> checkoutConfig;
 }

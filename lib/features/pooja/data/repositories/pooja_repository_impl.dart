@@ -9,8 +9,12 @@ class PoojaRepositoryImpl implements PoojaRepository {
   final PoojaRemoteDataSource _remote;
 
   @override
-  Future<String> uploadPoojaImage({required Uint8List bytes, required String fileName, required String mimeType}) =>
-      _remote.uploadPoojaImage(bytes: bytes, fileName: fileName, mimeType: mimeType);
+  Future<String> uploadPoojaImage(
+          {required Uint8List bytes,
+          required String fileName,
+          required String mimeType}) =>
+      _remote.uploadPoojaImage(
+          bytes: bytes, fileName: fileName, mimeType: mimeType);
 
   @override
   Future<void> deleteUploadedPoojaImage(String mediaAssetId) =>
@@ -39,6 +43,10 @@ class PoojaRepositoryImpl implements PoojaRepository {
     required String startTime,
     required int participants,
     String? notes,
+    String? couponCode,
+    String? expectedPriceHash,
+    String? paymentMethod,
+    List<Map<String, dynamic>>? addons,
   }) =>
       _remote.createPoojaBooking(
         offeringId: offeringId,
@@ -46,6 +54,10 @@ class PoojaRepositoryImpl implements PoojaRepository {
         startTime: startTime,
         participants: participants,
         notes: notes,
+        couponCode: couponCode,
+        expectedPriceHash: expectedPriceHash,
+        paymentMethod: paymentMethod,
+        addons: addons,
       );
 
   @override
@@ -61,8 +73,16 @@ class PoojaRepositoryImpl implements PoojaRepository {
       _remote.initiatePoojaPayment(bookingId);
 
   @override
-  Future<void> verifyPoojaPayment({required String paymentId, required String razorpayOrderId, required String razorpayPaymentId, required String razorpaySignature}) =>
-      _remote.verifyPoojaPayment(paymentId: paymentId, razorpayOrderId: razorpayOrderId, razorpayPaymentId: razorpayPaymentId, razorpaySignature: razorpaySignature);
+  Future<void> verifyPoojaPayment(
+          {required String paymentId,
+          required String razorpayOrderId,
+          required String razorpayPaymentId,
+          required String razorpaySignature}) =>
+      _remote.verifyPoojaPayment(
+          paymentId: paymentId,
+          razorpayOrderId: razorpayOrderId,
+          razorpayPaymentId: razorpayPaymentId,
+          razorpaySignature: razorpaySignature);
 
   @override
   Future<PoojaBooking> cancelCustomerBooking(
@@ -76,8 +96,13 @@ class PoojaRepositoryImpl implements PoojaRepository {
       _remote.withdrawCustomerBooking(bookingId);
 
   @override
-  Future<void> submitPoojaReview({required String bookingId, required int rating, required String comment, String? title}) =>
-      _remote.submitPoojaReview(bookingId: bookingId, rating: rating, comment: comment, title: title);
+  Future<void> submitPoojaReview(
+          {required String bookingId,
+          required int rating,
+          required String comment,
+          String? title}) =>
+      _remote.submitPoojaReview(
+          bookingId: bookingId, rating: rating, comment: comment, title: title);
 
   @override
   Future<PanditPoojaDashboard> getPanditDashboard() =>
@@ -156,8 +181,7 @@ class PoojaRepositoryImpl implements PoojaRepository {
       _remote.deleteAvailability(availabilityId);
 
   @override
-  Future<List<PoojaBooking>> getPanditBookings() =>
-      _remote.getPanditBookings();
+  Future<List<PoojaBooking>> getPanditBookings() => _remote.getPanditBookings();
 
   @override
   Future<PoojaBooking> getPanditBooking(String bookingId) =>

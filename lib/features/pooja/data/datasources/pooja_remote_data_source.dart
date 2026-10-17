@@ -9,7 +9,10 @@ import '../../domain/entities/pooja_entities.dart';
 import '../models/pooja_models.dart';
 
 abstract class PoojaRemoteDataSource {
-  Future<String> uploadPoojaImage({required Uint8List bytes, required String fileName, required String mimeType});
+  Future<String> uploadPoojaImage(
+      {required Uint8List bytes,
+      required String fileName,
+      required String mimeType});
   Future<void> deleteUploadedPoojaImage(String mediaAssetId);
   Future<List<Pooja>> getPublicPoojas({String? query});
   Future<Pooja> getPoojaDetail(String identifier);
@@ -22,6 +25,10 @@ abstract class PoojaRemoteDataSource {
     required String startTime,
     required int participants,
     String? notes,
+    String? couponCode,
+    String? expectedPriceHash,
+    String? paymentMethod,
+    List<Map<String, dynamic>>? addons,
   });
   Future<String> getPoojaStartOtp(String bookingId);
   Future<String> getPoojaEndOtp(String bookingId);
@@ -34,7 +41,11 @@ abstract class PoojaRemoteDataSource {
   });
   Future<PoojaBooking> cancelCustomerBooking(String bookingId, String reason);
   Future<PoojaBooking> withdrawCustomerBooking(String bookingId);
-  Future<void> submitPoojaReview({required String bookingId, required int rating, required String comment, String? title});
+  Future<void> submitPoojaReview(
+      {required String bookingId,
+      required int rating,
+      required String comment,
+      String? title});
 
   Future<PanditPoojaDashboard> getPanditDashboard();
   Future<PanditOffering> createPanditOffering({
@@ -83,7 +94,6 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
   const PoojaRemoteDataSourceImpl(this._apiClient);
   final ApiClient _apiClient;
 
-
   @override
   Future<String> uploadPoojaImage({
     required Uint8List bytes,
@@ -127,7 +137,8 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
     final path = q == null || q.isEmpty
         ? '${Endpoints.poojas}?limit=100'
         : '${Endpoints.poojas}?limit=100&q=${Uri.encodeQueryComponent(q)}';
-    final rows = await fetchApiCollection(_apiClient, path, sizeParameter: 'limit', keys: ['items', 'poojas', 'results']);
+    final rows = await fetchApiCollection(_apiClient, path,
+        sizeParameter: 'limit', keys: ['items', 'poojas', 'results']);
     return rows
         .map((item) => PoojaModel.fromJson(item, baseUrl: _apiClient.baseUrl))
         .toList(growable: false);
@@ -148,8 +159,13 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
 
   @override
   Future<List<PoojaBooking>> getCustomerPoojaBookings() async {
-    final rows = await fetchApiCollection(_apiClient, '${Endpoints.bookings}?bookingType=pooja', authenticated: true, keys: ['items', 'bookings', 'results']);
-    return rows.map((row) => poojaBookingFromJson(normalizeMediaUrls(row, _apiClient.baseUrl))).toList(growable: false);
+    final rows = await fetchApiCollection(
+        _apiClient, '${Endpoints.bookings}?bookingType=pooja',
+        authenticated: true, keys: ['items', 'bookings', 'results']);
+    return rows
+        .map((row) =>
+            poojaBookingFromJson(normalizeMediaUrls(row, _apiClient.baseUrl)))
+        .toList(growable: false);
   }
 
   @override
@@ -168,6 +184,10 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
     required String startTime,
     required int participants,
     String? notes,
+    String? couponCode,
+    String? expectedPriceHash,
+    String? paymentMethod,
+    List<Map<String, dynamic>>? addons,
   }) async {
     final response = await _apiClient.post(
       Endpoints.bookings,
@@ -175,6 +195,10 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
       body: <String, dynamic>{
         'bookingType': 'pooja',
         'panditPoojaId': offeringId,
+        if (couponCode != null) 'couponCode': couponCode,
+        if (expectedPriceHash != null) 'expectedPriceHash': expectedPriceHash,
+        if (paymentMethod != null) 'paymentMethod': paymentMethod,
+        if (addons != null) 'addons': addons,
         'serviceDate': serviceDate,
         'startTime': startTime,
         'participants': participants,
@@ -350,8 +374,7 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
       if (serviceMode != null) 'serviceMode': serviceMode,
       if (notes != null) 'notes': notes.trim(),
       if (isActive != null) 'isActive': isActive,
-      if (cleanMediaAssetIds != null)
-        'imageMediaAssetIds': cleanMediaAssetIds,
+      if (cleanMediaAssetIds != null) 'imageMediaAssetIds': cleanMediaAssetIds,
     };
     final response = await _apiClient.patch(
       '${Endpoints.providerPanditPoojas}/$offeringId',
@@ -407,8 +430,13 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
 
   @override
   Future<List<PoojaBooking>> getPanditBookings() async {
-    final rows = await fetchApiCollection(_apiClient, '${Endpoints.providerBookings}?bookingType=pooja', authenticated: true, keys: ['items', 'bookings', 'results']);
-    return rows.map((row) => poojaBookingFromJson(normalizeMediaUrls(row, _apiClient.baseUrl))).toList(growable: false);
+    final rows = await fetchApiCollection(
+        _apiClient, '${Endpoints.providerBookings}?bookingType=pooja',
+        authenticated: true, keys: ['items', 'bookings', 'results']);
+    return rows
+        .map((row) =>
+            poojaBookingFromJson(normalizeMediaUrls(row, _apiClient.baseUrl)))
+        .toList(growable: false);
   }
 
   @override
@@ -502,7 +530,8 @@ class PoojaRemoteDataSourceImpl implements PoojaRemoteDataSource {
 
   Map<String, dynamic> _data(Map<String, dynamic> response) {
     final value = response['data'];
-    return normalizeMediaUrls(value is Map ? _map(value) : response, _apiClient.baseUrl);
+    return normalizeMediaUrls(
+        value is Map ? _map(value) : response, _apiClient.baseUrl);
   }
 
   Map<String, dynamic> _object(

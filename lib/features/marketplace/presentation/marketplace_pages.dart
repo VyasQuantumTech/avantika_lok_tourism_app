@@ -1,3 +1,4 @@
+import '../../commercial/presentation/price_breakdown.dart';
 import '../../favorites/presentation/favorite_button.dart';
 import 'accommodation_calendar_page.dart';
 import '../../bookings/presentation/widgets/booking_lifecycle_panel.dart';
@@ -809,7 +810,9 @@ class _CustomerMarketplaceBookingPageState extends State<CustomerMarketplaceBook
     setState(() => saving = true);
     try {
       final body = widget.type == MarketplaceType.accommodation ? _accommodationBookingBody() : _transportBookingBody();
-      final booking = await getIt<MarketplaceActions>().book(widget.type, body);
+      final accepted=await reviewCommercialPrice(context,{'bookingType':widget.type.apiValue,...body});
+      if(accepted==null||!mounted)return;
+      final booking = await getIt<MarketplaceActions>().book(widget.type, {...body,...accepted});
       if (!mounted) return;
       AppFeedback.success(context, 'Booking ${booking.bookingNumber} created.');
       Navigator.pushReplacement(
@@ -1118,6 +1121,7 @@ class _CustomerMarketplaceBookingDetailPageState extends State<CustomerMarketpla
                   ),
                 ),
                 const SizedBox(height: 12),
+                if(booking.pricingSnapshot['commercial'] is Map)PriceBreakdown(snapshot:commercialMap(booking.pricingSnapshot['commercial'])),
                 BookingLifecyclePanel(bookingId: booking.id, lifecycle: booking.state,
                   onRefresh: () async { setState(load); await future; }),
                 if (widget.type == MarketplaceType.transport) ...[

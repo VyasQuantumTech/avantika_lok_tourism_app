@@ -17,6 +17,11 @@ class RouteNames {
   static const String transportDashboard = '/provider/dashboard/transport';
   static const String providerProfile = '/provider/profile';
   static const String providerProfileEdit = '/provider/profile/edit';
+  static const String providerWorkspace = '/provider/workspace';
+  static const String providerSubscription = '/provider/subscription';
+  static const String providerFinance = '/provider/finance';
+  static const String providerTaxProfile = '/provider/tax-profile';
+  static const String customerInvoices = '/invoices';
   static const String providerEarnings = '/provider/earnings';
   static const String providerReviews = '/provider/reviews';
 

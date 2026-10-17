@@ -1,3 +1,7 @@
+import '../../features/commercial/presentation/provider_workspace_page.dart';
+import '../../features/commercial/presentation/provider_subscription_page.dart';
+import '../../features/commercial/presentation/finance_documents_page.dart';
+import '../../features/commercial/presentation/tax_profile_page.dart';
 import '../../core/widgets/temple_surface.dart';
 import '../di/injection.dart';
 import '../../core/services/notification_service.dart';
@@ -156,6 +160,16 @@ class AppRouter {
           settings: settings,
         );
 
+      case RouteNames.providerWorkspace:
+        return MaterialPageRoute(builder:(_)=>const ProviderWorkspacePage(),settings:settings);
+      case RouteNames.providerSubscription:
+        return MaterialPageRoute(builder:(_)=>const ProviderSubscriptionPage(),settings:settings);
+      case RouteNames.providerFinance:
+        return MaterialPageRoute(builder:(_)=>const FinanceDocumentsPage(),settings:settings);
+      case RouteNames.providerTaxProfile:
+        return MaterialPageRoute(builder:(_)=>const TaxProfilePage(),settings:settings);
+      case RouteNames.customerInvoices:
+        return MaterialPageRoute(builder:(_)=>const FinanceDocumentsPage(provider:false),settings:settings);
       case RouteNames.providerEarnings:
         return MaterialPageRoute<void>(
           builder: (_) => const ProviderEarningsPage(),

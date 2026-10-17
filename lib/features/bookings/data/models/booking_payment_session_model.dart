@@ -3,6 +3,9 @@ import '../../domain/entities/booking_payment_session.dart';
 BookingPaymentSession bookingPaymentSessionFromJson(Map<String, dynamic> json) {
   final checkout = json['checkout'] is Map ? json['checkout'] as Map : const {};
   return BookingPaymentSession(
+    checkoutConfig: checkout['checkoutConfig'] is Map
+        ? Map<String, dynamic>.from(checkout['checkoutConfig'] as Map)
+        : {},
     id: '${json['id'] ?? ''}',
     bookingId: '${json['bookingId'] ?? ''}',
     keyId: '${checkout['keyId'] ?? ''}',

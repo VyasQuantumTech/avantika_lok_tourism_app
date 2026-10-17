@@ -1,3 +1,4 @@
+import '../../../commercial/presentation/price_breakdown.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
@@ -69,7 +70,22 @@ class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
     }
     setState(() => _saving = true);
     try {
+      final accepted = await reviewCommercialPrice(context, {
+        'bookingType': 'pooja',
+        'panditPoojaId': widget.offering.id,
+        'serviceDate': _dateValue(_date!),
+        'startTime': _timeValue(_time!),
+        'participants': _participants,
+        'notes': _notes.text
+      });
+      if (accepted == null || !mounted) return;
       final booking = await getIt<CustomerPoojaActions>().book(
+        couponCode: accepted['couponCode'] as String?,
+        expectedPriceHash: accepted['expectedPriceHash'] as String?,
+        paymentMethod: accepted['paymentMethod'] as String?,
+        addons: (accepted['addons'] as List?)
+            ?.map((v) => Map<String, dynamic>.from(v as Map))
+            .toList(),
         offeringId: widget.offering.id,
         serviceDate: _dateValue(_date!),
         startTime: _timeValue(_time!),
@@ -77,7 +93,9 @@ class _CustomerPoojaBookingPageState extends State<CustomerPoojaBookingPage> {
         notes: _notes.text,
       );
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(RouteNames.customerPoojaBookingDetail, arguments: booking.id);
+      Navigator.of(context).pushReplacementNamed(
+          RouteNames.customerPoojaBookingDetail,
+          arguments: booking.id);
     } on ApiException catch (error) {
       if (mounted) AppFeedback.error(context, error.message);
     } catch (_) {

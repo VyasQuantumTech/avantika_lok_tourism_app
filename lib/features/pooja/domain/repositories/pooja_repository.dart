@@ -3,7 +3,10 @@ import 'dart:typed_data';
 import '../entities/pooja_entities.dart';
 
 abstract class PoojaRepository {
-  Future<String> uploadPoojaImage({required Uint8List bytes, required String fileName, required String mimeType});
+  Future<String> uploadPoojaImage(
+      {required Uint8List bytes,
+      required String fileName,
+      required String mimeType});
   Future<void> deleteUploadedPoojaImage(String mediaAssetId);
   Future<List<Pooja>> getPublicPoojas({String? query});
   Future<Pooja> getPoojaDetail(String identifier);
@@ -16,14 +19,26 @@ abstract class PoojaRepository {
     required String startTime,
     required int participants,
     String? notes,
+    String? couponCode,
+    String? expectedPriceHash,
+    String? paymentMethod,
+    List<Map<String, dynamic>>? addons,
   });
   Future<String> getPoojaStartOtp(String bookingId);
   Future<String> getPoojaEndOtp(String bookingId);
   Future<PoojaPaymentSession> initiatePoojaPayment(String bookingId);
-  Future<void> verifyPoojaPayment({required String paymentId, required String razorpayOrderId, required String razorpayPaymentId, required String razorpaySignature});
+  Future<void> verifyPoojaPayment(
+      {required String paymentId,
+      required String razorpayOrderId,
+      required String razorpayPaymentId,
+      required String razorpaySignature});
   Future<PoojaBooking> cancelCustomerBooking(String bookingId, String reason);
   Future<PoojaBooking> withdrawCustomerBooking(String bookingId);
-  Future<void> submitPoojaReview({required String bookingId, required int rating, required String comment, String? title});
+  Future<void> submitPoojaReview(
+      {required String bookingId,
+      required int rating,
+      required String comment,
+      String? title});
 
   Future<PanditPoojaDashboard> getPanditDashboard();
   Future<PanditOffering> createPanditOffering({

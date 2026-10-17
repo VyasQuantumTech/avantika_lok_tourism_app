@@ -32,7 +32,9 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
       ..on(Razorpay.EVENT_EXTERNAL_WALLET, _wallet);
   }
 
-  void _reload() { future = getIt<BookingActions>().lifecycle(widget.bookingId); }
+  void _reload() {
+    future = getIt<BookingActions>().lifecycle(widget.bookingId);
+  }
 
   @override
   void dispose() {
@@ -62,6 +64,8 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
         'order_id': checkout.orderId,
         'amount': checkout.amountMinor,
         'currency': checkout.currency,
+        if (checkout.checkoutConfig.isNotEmpty)
+          'config': checkout.checkoutConfig,
         'name': 'Avantika Lok',
         'description': 'Service booking',
         'retry': {'enabled': true, 'max_count': 2}
@@ -193,9 +197,7 @@ class _BookingPaymentPageState extends State<BookingPaymentPage> {
                         ? 'Checkout in progress…'
                         : 'Pay securely with Razorpay')),
               TextButton(
-                  onPressed: busy
-                      ? null
-                      : () => setState(_reload),
+                  onPressed: busy ? null : () => setState(_reload),
                   child: const Text('Refresh payment status')),
               OutlinedButton(
                   onPressed: () => Navigator.pop(context),
